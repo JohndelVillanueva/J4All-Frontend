@@ -4,6 +4,7 @@ import IndiPeoplePage from "../pages/admin/IndiPeoplePage"; // Ensure the file e
 import Layout from "../layouts/Layout"; // Ensure the file exists at 'src/components/Layout.tsx' or adjust the path accordingly
 import Login from "../pages/login"; // Ensure the file exists at 'src/components/Login.tsx' or adjust the path accordingly
 import AdminDashboard from "../routing/admin/AdminDashboard";
+import SignUpPage from "../pages/Signup";
 import IndigenousDashboard from "../routing/indigenous/IndigenousDashboard";
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
         <Layout>
           <Routes>
             <Route path="/" element={<Login />} />
+            <Route path="/SignUpPage" element={<SignUpPage />} />
             <Route path="/IndigenousDashboard" element={<IndigenousDashboard />} />
             <Route path="/pwd" element={<PwdPage />} />
             <Route path="/indigenous-people" element={<IndiPeoplePage />} />

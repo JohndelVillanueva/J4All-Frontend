@@ -4,12 +4,13 @@ import Header from '../components/Header'; // Adjust the import path as necessar
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const isLoginPage = location.pathname === '/';
+  const hideHeaderPages = ['/', '/SignUpPage']; // Add paths where header should be hidden
+  const shouldHideHeader = hideHeaderPages.includes(location.pathname);
 
   return (
     <div className="min-h-screen">
-      {!isLoginPage && <Header />}
-      <main className={!isLoginPage ? "pt-16" : ""}>
+      {!shouldHideHeader && <Header />}
+      <main className={!shouldHideHeader ? "pt-16" : ""}>
         {children}
       </main>
     </div>
