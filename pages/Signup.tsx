@@ -5,9 +5,10 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { JSX } from 'react';
 
 // Type definitions
-type UserType = 'general' | 'pwd' | 'indigenous';
+type UserType = 'general' | 'pwd' | 'indigenous' | 'employer';
 
 interface SignUpFormData {
   firstName: string;
@@ -15,7 +16,7 @@ interface SignUpFormData {
   email: string;
   phone: string;
   address: string;
-  password: string;
+  password_hash: string;
   confirmPassword: string;
   userType: UserType;
   agreeToTerms: true;
@@ -28,18 +29,18 @@ const signUpSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email format'),
   phone: z.string().min(10, 'Phone number must be at least 10 digits').max(15, 'Phone number is too long'),
   address: z.string().min(5, 'Address is too short').max(100, 'Address is too long'),
-  password: z.string()
+  password_hash: z.string()
     .min(8, 'Password must be at least 8 characters')
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
     .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
     .regex(/[0-9]/, 'Password must contain at least one number')
     .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
   confirmPassword: z.string().min(1, 'Please confirm your password'),
-  userType: z.enum(['general', 'pwd', 'indigenous']),
+  userType: z.enum(['general', 'pwd', 'indigenous', 'employer']),
   agreeToTerms: z.literal(true, {
     errorMap: () => ({ message: 'You must agree to the terms and conditions' }),
   }),
-}).refine((data) => data.password === data.confirmPassword, {
+}).refine((data) => data.password_hash === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
 });
@@ -90,13 +91,15 @@ const UserTypeButton: React.FC<{
   const labelMap: Record<UserType, string> = {
     general: 'General User',
     pwd: 'Person with Disability',
-    indigenous: 'Indigenous Person'
+    indigenous: 'Indigenous Person',
+    employer: 'Employer'
   };
 
   const iconMap: Record<UserType, JSX.Element> = {
     general: <FaUser className="mr-1" />,
     pwd: <FaAccessibleIcon className="mr-1" />,
-    indigenous: <FaGlobeAmericas className="mr-1" />
+    indigenous: <FaGlobeAmericas className="mr-1" />,
+    employer: <FaUser className="mr-1" />
   };
 
   return (
@@ -120,7 +123,7 @@ const UserTypeButton: React.FC<{
 
 const SignUpPage: React.FC = () => {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword_hash, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -143,35 +146,56 @@ const SignUpPage: React.FC = () => {
   });
 
   const userType = watch('userType');
-  const password = watch('password');
+  const password_hash = watch('password_hash');
 
   const onSubmit: SubmitHandler<SignUpFormData> = async (data) => {
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await fetch('/api/signup', {
+      console.log('Sending registration request...');
+      const response = await fetch('/api/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          username: data.email,
+          email: data.email,
+          password: data.password_hash,
+          user_type: data.userType,
           first_name: data.firstName,
           last_name: data.lastName,
-          email: data.email,
           phone_number: data.phone,
-          user_type: data.userType,
-          password: data.password,
         }),
-        credentials: 'include', // For cookies if using them
+        credentials: 'include',
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      const responseText = await response.text();
+      console.log('Raw response:', responseText);
+      console.log('Response length:', responseText.length);
+      console.log('First 10 characters:', responseText.substring(0, 10));
+      
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse response as JSON:', e);
+        console.error('Response text that failed to parse:', responseText);
+        throw new Error('Invalid response from server');
+      }
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || 
-          errorData.error?.message || 
-          'Registration failed. Please try again.'
-        );
+        if (response.status === 409) {
+          throw new Error('This email is already registered. Please use a different email or try logging in.');
+        } else if (response.status === 400) {
+          throw new Error(responseData.error || 'Please check your input and try again.');
+        } else if (response.status === 429) {
+          throw new Error('Too many attempts. Please try again later.');
+        } else {
+          throw new Error(responseData.error || 'Registration failed. Please try again.');
+        }
       }
 
       // Success handling
@@ -181,16 +205,20 @@ const SignUpPage: React.FC = () => {
           fromRegistration: true,
           message: 'Registration successful! Welcome to our platform.' 
         },
-        replace: true // Prevent going back to signup page
+        replace: true
       });
       
     } catch (err) {
       console.error('Registration error:', err);
-      setError(
-        err instanceof Error ? 
-        err.message : 
-        'An unexpected error occurred. Please try again.'
-      );
+      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+        setError('Unable to connect to the server. Please check your internet connection and try again.');
+      } else {
+        setError(
+          err instanceof Error ? 
+          err.message : 
+          'An unexpected error occurred. Please try again.'
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -355,8 +383,8 @@ const SignUpPage: React.FC = () => {
               <legend className="block text-sm font-medium text-gray-700 mb-2">
                 I am a:
               </legend>
-              <div className="grid grid-cols-3 gap-2">
-                {(['general', 'pwd', 'indigenous'] as UserType[]).map((type) => (
+              <div className="grid grid-cols-4 gap-2">
+                {(['general', 'pwd', 'indigenous', 'employer'] as UserType[]).map((type) => (
                   <UserTypeButton
                     key={type}
                     type={type}
@@ -538,37 +566,37 @@ const SignUpPage: React.FC = () => {
                 </div>
                 <input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword_hash ? 'text' : 'password'}
                   autoComplete="new-password"
                   className={`block w-full pl-10 pr-10 py-2 border ${
-                    errors.password ? 'border-red-500' : 'border-gray-300'
+                    errors.password_hash ? 'border-red-500' : 'border-gray-300'
                   } rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
                   placeholder="••••••••"
-                  aria-invalid={!!errors.password}
+                  aria-invalid={!!errors.password_hash}
                   aria-describedby="password-error"
-                  {...register('password')}
+                  {...register('password_hash')}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => setShowPassword(!showPassword_hash)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword_hash ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? (
+                  {showPassword_hash ? (
                     <FaEyeSlash className="text-gray-400 hover:text-gray-500 transition-colors" />
                   ) : (
                     <FaEye className="text-gray-400 hover:text-gray-500 transition-colors" />
                   )}
                 </button>
               </div>
-              {errors.password && (
+              {errors.password_hash && (
                 <motion.p
                   id="password-error"
                   className="text-sm text-red-600"
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
-                  {errors.password.message}
+                  {errors.password_hash.message}
                 </motion.p>
               )}
             </div>
