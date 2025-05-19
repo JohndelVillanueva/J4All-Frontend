@@ -153,7 +153,7 @@ const SignUpPage: React.FC = () => {
     setError(null);
     try {
       console.log('Sending registration request...');
-      const response = await fetch('/api/users', {
+      const response = await fetch('/api/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
