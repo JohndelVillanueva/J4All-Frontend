@@ -6,6 +6,7 @@ import Login from "../pages/login"; // Ensure the file exists at 'src/components
 import AdminDashboard from "../routing/admin/AdminDashboard";
 import SignUpPage from "../pages/Signup";
 import IndigenousDashboard from "../routing/indigenous/IndigenousDashboard";
+import LoginPage from "../pages/login";
 export default function App() {
   return (
     <div className="App">
@@ -13,6 +14,7 @@ export default function App() {
       <Router>
         <Layout>
           <Routes>
+            <Route path="/login" element={<LoginPage />} />
             <Route path="/" element={<Login />} />
             <Route path="/SignUpPage" element={<SignUpPage />} />
             <Route path="/IndigenousDashboard" element={<IndigenousDashboard />} />
