@@ -1,13 +1,13 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { FaUser, FaLock, FaEye, FaEyeSlash, FaAccessibleIcon, FaGlobeAmericas, FaQuestionCircle } from 'react-icons/fa';
+import { FaUser, FaLock, FaEye, FaEyeSlash, FaAccessibleIcon, FaGlobeAmericas, FaQuestionCircle, FaBriefcase } from 'react-icons/fa';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Type definitions
-type UserType = 'general' | 'pwd' | 'indigenous';
+type UserType = 'general' | 'pwd' | 'indigenous' | 'employer';
 
 interface LoginFormData {
   email: string;
@@ -20,7 +20,7 @@ interface LoginFormData {
 const loginSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Invalid email format'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  userType: z.enum(['general', 'pwd', 'indigenous']),
+  userType: z.enum(['general', 'pwd', 'indigenous', 'employer']),
   rememberMe: z.boolean()
 });
 
@@ -67,17 +67,19 @@ const UserTypeButton: React.FC<{
   onChange: (type: UserType) => void;
 }> = ({ type, currentType, onChange }) => {
   const isActive = type === currentType;
-  const labelMap: Record<UserType, string> = {
-    general: 'General User',
-    pwd: 'Person with Disability',
-    indigenous: 'Indigenous Person'
-  };
+const labelMap: Record<UserType, string> = {
+  general: 'General User',
+  pwd: 'Person with Disability',
+  indigenous: 'Indigenous Person',
+  employer: 'Employer'
+};
 
-  const iconMap: Record<UserType, JSX.Element> = {
-    general: <FaUser className="mr-1" />,
-    pwd: <FaAccessibleIcon className="mr-1" />,
-    indigenous: <FaGlobeAmericas className="mr-1" />
-  };
+  const iconMap: Record<UserType, React.ReactElement> = {
+  general: <FaUser className="mr-1" />,
+  pwd: <FaAccessibleIcon className="mr-1" />,
+  indigenous: <FaGlobeAmericas className="mr-1" />,
+  employer: <FaBriefcase className="mr-1" /> // You'll need to import FaBriefcase from react-icons/fa
+};
 
   return (
     <motion.button
@@ -140,19 +142,28 @@ const LoginPage: React.FC = () => {
   const userType = watch('userType');
 
   const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
-    setIsSubmitting(true);
-    
-    // Simulate loading state
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Log the form data (optional)
-    console.log('Form submitted:', data);
-    
-    // Redirect to admin welcome page
-    navigate('/IndigenousDashboard');
-    
-    setIsSubmitting(false);
-  };
+  setIsSubmitting(true);
+  
+  // Simulate loading state
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  console.log('Form submitted:', data);
+  
+  // Redirect based on user type
+  switch(data.userType) {
+    case 'indigenous':
+      navigate('/IndigenousDashboard');
+      break;
+    case 'employer':
+      navigate('/EmployerDashboard');
+      break;
+    // Add other cases as needed
+    default:
+      navigate('/Dashboard');
+  }
+  
+  setIsSubmitting(false);
+};
 
   // Add subtle background animation
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -332,16 +343,16 @@ const LoginPage: React.FC = () => {
               <legend className="block text-sm font-medium text-gray-700 mb-2">
                 I am a:
               </legend>
-              <div className="grid grid-cols-3 gap-2">
-                {(['general', 'pwd', 'indigenous'] as UserType[]).map((type) => (
-                  <UserTypeButton
-                    key={type}
-                    type={type}
-                    currentType={userType}
-                    onChange={(t) => setValue('userType', t)}
-                  />
-                ))}
-              </div>
+<div className="grid grid-cols-2 gap-2">
+  {(['general', 'pwd', 'indigenous', 'employer'] as UserType[]).map((type) => (
+    <UserTypeButton
+      key={type}
+      type={type}
+      currentType={userType}
+      onChange={(t) => setValue('userType', t)}
+    />
+  ))}
+</div>
             </fieldset>
 
             {/* Email field */}
