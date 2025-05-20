@@ -3,7 +3,7 @@ import PwdPage from "../pages/admin/PwdPage"; // Ensure the file exists at 'src/
 import IndiPeoplePage from "../pages/admin/IndiPeoplePage"; // Ensure the file exists at 'src/components/IndigenousPeoplePage.tsx' or adjust the path accordingly
 import Layout from "../layouts/Layout"; // Ensure the file exists at 'src/components/Layout.tsx' or adjust the path accordingly
 import Login from "../pages/login"; // Ensure the file exists at 'src/components/Login.tsx' or adjust the path accordingly
-import AdminDashboard from "../routing/admin/AdminDashboard";
+// import AdminDashboard from "../routing/admin/AdminDashboard";
 import SignUpPage from "../pages/Signup";
 import IndigenousDashboard from "../routing/indigenous/IndigenousDashboard";
 import LoginPage from "../pages/login";
