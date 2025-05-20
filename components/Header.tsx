@@ -31,6 +31,21 @@ const Header = () => {
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const infoSidebarRef = useRef<HTMLDivElement>(null);
   const HeaderStyle = "J4All";
+  
+  const getDashboardPath = (user_type: string) => {
+  switch(user_type) {
+    case "pwd":
+      return "/PWDDashboard";
+    case "indigenous":
+      return "/IndigenousDashboard";
+    case "employer":
+      return "/EmployerDashboard";
+    case "admin":
+      return "/AdminDashboard";
+    default:
+      return "/DefaultDashboard";
+  }
+};
 
   const toggleInfoSidebar = useCallback(() => {
     setIsInfoSidebarOpen((prev) => !prev);
@@ -96,13 +111,16 @@ const Header = () => {
     };
   }, [closeAllDropdowns]);
 
+  // TODO: Replace this with actual user type from context, props, or authentication logic
+  const user_type = "pwd"; // Example default value
+
   const mainMenuItems = useMemo<MenuItem[]>(
     () => [
-      { icon: <FaTachometerAlt />, label: "Dashboard", path: "/IndigenousDashboard" },
+      { icon: <FaTachometerAlt />, label: "Dashboard", path: getDashboardPath(user_type) },
       { icon: <FaCog />, label: "Settings", path: "/settings" },
       { icon: <FaUserShield />, label: "Admin Portal", path: "/admin" },
     ],
-    []
+    [user_type]
     
   );
 

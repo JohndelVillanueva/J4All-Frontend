@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   FaUser,
@@ -47,7 +47,7 @@ const UserTypeButton: React.FC<{
     employer: "Employer",
   };
 
-  const iconMap: Record<UserType, JSX.Element> = {
+  const iconMap: Record<UserType, React.JSX.Element> = {
     general: <FaUser className="w-4 h-4" />,
     pwd: <FaAccessibleIcon className="w-4 h-4" />,
     indigenous: <FaGlobeAmericas className="w-4 h-4" />,
