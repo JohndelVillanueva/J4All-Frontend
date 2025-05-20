@@ -10,23 +10,27 @@ import PWDDashboard from "../pages/pwd/WelcomePage"; // Ensure the file exists a
 import SignUpPage from "../pages/Signup";
 import IndigenousDashboard from "../routing/indigenous/IndigenousDashboard";
 // import LoginPage from "../pages/login";
+import { AuthProvider } from '../contexts/AuthContext';
+
 export default function App() {
   return (
-    <div className="App">
-      {/* Main content area */}
-      <Router>
-        <Layout>
-          <Routes>
-            {/* <Route path="/login" element={<LoginPage />} /> */}
-            <Route path="/" element={<Login />} />
-            <Route path="/SignUpPage" element={<SignUpPage />} />
-            <Route path="/IndigenousDashboard" element={<IndigenousDashboard />} />
-            <Route path="/PWDDashboard" element={<PWDDashboard />} />
-            <Route path="/indigenous-people" element={<IndiPeoplePage />} />
-          </Routes>
-        </Layout>
-        {/* Footer */}
-      </Router>
-    </div>
+    <AuthProvider>
+      <div className="App">
+        {/* Main content area */}
+        <Router>
+          <Layout>
+            <Routes>
+              {/* <Route path="/login" element={<LoginPage />} /> */}
+              <Route path="/" element={<Login />} />
+              <Route path="/SignUpPage" element={<SignUpPage />} />
+              <Route path="/IndigenousDashboard" element={<IndigenousDashboard />} />
+              <Route path="/PWDDashboard" element={<PWDDashboard />} />
+              <Route path="/indigenous-people" element={<IndiPeoplePage />} />
+            </Routes>
+          </Layout>
+          {/* Footer */}
+        </Router>
+      </div>
+    </AuthProvider>
   );
 }

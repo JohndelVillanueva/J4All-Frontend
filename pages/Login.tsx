@@ -15,6 +15,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
+import { useAuth } from "../contexts/AuthContext";
 
 // Type definitions
 type UserType = "general" | "pwd" | "indigenous" | "employer";
@@ -82,6 +83,7 @@ const UserTypeButton: React.FC<{
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showHelpTooltip, setShowHelpTooltip] = useState(false);
@@ -147,11 +149,7 @@ const LoginPage: React.FC = () => {
         userType: data.userType,
       });
 
-      // Change this in your frontend onSubmit handler:
-      if (
-        response.status === 200 &&
-        response.data.message === "Login successful"
-      ) {
+      if (response.status === 200 && response.data.message === "Login successful") {
         // Save credentials if "Remember Me" is checked
         if (data.rememberMe) {
           localStorage.setItem("rememberedEmail", data.email);
@@ -165,7 +163,14 @@ const LoginPage: React.FC = () => {
 
         // Save token
         localStorage.setItem("token", response.data.token);
-        console.log('Redirecting to:', data.userType);
+
+        // Store user data in auth context
+        login({
+          id: response.data.user.id,
+          username: response.data.user.username,
+          email: response.data.user.email,
+          user_type: data.userType,
+        });
 
         // Redirect based on user type
         switch (data.userType) {
@@ -182,14 +187,10 @@ const LoginPage: React.FC = () => {
             navigate("/");
         }
       } else {
-        setLoginError(
-          response.data.message || "Login failed. Please try again."
-        );
+        setLoginError(response.data.message || "Login failed. Please try again.");
       }
     } catch (error: any) {
-      setLoginError(
-        error.response?.data?.message || "Server error. Please try again later."
-      );
+      setLoginError(error.response?.data?.message || "Server error. Please try again later.");
     } finally {
       setIsSubmitting(false);
     }

@@ -12,12 +12,18 @@ import {
   FaUserEdit,
 } from "react-icons/fa";
 import InfoSideBar from "./InfoSideBar"; // Adjust the import path as needed
+import { useAuth } from "../contexts/AuthContext"; // Add this import
+import { useNavigate } from "react-router-dom";
+
+// Define user types as a union type
+type UserType = 'general' | 'pwd' | 'indigenous' | 'employer' | 'admin';
 
 type MenuItem = {
   icon: React.ReactNode;
   label: string;
   path: string;
   className?: string;
+  onClick?: () => void;
 };
 
 const DEFAULT_PROFILE_IMAGE =
@@ -31,25 +37,31 @@ const Header = () => {
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const infoSidebarRef = useRef<HTMLDivElement>(null);
   const HeaderStyle = "J4All";
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   
-  const getDashboardPath = (user_type: string) => {
-  switch(user_type) {
-    case "pwd":
-      return "/PWDDashboard";
-    case "indigenous":
-      return "/IndigenousDashboard";
-    case "employer":
-      return "/EmployerDashboard";
-    case "admin":
-      return "/AdminDashboard";
-    default:
-      return "/DefaultDashboard";
-  }
-};
+  const getDashboardPath = (user_type: UserType): string => {
+    switch(user_type) {
+      case "pwd":
+        return "/PWDDashboard";
+      case "indigenous":
+        return "/IndigenousDashboard";
+      case "employer":
+        return "/EmployerDashboard";
+      case "admin":
+        return "/AdminDashboard";
+      default:
+        return "/DefaultDashboard";
+    }
+  };
+
+  const handleLogout = useCallback(() => {
+    logout();
+    navigate("/");
+  }, [logout, navigate]);
 
   const toggleInfoSidebar = useCallback(() => {
     setIsInfoSidebarOpen((prev) => !prev);
-    // Close other dropdowns when opening info sidebar
     if (!isInfoSidebarOpen) {
       setIsDropdownOpen(false);
       setIsProfileDropdownOpen(false);
@@ -111,17 +123,13 @@ const Header = () => {
     };
   }, [closeAllDropdowns]);
 
-  // TODO: Replace this with actual user type from context, props, or authentication logic
-  const user_type = "pwd"; // Example default value
-
   const mainMenuItems = useMemo<MenuItem[]>(
     () => [
-      { icon: <FaTachometerAlt />, label: "Dashboard", path: getDashboardPath(user_type) },
+      { icon: <FaTachometerAlt />, label: "Dashboard", path: getDashboardPath(user?.user_type || "general") },
       { icon: <FaCog />, label: "Settings", path: "/settings" },
       { icon: <FaUserShield />, label: "Admin Portal", path: "/admin" },
     ],
-    [user_type]
-    
+    [user?.user_type]
   );
 
   const profileMenuItems = useMemo<MenuItem[]>(
@@ -131,25 +139,26 @@ const Header = () => {
       {
         icon: <FaSignOutAlt />,
         label: "Logout",
-        path: "/logout",
+        path: "#",
         className: "text-red-400",
+        onClick: handleLogout,
       },
     ],
-    []
+    [handleLogout]
   );
 
   const navIcons = useMemo(
     () => [
-      { icon: <FaHome />, path: "/IndigenousDashboard", label: "Home" },
+      { icon: <FaHome />, path: getDashboardPath(user?.user_type || "general"), label: "Home" },
       {
         icon: <FaInfoCircle />,
         path: "#",
         label: "About",
-        onClick: toggleInfoSidebar, // Add onClick handler for the Info button
+        onClick: toggleInfoSidebar,
       },
       { icon: <FaEnvelope />, path: "/contact", label: "Contact" },
     ],
-    [toggleInfoSidebar]
+    [toggleInfoSidebar, user?.user_type]
   );
 
   const toggleDropdown = useCallback(() => {
@@ -180,7 +189,13 @@ const Header = () => {
         className={`flex items-center px-4 py-2 text-sm hover:bg-gray-600 transition-colors ${
           item.className || ""
         }`}
-        onClick={closeAllDropdowns}
+        onClick={(e) => {
+          if (item.onClick) {
+            e.preventDefault();
+            item.onClick();
+          }
+          closeAllDropdowns();
+        }}
       >
         <span className="mr-2">{item.icon}</span>
         {item.label}
