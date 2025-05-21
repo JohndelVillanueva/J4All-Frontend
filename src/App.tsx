@@ -3,14 +3,16 @@ import { Suspense, lazy } from "react";
 import Layout from "../layouts/Layout";
 import Login from "../pages/auth/Login";
 import SignUpPage from "../pages/auth/SignUp";
-import { AuthProvider } from '../contexts/AuthContext';
+import { AuthProvider } from "../contexts/AuthContext";
 import LoadingScreen from "../components/LoadingScreen"; // Create this component
 
 // Lazy-loaded components
 const PwdPage = lazy(() => import("../pages/admin/PwdPage"));
 const IndiPeoplePage = lazy(() => import("../pages/admin/IndiPeoplePage"));
 const PWDDashboard = lazy(() => import("../pages/pwd/WelcomePage"));
-const IndigenousDashboard = lazy(() => import("../routing/indigenous/IndigenousDashboard"));
+const IndigenousDashboard = lazy(
+  () => import("../routing/indigenous/IndigenousDashboard")
+);
 const AdminDashboard = lazy(() => import("../routing/admin/AdminDashboard"));
 
 export default function App() {
@@ -22,49 +24,47 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Login />} />
               <Route path="/SignUpPage" element={<SignUpPage />} />
-              
+
               {/* Lazy-loaded routes with Suspense */}
-              <Route 
-                path="/IndigenousDashboard" 
+              <Route
+                path="/IndigenousDashboard"
                 element={
                   <Suspense fallback={<LoadingScreen />}>
                     <IndigenousDashboard />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/PWDDashboard" 
+              <Route
+                path="/PWDDashboard"
                 element={
                   <Suspense fallback={<LoadingScreen />}>
                     <PWDDashboard />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/indigenous-people" 
+              <Route
+                path="/indigenous-people"
                 element={
                   <Suspense fallback={<LoadingScreen />}>
                     <IndiPeoplePage />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/Pwd" 
+              <Route
+                path="/Pwd"
                 element={
                   <Suspense fallback={<LoadingScreen />}>
                     <PwdPage />
                   </Suspense>
-                } 
-                
+                }
               />
-              <Route 
-                path="/AdminDashboard" 
+              <Route
+                path="/AdminDashboard"
                 element={
                   <Suspense fallback={<LoadingScreen />}>
                     <AdminDashboard />
                   </Suspense>
-                } 
-                
+                }
               />
             </Routes>
           </Layout>
