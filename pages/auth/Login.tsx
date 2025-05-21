@@ -15,7 +15,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
+
 
 // Type definitions
 type UserType = "general" | "pwd" | "indigenous" | "employer";
@@ -139,62 +140,80 @@ const LoginPage: React.FC = () => {
 
   // Form submission
   const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
-    setIsSubmitting(true);
-    setLoginError(null);
+  setIsSubmitting(true);
+  setLoginError(null);
 
-    try {
-      const response = await axios.post("/api/login", {
-        email: data.email,
-        password: data.password,
-        userType: data.userType,
+  try {
+    const response = await axios.post("/api/login", {
+      email: data.email,
+      password: data.password,
+      userType: data.userType,
+    });
+
+    if (response.status === 200 && response.data.message === "Login successful") {
+      // Save credentials if "Remember Me" is checked
+      if (data.rememberMe) {
+        localStorage.setItem("rememberedEmail", data.email);
+        localStorage.setItem("rememberedPassword", data.password);
+        localStorage.setItem("rememberedUserType", data.userType);
+      } else {
+        localStorage.removeItem("rememberedEmail");
+        localStorage.removeItem("rememberedPassword");
+        localStorage.removeItem("rememberedUserType");
+      }
+
+      // Save token
+      localStorage.setItem("token", response.data.token);
+
+      // Store user data in auth context
+      login({
+        id: response.data.user.id,
+        username: response.data.user.username,
+        email: response.data.user.email,
+        user_type: data.userType,
       });
 
-      if (response.status === 200 && response.data.message === "Login successful") {
-        // Save credentials if "Remember Me" is checked
-        if (data.rememberMe) {
-          localStorage.setItem("rememberedEmail", data.email);
-          localStorage.setItem("rememberedPassword", data.password);
-          localStorage.setItem("rememberedUserType", data.userType);
-        } else {
-          localStorage.removeItem("rememberedEmail");
-          localStorage.removeItem("rememberedPassword");
-          localStorage.removeItem("rememberedUserType");
-        }
+      // Add a small delay to show loading state (optional)
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-        // Save token
-        localStorage.setItem("token", response.data.token);
-
-        // Store user data in auth context
-        login({
-          id: response.data.user.id,
-          username: response.data.user.username,
-          email: response.data.user.email,
-          user_type: data.userType,
-        });
-
-        // Redirect based on user type
-        switch (data.userType) {
-          case "indigenous":
+      // Redirect based on user type with lazy loading
+      switch (data.userType) {
+        case "indigenous":
+          // Preload the dashboard component
+          import("../indigenous-people/WelcomePage").then(() => {
             navigate("/IndigenousDashboard");
-            break;
-          case "employer":
+          });
+          break;
+        case "employer":
+          import("../employer/WelcomePage").then(() => {
             navigate("/EmployerDashboard");
-            break;
-          case "pwd":
+          });
+          break;
+        case "pwd":
+          import("../pwd/WelcomePage").then(() => {
             navigate("/PWDDashboard");
-            break;
-          default:
+          });
+          break;
+
+          case "general":
+          import("../admin/WelcomePage").then(() => {
+            navigate("/AdminDashboard");
+          });
+          break;
+        default:
+          import("../admin/WelcomePage").then(() => {
             navigate("/");
-        }
-      } else {
-        setLoginError(response.data.message || "Login failed. Please try again.");
+          });
       }
-    } catch (error: any) {
-      setLoginError(error.response?.data?.message || "Server error. Please try again later.");
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      setLoginError(response.data.message || "Login failed. Please try again.");
     }
-  };
+  } catch (error: any) {
+    setLoginError(error.response?.data?.message || "Incorrect Email or Password. Please try again.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // Background animation
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });

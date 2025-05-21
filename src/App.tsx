@@ -1,34 +1,73 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import PwdPage from "../pages/admin/PwdPage"; // Ensure the file exists at 'src/components/PwdPage.tsx' or adjust the path accordingly
-import IndiPeoplePage from "../pages/admin/IndiPeoplePage"; // Ensure the file exists at 'src/components/IndigenousPeoplePage.tsx' or adjust the path accordingly
-import Layout from "../layouts/Layout"; // Ensure the file exists at 'src/components/Layout.tsx' or adjust the path accordingly
-import Login from "../pages/login"; // Ensure the file exists at 'src/components/Login.tsx' or adjust the path accordingly
-// import WelcomePage from "../routing/pwd/PwdDashboard"; // Ensure the file exists at 'src/components/PwdDashboard.tsx' or adjust the path accordingly
-import PWDDashboard from "../pages/pwd/WelcomePage"; // Ensure the file exists at 'src/components/PwdDashboard.tsx' or adjust the path accordingly
-
-// import AdminDashboard from "../routing/admin/AdminDashboard";
-import SignUpPage from "../pages/Signup";
-import IndigenousDashboard from "../routing/indigenous/IndigenousDashboard";
-// import LoginPage from "../pages/login";
+import { Suspense, lazy } from "react";
+import Layout from "../layouts/Layout";
+import Login from "../pages/auth/Login";
+import SignUpPage from "../pages/auth/SignUp";
 import { AuthProvider } from '../contexts/AuthContext';
+import LoadingScreen from "../components/LoadingScreen"; // Create this component
+
+// Lazy-loaded components
+const PwdPage = lazy(() => import("../pages/admin/PwdPage"));
+const IndiPeoplePage = lazy(() => import("../pages/admin/IndiPeoplePage"));
+const PWDDashboard = lazy(() => import("../pages/pwd/WelcomePage"));
+const IndigenousDashboard = lazy(() => import("../routing/indigenous/IndigenousDashboard"));
+const AdminDashboard = lazy(() => import("../routing/admin/AdminDashboard"));
 
 export default function App() {
   return (
     <AuthProvider>
       <div className="App">
-        {/* Main content area */}
         <Router>
           <Layout>
             <Routes>
-              {/* <Route path="/login" element={<LoginPage />} /> */}
               <Route path="/" element={<Login />} />
               <Route path="/SignUpPage" element={<SignUpPage />} />
-              <Route path="/IndigenousDashboard" element={<IndigenousDashboard />} />
-              <Route path="/PWDDashboard" element={<PWDDashboard />} />
-              <Route path="/indigenous-people" element={<IndiPeoplePage />} />
+              
+              {/* Lazy-loaded routes with Suspense */}
+              <Route 
+                path="/IndigenousDashboard" 
+                element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <IndigenousDashboard />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/PWDDashboard" 
+                element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <PWDDashboard />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/indigenous-people" 
+                element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <IndiPeoplePage />
+                  </Suspense>
+                } 
+              />
+              <Route 
+                path="/admin/pwd" 
+                element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <PwdPage />
+                  </Suspense>
+                } 
+                
+              />
+              <Route 
+                path="/AdminDashboard" 
+                element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <AdminDashboard />
+                  </Suspense>
+                } 
+                
+              />
             </Routes>
           </Layout>
-          {/* Footer */}
         </Router>
       </div>
     </AuthProvider>
