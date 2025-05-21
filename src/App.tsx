@@ -49,7 +49,7 @@ export default function App() {
                 } 
               />
               <Route 
-                path="/admin/pwd" 
+                path="/Pwd" 
                 element={
                   <Suspense fallback={<LoadingScreen />}>
                     <PwdPage />

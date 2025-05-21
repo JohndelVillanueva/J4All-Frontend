@@ -30,7 +30,7 @@ const AdminWelcomePage = () => {
         <div className="mx-4">
           <div className="mx-auto">
             <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold">Welcome to the Dashboard</h1>
+              <h1 className="text-2xl font-bold">Welcome to the Admin Dashboard</h1>
               {/* <button 
                 onClick={handleFindJobClick}
                 className="bg-blue-700 hover:bg-red-900 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-colors"
