@@ -580,6 +580,18 @@ const LoginPage: React.FC = () => {
                   Create new account
                 </a>
               </motion.div>
+              <motion.div
+                className="mt-5"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <a
+                  href="/EmployerSignUpForm"
+                  className="inline-flex items-center justify-center w-full py-2.5 px-4 border border-gray-200 rounded-lg bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors"
+                >
+                  Create Employer account
+                </a>
+              </motion.div>
             </div>
           </div>
         </motion.div>

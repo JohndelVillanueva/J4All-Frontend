@@ -4,7 +4,8 @@ import Header from '../components/Header'; // Adjust the import path as necessar
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const hideHeaderPages = ['/', '/SignUpPage']; // Add paths where header should be hidden
+  const hideHeaderPages = ['/', '/SignUpPage', '/EmployerSignUpForm']; // Add paths where header should be hidden
+
   const shouldHideHeader = hideHeaderPages.includes(location.pathname);
 
   return (
