@@ -135,7 +135,7 @@ const SignUpPage: React.FC = () => {
     handleSubmit,
     setValue,
     watch,
-    formState: { errors, isValid },
+    formState: { errors },
   } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -146,7 +146,6 @@ const SignUpPage: React.FC = () => {
   });
 
   const userType = watch('userType');
-  const password_hash = watch('password_hash');
 
   const onSubmit: SubmitHandler<SignUpFormData> = async (data) => {
     setIsSubmitting(true);
