@@ -10,6 +10,7 @@ import {
   FaEye,
   FaEyeSlash,
   FaQuestionCircle,
+  FaUser,
 } from "react-icons/fa";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 // Type definitions
 interface EmployerSignUpFormData {
+  username: string;
   companyName: string;
   contactPerson: string;
   email: string;
@@ -40,6 +42,14 @@ const employerSignUpSchema = z
       .string()
       .min(1, "Contact person is required")
       .max(100, "Name is too long"),
+    username: z
+      .string()
+      .min(3, "Username must be at least 3 characters")
+      .max(20, "Username is too long")
+      .regex(
+        /^[a-zA-Z0-9_]+$/,
+        "Username can only contain letters, numbers, and underscores"
+      ),
     email: z.string().min(1, "Email is required").email("Invalid email format"),
     phone: z
       .string()
@@ -132,41 +142,49 @@ const EmployerSignUpForm: React.FC = () => {
     mode: "onChange",
   });
 
-const onSubmit: SubmitHandler<EmployerSignUpFormData> = async (data) => {
-  setIsSubmitting(true);
-  setError(null);
-  try {
-    const response = await fetch("/api/createUserEmployer", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        companyName: data.companyName,
-        contactPerson: data.contactPerson,
-        email: data.email,
-        phone: data.phone,
-        companyDescription: data.address, // Map address to companyDescription
-        industry: data.industry,
-        password: data.password_hash, // Change field name to password
-        // Add required fields with default values
-        companySize: "1-10", // You should add this to your form
-        websiteUrl: "", // You should add this to your form
-        foundedYear: new Date().getFullYear() // You should add this to your form
-      }),
-      credentials: "include",
-    });
+  const onSubmit: SubmitHandler<EmployerSignUpFormData> = async (data) => {
+    setIsSubmitting(true);
+    setError(null);
 
-      const responseData = await response.json();
+    try {
+      const response = await fetch("/api/employers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: data.username, // Added this
+          companyName: data.companyName,
+          contactPerson: data.contactPerson,
+          email: data.email,
+          phone: data.phone,
+          companyDescription: data.address,
+          industry: data.industry,
+          password: data.password_hash,
+          companySize: "1-10",
+          websiteUrl: "",
+          foundedYear: new Date().getFullYear(),
+          user_type: "employer", // Added this
+          is_active: true, // Added this
+        }),
+        credentials: "include",
+      });
 
+      // First check if the response is OK (status 2xx)
       if (!response.ok) {
-        // Handle structured error responses
-        const errorMessage =
-          responseData.message ||
-          responseData.error ||
-          `Registration failed (status ${response.status})`;
-        throw new Error(errorMessage);
+        // Try to parse error response as JSON
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (jsonError) {
+          // If JSON parsing fails, use the status text
+          throw new Error(response.statusText || "Registration failed");
+        }
+        throw new Error(errorData.message || "Registration failed");
       }
+
+      // If successful, parse the JSON response
+      const responseData = await response.json();
 
       // Success handling
       sessionStorage.setItem("registrationSuccess", "true");
@@ -179,6 +197,7 @@ const onSubmit: SubmitHandler<EmployerSignUpFormData> = async (data) => {
       });
     } catch (err) {
       console.error("Registration error:", err);
+
       setError(
         err instanceof Error
           ? err.message
@@ -414,6 +433,41 @@ const onSubmit: SubmitHandler<EmployerSignUpFormData> = async (data) => {
                   animate={{ opacity: 1, y: 0 }}
                 >
                   {errors.contactPerson.message}
+                </motion.p>
+              )}
+            </div>
+            {/* Username field */}
+            <div className="space-y-2">
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Username
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaUser className="text-gray-400" />
+                </div>
+                <input
+                  id="username"
+                  type="text"
+                  className={`block w-full pl-10 pr-3 py-2 border ${
+                    errors.username ? "border-red-500" : "border-gray-300"
+                  } rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
+                  placeholder="Username"
+                  aria-invalid={!!errors.username}
+                  aria-describedby="username-error"
+                  {...register("username")}
+                />
+              </div>
+              {errors.username && (
+                <motion.p
+                  id="username-error"
+                  className="text-sm text-red-600"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  {errors.username.message}
                 </motion.p>
               )}
             </div>
