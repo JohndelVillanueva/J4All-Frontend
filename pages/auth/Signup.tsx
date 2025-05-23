@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { JSX } from 'react';
 
 // Type definitions
-type UserType = 'general' | 'pwd' | 'indigenous' | 'employer';
+type UserType = 'general' | 'pwd' | 'indigenous';
 
 interface SignUpFormData {
   firstName: string;
@@ -36,7 +36,7 @@ const signUpSchema = z.object({
     .regex(/[0-9]/, 'Password must contain at least one number')
     .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
   confirmPassword: z.string().min(1, 'Please confirm your password'),
-  userType: z.enum(['general', 'pwd', 'indigenous', 'employer']),
+  userType: z.enum(['general', 'pwd', 'indigenous']),
   agreeToTerms: z.literal(true, {
     errorMap: () => ({ message: 'You must agree to the terms and conditions' }),
   }),
@@ -91,15 +91,13 @@ const UserTypeButton: React.FC<{
   const labelMap: Record<UserType, string> = {
     general: 'General User',
     pwd: 'Person with Disability',
-    indigenous: 'Indigenous Person',
-    employer: 'Employer'
+    indigenous: 'Indigenous Person'
   };
 
   const iconMap: Record<UserType, JSX.Element> = {
     general: <FaUser className="mr-1" />,
     pwd: <FaAccessibleIcon className="mr-1" />,
-    indigenous: <FaGlobeAmericas className="mr-1" />,
-    employer: <FaUser className="mr-1" />
+    indigenous: <FaGlobeAmericas className="mr-1" />
   };
 
   return (
@@ -148,7 +146,7 @@ const SignUpPage: React.FC = () => {
   const userType = watch('userType');
   const password_hash = watch('password_hash');
 
-const onSubmit: SubmitHandler<SignUpFormData> = async (data) => {
+  const onSubmit: SubmitHandler<SignUpFormData> = async (data) => {
     setIsSubmitting(true);
     setError(null);
     
@@ -393,8 +391,8 @@ const onSubmit: SubmitHandler<SignUpFormData> = async (data) => {
               <legend className="block text-sm font-medium text-gray-700 mb-2">
                 I am a:
               </legend>
-              <div className="grid grid-cols-4 gap-2">
-                {(['general', 'pwd', 'indigenous', 'employer'] as UserType[]).map((type) => (
+              <div className="grid grid-cols-3 gap-2">
+                {(['general', 'pwd', 'indigenous'] as UserType[]).map((type) => (
                   <UserTypeButton
                     key={type}
                     type={type}
