@@ -1,8 +1,13 @@
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
+import PositionsModal from "../../modals/Find-Job"; // Adjust the import path as necessary
 
 const IndigenousWelcomePage = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-amber-100">
+    <>
+      {isModalOpen && <PositionsModal onClose={() => setIsModalOpen(false)} />}
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-amber-100">
       {/* Navigation (added for better UX) */}
       <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="text-2xl font-bold text-amber-900">
@@ -260,11 +265,7 @@ const IndigenousWelcomePage = () => {
       </section>
 
       {/* Call to Action - Enhanced */}
-
-      <section
-        id="careers"
-        className="container mx-auto px-4 py-16 text-center"
-      >
+      <section id="careers" className="container mx-auto px-4 py-16 text-center">
         <div className="bg-white rounded-xl shadow-xl p-8 md:p-12 max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold text-amber-900 mb-4">
             Explore Career Opportunities
@@ -275,7 +276,10 @@ const IndigenousWelcomePage = () => {
             have positions that might be right for you.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <button className="px-8 py-3 bg-amber-700 text-white rounded-lg font-semibold hover:bg-amber-800 transition-colors shadow-md hover:shadow-lg">
+            <button 
+              onClick={() => setIsModalOpen(true)}
+              className="px-8 py-3 bg-amber-700 text-white rounded-lg font-semibold hover:bg-amber-800 transition-colors shadow-md hover:shadow-lg"
+            >
               View Open Positions
             </button>
             <button className="px-8 py-3 border-2 border-amber-700 text-amber-700 rounded-lg font-semibold hover:bg-amber-50 transition-colors">
@@ -348,7 +352,11 @@ const IndigenousWelcomePage = () => {
           </div>
         </div>
       </footer>
+
+      {/* Positions Modal */}
+
     </div>
+    </>
   );
 };
 

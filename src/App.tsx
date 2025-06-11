@@ -15,6 +15,7 @@ const IndigenousDashboard = lazy(
   () => import("../routing/indigenous/IndigenousDashboard")
 );
 const AdminDashboard = lazy(() => import("../routing/admin/AdminDashboard"));
+const EmployerDashboard = lazy(() => import("../routing/employer/EmployerDashboard"));
 
 export default function App() {
   return (
@@ -57,6 +58,14 @@ export default function App() {
                 element={
                   <Suspense fallback={<LoadingScreen />}>
                     <PwdPage />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/EmployerDashboard"
+                element={
+                  <Suspense fallback={<LoadingScreen />}>
+                    <EmployerDashboard />
                   </Suspense>
                 }
               />
