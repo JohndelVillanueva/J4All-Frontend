@@ -1,7 +1,22 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import axios from "axios";
-// import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import {
+  FaUser,
+  FaLock,
+  FaEye,
+  FaEyeSlash,
+  FaBuilding,
+  FaUserTie,
+  FaGlobe,
+  FaPhone,
+  FaCalendarAlt,
+  FaMapMarkerAlt,
+  FaCheck,
+  FaBriefcase,
+} from "react-icons/fa";
+import { motion } from "framer-motion";
 
 type FormData = {
   email: string;
@@ -21,9 +36,15 @@ type FormData = {
   agreeToTerms: boolean;
   userType: "EMPLOYER";
 };
-// const navigate = useNavigate();
 
 export default function EmployerSignupForm() {
+  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -34,15 +55,22 @@ export default function EmployerSignupForm() {
 
   const passwordValue = watch("password");
 
+  // Background animation
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   useEffect(() => {
-    console.log("❗Form validation errors:", errors);
-  }, [errors]);
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({
+        x: e.clientX / window.innerWidth - 0.5,
+        y: e.clientY / window.innerHeight - 0.5,
+      });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
 
   const onSubmit = async (data: FormData) => {
-    console.log("🖱️ Button clicked");
-
-    // Log validation data
-    console.log("📤 Submitting with data:", data);
+    setIsSubmitting(true);
+    setFormError(null);
 
     try {
       const payload = {
@@ -68,19 +96,36 @@ export default function EmployerSignupForm() {
         agreeToTerms: data.agreeToTerms,
       };
 
-      console.log("📦 Payload being sent to server:", payload);
-
       const response = await axios.post("/api/createEmployer", payload);
 
-      console.log("✅ Success response:", response.data);
-      alert("✅ Form submitted successfully!");
-      // navigate("/");
+      if (response.status === 200 || response.status === 201) {
+        setShowSuccess(true);
+        setTimeout(() => {
+          navigate("/");
+        }, 2000);
+      }
     } catch (error: any) {
-      console.error("❌ Axios error:", error);
-
+      console.error("Error:", error);
       const responseData = error?.response?.data;
-      console.log("❌ Full error response:", responseData);
 
+      // 🔍 Handle known duplicate errors from backend
+      if (responseData?.message === "Username already taken") {
+        setError("username", {
+          type: "server",
+          message: "Username is already in use",
+        });
+        return;
+      }
+
+      if (responseData?.message === "Email already exists") {
+        setError("email", {
+          type: "server",
+          message: "Email is already registered",
+        });
+        return;
+      }
+
+      // Fallback: Zod or schema-based field validation
       const fieldErrors = responseData?.errors?.fieldErrors || {};
       for (const field in fieldErrors) {
         const messages = fieldErrors[field];
@@ -94,126 +139,607 @@ export default function EmployerSignupForm() {
 
       const formErrors = responseData?.errors?.formErrors || [];
       if (formErrors.length > 0) {
-        alert("Form errors:\n" + formErrors.join("\n"));
+        setFormError(formErrors.join("\n"));
+      } else {
+        setFormError(
+          "An error occurred during registration. Please try again."
+        );
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4 max-w-lg mx-auto"
-    >
-      <input
-        type="text"
-        {...register("email", { required: "Email is required" })}
-        placeholder="Email"
-      />
-      {errors.email && <p className="text-red-500">{errors.email.message}</p>}
-
-      <input
-        type="text"
-        {...register("username", { required: "Username is required" })}
-        placeholder="Username"
-      />
-      {errors.username && (
-        <p className="text-red-500">{errors.username.message}</p>
-      )}
-
-      <input
-        type="password"
-        {...register("password", {
-          required: "Password is required",
-          pattern: {
-            value: /^(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{6,}$/,
-            message:
-              "Password must be at least 6 characters and include a number and special character",
-          },
-        })}
-        placeholder="Password"
-      />
-      {errors.password && (
-        <p className="text-red-500">{errors.password.message}</p>
-      )}
-
-      <input
-        type="password"
-        {...register("confirmPassword", {
-          required: "Please confirm your password",
-          validate: (val) => val === passwordValue || "Passwords do not match",
-        })}
-        placeholder="Confirm Password"
-      />
-      {errors.confirmPassword && (
-        <p className="text-red-500">{errors.confirmPassword.message}</p>
-      )}
-
-      <input type="text" {...register("firstName")} placeholder="First Name" />
-      <input type="text" {...register("lastName")} placeholder="Last Name" />
-      <input type="text" {...register("phone")} placeholder="Phone Number" />
-
-      <input
-        type="text"
-        {...register("companyName")}
-        placeholder="Company Name"
-      />
-      <input
-        type="text"
-        {...register("contactPerson")}
-        placeholder="Contact Person"
-      />
-      <input type="text" {...register("industry")} placeholder="Industry" />
-
-      <select
-        {...register("companySize", { required: "Company size is required" })}
-      >
-        <option value="">Select Company Size</option>
-        <option value="1-10">1-10</option>
-        <option value="11-50">11-50</option>
-        <option value="51-200">51-200</option>
-        <option value="201-500">201-500</option>
-        <option value="501+">501+</option>
-      </select>
-      {errors.companySize && (
-        <p className="text-red-500">{errors.companySize.message}</p>
-      )}
-
-      <input
-        type="text"
-        {...register("websiteUrl")}
-        placeholder="Website URL"
-      />
-      <input
-        type="number"
-        {...register("foundedYear")}
-        placeholder="Founded Year"
-      />
-      {errors.foundedYear && (
-        <p className="text-red-500">{errors.foundedYear.message}</p>
-      )}
-
-      <input type="text" {...register("address")} placeholder="Address" />
-
-      <label className="flex items-center space-x-2">
-        <input
-          type="checkbox"
-          {...register("agreeToTerms", {
-            validate: (value) => value === true || "You must accept terms",
-          })}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 overflow-hidden relative">
+      {/* Background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div
+          className="absolute inset-0 bg-gradient-to-br from-gray-50 to-indigo-50"
+          style={{
+            backgroundPosition: `${50 + mousePosition.x * 3}% ${
+              50 + mousePosition.y * 3
+            }%`,
+          }}
         />
-        <span>I agree to the terms and conditions</span>
-      </label>
-      {errors.agreeToTerms && (
-        <p className="text-red-500">{errors.agreeToTerms.message}</p>
+        <div className="absolute top-1/4 -left-20 w-64 h-64 bg-indigo-100 rounded-full filter blur-3xl opacity-30" />
+        <div className="absolute bottom-1/3 -right-20 w-72 h-72 bg-purple-100 rounded-full filter blur-3xl opacity-30" />
+      </div>
+
+      {/* Success notification */}
+      {showSuccess && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50"
+        >
+          <div className="bg-emerald-500 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-2">
+            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span className="font-medium">
+              Registration successful! Redirecting to login...
+            </span>
+          </div>
+        </motion.div>
       )}
 
-      <button
-        type="submit"
-        onClick={() => console.log("🖱️ Button clicked")}
-        className="bg-blue-500 text-white px-4 py-2 rounded"
-      >
-        Sign Up
-      </button>
-    </form>
+      {/* Main content */}
+      <div className="container mx-auto px-4 py-12 flex flex-col md:flex-row items-center justify-center min-h-screen relative z-10">
+        {/* Left side - Branding */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full md:w-1/2 lg:w-2/5 mb-12 md:mb-0 md:pr-12"
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 bg-indigo-500 rounded-xl text-white">
+              <FaBuilding className="text-2xl" />
+            </div>
+            <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+              J4All Employers
+            </h1>
+          </div>
+
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+            Join our inclusive hiring platform
+          </h2>
+
+          <p className="text-gray-600 mb-8 leading-relaxed">
+            Connect with talented professionals from diverse backgrounds. Our
+            platform helps you find the right candidates while promoting
+            workplace inclusivity.
+          </p>
+
+          <div className="space-y-4">
+            {[
+              "Access to a diverse talent pool",
+              "Streamlined hiring process",
+              "Inclusivity-focused tools",
+              "Company profile customization",
+              "Dedicated employer support",
+            ].map((feature, index) => (
+              <div key={index} className="flex items-start gap-3">
+                <div className="flex-shrink-0 mt-1">
+                  <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center">
+                    <div className="w-2 h-2 rounded-full bg-indigo-600" />
+                  </div>
+                </div>
+                <p className="text-gray-600">{feature}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Right side - Signup Form */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="w-full md:w-1/2 lg:w-2/5 max-w-md"
+        >
+          <div className="bg-white rounded-2xl shadow-xl p-8 relative overflow-hidden">
+            {/* Decorative element */}
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-indigo-100 rounded-full filter blur-3xl opacity-20" />
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold text-gray-800 mb-1">
+                  Create Employer Account
+                </h2>
+                <p className="text-gray-500">
+                  Fill in your company details to get started
+                </p>
+              </div>
+
+              {/* Form error */}
+              {formError && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-3 bg-red-50 border border-red-100 text-red-600 rounded-lg text-sm flex items-center gap-2"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  {formError}
+                </motion.div>
+              )}
+
+              {/* Account Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-gray-500 border-b pb-2">
+                  Account Information
+                </h3>
+
+                {/* Email */}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                      <FaUser className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="email"
+                      className={`block w-full pl-10 pr-3 py-2.5 border ${
+                        errors.email ? "border-red-300" : "border-gray-200"
+                      } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`}
+                      placeholder="your@email.com"
+                      {...register("email", { required: "Email is required" })}
+                    />
+                  </div>
+                  {errors.email && (
+                    <p className="text-xs text-red-500">
+                      {errors.email.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Username */}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Username
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                      <FaUser className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="text"
+                      className={`block w-full pl-10 pr-3 py-2.5 border ${
+                        errors.username ? "border-red-300" : "border-gray-200"
+                      } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`}
+                      placeholder="username"
+                      {...register("username", {
+                        required: "Username is required",
+                      })}
+                    />
+                  </div>
+                  {errors.username && (
+                    <p className="text-xs text-red-500">
+                      {errors.username.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Password */}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                      <FaLock className="w-4 h-4" />
+                    </div>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      className={`block w-full pl-10 pr-10 py-2.5 border ${
+                        errors.password ? "border-red-300" : "border-gray-200"
+                      } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`}
+                      placeholder="••••••••"
+                      {...register("password", {
+                        required: "Password is required",
+                        pattern: {
+                          value:
+                            /^(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{6,}$/,
+                          message:
+                            "Password must be at least 6 characters and include a number and special character",
+                        },
+                      })}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
+                    >
+                      {showPassword ? (
+                        <FaEyeSlash className="w-4 h-4" />
+                      ) : (
+                        <FaEye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <p className="text-xs text-red-500">
+                      {errors.password.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Confirm Password */}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Confirm Password
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                      <FaLock className="w-4 h-4" />
+                    </div>
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      className={`block w-full pl-10 pr-10 py-2.5 border ${
+                        errors.confirmPassword
+                          ? "border-red-300"
+                          : "border-gray-200"
+                      } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`}
+                      placeholder="••••••••"
+                      {...register("confirmPassword", {
+                        required: "Please confirm your password",
+                        validate: (val) =>
+                          val === passwordValue || "Passwords do not match",
+                      })}
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
+                    >
+                      {showConfirmPassword ? (
+                        <FaEyeSlash className="w-4 h-4" />
+                      ) : (
+                        <FaEye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                  {errors.confirmPassword && (
+                    <p className="text-xs text-red-500">
+                      {errors.confirmPassword.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Personal Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-gray-500 border-b pb-2">
+                  Personal Information
+                </h3>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* First Name */}
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      First Name
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                        <FaUserTie className="w-4 h-4" />
+                      </div>
+                      <input
+                        type="text"
+                        className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
+                        placeholder="John"
+                        {...register("firstName")}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Last Name */}
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Last Name
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                        <FaUserTie className="w-4 h-4" />
+                      </div>
+                      <input
+                        type="text"
+                        className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
+                        placeholder="Doe"
+                        {...register("lastName")}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Phone */}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Phone Number
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                      <FaPhone className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="text"
+                      className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
+                      placeholder="+1 (555) 123-4567"
+                      {...register("phone")}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Company Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-gray-500 border-b pb-2">
+                  Company Information
+                </h3>
+
+                {/* Company Name */}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Company Name
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                      <FaBuilding className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="text"
+                      className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
+                      placeholder="Acme Inc."
+                      {...register("companyName")}
+                    />
+                  </div>
+                </div>
+
+                {/* Contact Person */}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Contact Person
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                      <FaUserTie className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="text"
+                      className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
+                      placeholder="Jane Smith"
+                      {...register("contactPerson")}
+                    />
+                  </div>
+                </div>
+
+                {/* Industry */}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Industry
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                      <FaBriefcase className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="text"
+                      className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
+                      placeholder="Technology"
+                      {...register("industry")}
+                    />
+                  </div>
+                </div>
+
+                {/* Company Size */}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Company Size
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                      <FaUser className="w-4 h-4" />
+                    </div>
+                    <select
+                      className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors appearance-none"
+                      {...register("companySize", {
+                        required: "Company size is required",
+                      })}
+                    >
+                      <option value="">Select Company Size</option>
+                      <option value="1-10">1-10</option>
+                      <option value="11-50">11-50</option>
+                      <option value="51-200">51-200</option>
+                      <option value="201-500">201-500</option>
+                      <option value="501+">501+</option>
+                    </select>
+                  </div>
+                  {errors.companySize && (
+                    <p className="text-xs text-red-500">
+                      {errors.companySize.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Website URL */}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Website URL
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                      <FaGlobe className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="text"
+                      className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
+                      placeholder="https://yourcompany.com"
+                      {...register("websiteUrl")}
+                    />
+                  </div>
+                </div>
+
+                {/* Founded Year */}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Founded Year
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                      <FaCalendarAlt className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="number"
+                      className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
+                      placeholder="2020"
+                      {...register("foundedYear")}
+                    />
+                  </div>
+                  {errors.foundedYear && (
+                    <p className="text-xs text-red-500">
+                      {errors.foundedYear.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Address */}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Address
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                      <FaMapMarkerAlt className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="text"
+                      className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
+                      placeholder="123 Main St, City, Country"
+                      {...register("address")}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Terms and Conditions */}
+              <div className="space-y-2">
+                <label className="flex items-start space-x-3">
+                  <div className="flex items-center h-5">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-200 border-gray-300 rounded"
+                      {...register("agreeToTerms", {
+                        validate: (value) =>
+                          value === true || "You must accept terms",
+                      })}
+                    />
+                  </div>
+                  <span className="text-sm text-gray-600">
+                    I agree to the{" "}
+                    <a href="#" className="text-indigo-600 hover:underline">
+                      Terms and Conditions
+                    </a>{" "}
+                    and{" "}
+                    <a href="#" className="text-indigo-600 hover:underline">
+                      Privacy Policy
+                    </a>
+                  </span>
+                </label>
+                {errors.agreeToTerms && (
+                  <p className="text-xs text-red-500">
+                    {errors.agreeToTerms.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Submit button */}
+              <motion.button
+                type="submit"
+                disabled={isSubmitting}
+                className={`w-full flex justify-center items-center py-3.5 px-4 rounded-xl text-sm font-medium text-white ${
+                  isSubmitting
+                    ? "bg-indigo-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 shadow-md"
+                } focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-all`}
+                whileHover={!isSubmitting ? { scale: 1.01 } : {}}
+                whileTap={!isSubmitting ? { scale: 0.99 } : {}}
+              >
+                {isSubmitting ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Creating Account...
+                  </>
+                ) : (
+                  "Create Employer Account"
+                )}
+              </motion.button>
+            </form>
+
+            {/* Login link */}
+            <div className="mt-6 text-center">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-200"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-3 bg-white text-gray-500">
+                    Already have an account?
+                  </span>
+                </div>
+              </div>
+              <motion.div
+                className="mt-5"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <a
+                  href="/login"
+                  className="inline-flex items-center justify-center w-full py-2.5 px-4 border border-gray-200 rounded-lg bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition-colors"
+                >
+                  Sign in to your account
+                </a>
+              </motion.div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </div>
   );
 }
