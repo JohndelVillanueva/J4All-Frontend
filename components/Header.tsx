@@ -48,7 +48,7 @@ const Header = () => {
         return "/IndigenousDashboard";
       case "employer":
         return "/EmployerDashboard";
-      case "admin":
+      case "general":
         return "/AdminDashboard";
       default:
         return "/DefaultDashboard";
