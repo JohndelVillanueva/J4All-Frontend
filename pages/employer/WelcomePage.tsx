@@ -54,7 +54,7 @@ function EmployerWelcomePage() {
     visible: { opacity: 1, y: 0 }
   };
 
-  const paginateTestimonial = (dir) => {
+  const paginateTestimonial = (dir: number) => {
     setTestimonialIndex((prev) => (prev + dir + testimonials.length) % testimonials.length);
   };
 

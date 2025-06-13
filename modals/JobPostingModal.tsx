@@ -2,7 +2,11 @@
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import { motion } from 'framer-motion';
 
-const JobPostingModal = ({ onClose }) => {
+interface JobPostingModalProps {
+  onClose: () => void;
+}
+
+const JobPostingModal = ({ onClose }: JobPostingModalProps) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Blurred overlay */}
