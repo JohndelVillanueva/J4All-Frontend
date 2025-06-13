@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   FaHome,
   FaInfoCircle,
-  FaEnvelope,
+  FaComments,
   FaChevronDown,
   FaTachometerAlt,
   FaCog,
@@ -10,21 +10,16 @@ import {
   FaUserCircle,
   FaSignOutAlt,
   FaUserEdit,
+  FaBell,
+  FaExclamationTriangle,
+  FaCheckCircle,
 } from "react-icons/fa";
-import InfoSideBar from "./InfoSideBar"; // Adjust the import path as needed
-import { useAuth } from "../contexts/AuthContext"; // Add this import
+import InfoSideBar from "./InfoSideBar";
+import NotificationBar from "./NotificationBar";
+import MessageSidebar from "./MessageSideBar";
+import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-
-// Define user types as a union type
-type UserType = 'general' | 'pwd' | 'indigenous' | 'employer' | 'admin';
-
-type MenuItem = {
-  icon: React.ReactNode;
-  label: string;
-  path: string;
-  className?: string;
-  onClick?: () => void;
-};
+import { UserType, MenuItem } from "../components/types/types";
 
 const DEFAULT_PROFILE_IMAGE =
   "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJDNi40NzcgMiAyIDYuNDc3IDIgMTJzNC40NzcgMTAgMTAgMTAgMTAtNC40NzcgMTAtMTBTMTcuNTIzIDIgMTIgMnptMCAyYzQuNDE4IDAgOCAzLjU4MiA4IDhzLTMuNTgyIDgtOCA4LTgtMy41ODItOC04IDMuNTgyLTggOC04eiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==";
@@ -33,15 +28,126 @@ const Header = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isInfoSidebarOpen, setIsInfoSidebarOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isMessageSidebarOpen, setIsMessageSidebarOpen] = useState(false);
+  
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const infoSidebarRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
+  const messageSidebarRef = useRef<HTMLDivElement>(null);
+  
   const HeaderStyle = "J4All";
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  
+
+  // Sample notifications data
+  const notifications = useMemo(
+    () => [
+      {
+        id: 1,
+        type: "alert",
+        title: "System Maintenance",
+        message:
+          "Scheduled maintenance on June 20, 2023 from 2:00 AM to 4:00 AM UTC",
+        time: "10 min ago",
+        icon: <FaExclamationTriangle className="text-yellow-500" />,
+      },
+      {
+        id: 2,
+        type: "success",
+        title: "Update Completed",
+        message: "Version 2.3.1 has been successfully deployed",
+        time: "1 hour ago",
+        icon: <FaCheckCircle className="text-green-500" />,
+      },
+      {
+        id: 3,
+        type: "alert",
+        title: "Storage Warning",
+        message: "Database storage is at 85% capacity",
+        time: "3 hours ago",
+        icon: <FaExclamationTriangle className="text-yellow-500" />,
+      },
+    ],
+    []
+  );
+  const conversations = useMemo(
+  () => [
+    {
+      id: 1,
+      title: "Project Status Update",
+      participants: ["John Doe", "You"],
+      lastMessage: "Actually, could you review the API docs...",
+      lastMessageTime: "10:35 AM",
+      unreadCount: 0,
+      participant: "John Doe",
+      time: "10:35 AM",
+    },
+    {
+      id: 2,
+      title: "Meeting Request",
+      participants: ["Sarah Johnson", "You"],
+      lastMessage: "Perfect! Looking forward to our discussion...",
+      lastMessageTime: "11:48 AM",
+      unreadCount: 0,
+      participant: "Sarah Johnson",
+      time: "11:48 AM",
+    },
+    {
+      id: 3,
+      title: "Design Specs Review",
+      participants: ["Alex Chen", "You"],
+      lastMessage: "Just sent them. Let me know if...",
+      lastMessageTime: "3:25 PM",
+      unreadCount: 1,
+      participant: "Alex Chen",
+      time: "3:25 PM",
+    },
+    {
+      id: 4,
+      title: "System Notifications",
+      participants: ["System"],
+      lastMessage: "Your storage is 85% full...",
+      lastMessageTime: "12:00 PM",
+      unreadCount: 0,
+      isSystem: true,
+      participant: "System",
+      time: "12:00 PM",
+    },
+  ],
+  []
+);
+  // Sample messages data
+  const messages = useMemo(
+    () => [
+      {
+        id: 1,
+        sender: "John Doe",
+        text: "Hey, how's the project coming along?",
+        time: "10:30 AM",
+        isCurrentUser: false,
+      },
+      {
+        id: 2,
+        sender: "You",
+        text: "Going well! Should be done by Friday.",
+        time: "10:32 AM",
+        isCurrentUser: true,
+      },
+      {
+        id: 3,
+        sender: "John Doe",
+        text: "Great to hear! Let me know if you need anything.",
+        time: "10:33 AM",
+        isCurrentUser: false,
+      },
+    ],
+    []
+  );
+
   const getDashboardPath = (user_type: UserType): string => {
-    switch(user_type) {
+    switch (user_type) {
       case "pwd":
         return "/PWDDashboard";
       case "indigenous":
@@ -65,8 +171,34 @@ const Header = () => {
     if (!isInfoSidebarOpen) {
       setIsDropdownOpen(false);
       setIsProfileDropdownOpen(false);
+      setIsNotificationOpen(false);
+      setIsMessageSidebarOpen(false);
     }
   }, [isInfoSidebarOpen]);
+
+  const toggleNotification = useCallback(() => {
+    setIsNotificationOpen((prev) => {
+      if (!prev) {
+        setIsDropdownOpen(false);
+        setIsProfileDropdownOpen(false);
+        setIsInfoSidebarOpen(false);
+        setIsMessageSidebarOpen(false);
+      }
+      return !prev;
+    });
+  }, []);
+
+  const toggleMessageSidebar = useCallback(() => {
+    setIsMessageSidebarOpen((prev) => {
+      if (!prev) {
+        setIsDropdownOpen(false);
+        setIsProfileDropdownOpen(false);
+        setIsInfoSidebarOpen(false);
+        setIsNotificationOpen(false);
+      }
+      return !prev;
+    });
+  }, []);
 
   const handleImageError = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -80,6 +212,8 @@ const Header = () => {
   const closeAllDropdowns = useCallback(() => {
     setIsDropdownOpen(false);
     setIsProfileDropdownOpen(false);
+    setIsNotificationOpen(false);
+    setIsMessageSidebarOpen(false);
   }, []);
 
   // Close dropdowns when clicking outside or pressing Escape
@@ -113,6 +247,20 @@ const Header = () => {
       ) {
         setIsInfoSidebarOpen(false);
       }
+
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target as Node)
+      ) {
+        setIsNotificationOpen(false);
+      }
+
+      if (
+        messageSidebarRef.current &&
+        !messageSidebarRef.current.contains(event.target as Node)
+      ) {
+        setIsMessageSidebarOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -125,7 +273,11 @@ const Header = () => {
 
   const mainMenuItems = useMemo<MenuItem[]>(
     () => [
-      { icon: <FaTachometerAlt />, label: "Dashboard", path: getDashboardPath(user?.user_type || "general") },
+      {
+        icon: <FaTachometerAlt />,
+        label: "Dashboard",
+        path: getDashboardPath(user?.user_type || "general"),
+      },
       { icon: <FaCog />, label: "Settings", path: "/settings" },
       { icon: <FaUserShield />, label: "Admin Portal", path: "/admin" },
     ],
@@ -149,16 +301,58 @@ const Header = () => {
 
   const navIcons = useMemo(
     () => [
-      { icon: <FaHome />, path: getDashboardPath(user?.user_type || "general"), label: "Home" },
+      // {
+      //   icon: <FaInfoCircle />,
+      //   path: "#",
+      //   label: "About",
+      //   onClick: toggleInfoSidebar,
+      // },
+      //       {
+      //   icon: <FaHome />,
+      //   path: getDashboardPath(user?.user_type || "general"),
+      //   label: "Home",
+      // },
       {
-        icon: <FaInfoCircle />,
+        icon: (
+          <div className="relative">
+            <FaComments />
+            {messages.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold h-4 w-4 flex items-center justify-center rounded-full">
+                {messages.length}
+              </span>
+            )}
+          </div>
+        ),
         path: "#",
-        label: "About",
-        onClick: toggleInfoSidebar,
+        label: "Messages",
+        onClick: toggleMessageSidebar,
       },
-      { icon: <FaEnvelope />, path: "/contact", label: "Contact" },
+
+      
+      {
+        icon: (
+          <div className="relative">
+            <FaBell />
+            {notifications.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold h-4 w-4 flex items-center justify-center rounded-full">
+                {notifications.length}
+              </span>
+            )}
+          </div>
+        ),
+        path: "#",
+        label: "Notifications",
+        onClick: toggleNotification,
+      },
     ],
-    [toggleInfoSidebar, user?.user_type]
+    [
+      toggleInfoSidebar,
+      toggleNotification,
+      toggleMessageSidebar,
+      notifications.length,
+      messages.length,
+      user?.user_type,
+    ]
   );
 
   const toggleDropdown = useCallback(() => {
@@ -166,6 +360,8 @@ const Header = () => {
       if (!prev) {
         setIsProfileDropdownOpen(false);
         setIsInfoSidebarOpen(false);
+        setIsNotificationOpen(false);
+        setIsMessageSidebarOpen(false);
       }
       return !prev;
     });
@@ -176,6 +372,8 @@ const Header = () => {
       if (!prev) {
         setIsDropdownOpen(false);
         setIsInfoSidebarOpen(false);
+        setIsNotificationOpen(false);
+        setIsMessageSidebarOpen(false);
       }
       return !prev;
     });
@@ -299,7 +497,25 @@ const Header = () => {
         </nav>
       </header>
 
-      {/* Info Sidebar */}
+      <NotificationBar
+        notificationRef={notificationRef}
+        isNotificationOpen={isNotificationOpen}
+        toggleNotification={toggleNotification}
+        notifications={notifications}
+      />
+
+<MessageSidebar
+  sidebarRef={messageSidebarRef}
+  isSidebarOpen={isMessageSidebarOpen}
+  toggleSidebar={toggleMessageSidebar}
+  messages={messages}
+  currentUser={user?.username || "You"}
+  conversations={conversations}
+  onNewConversation={() => {
+    // Handle new conversation logic
+  }}
+/>
+
       <InfoSideBar
         infoSidebarRef={infoSidebarRef as React.RefObject<HTMLDivElement>}
         isInfoSidebarOpen={isInfoSidebarOpen}

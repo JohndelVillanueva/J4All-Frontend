@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ApplicantModal from '../../modals/ApplicantModal';
 import JobPostingModal from '../../modals/JobPostingModal'; // Add this import
-import { XMarkIcon, MapPinIcon, BriefcaseIcon, CurrencyDollarIcon, ClockIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
 
 function EmployerWelcomePage() {
   const [showApplicantModal, setShowApplicantModal] = useState(false);
