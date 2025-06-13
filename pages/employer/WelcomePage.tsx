@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import ApplicantModal from '../../modals/ApplicantModal'; // adjust path if needed
+import ApplicantModal from '../../modals/ApplicantModal';
+import JobPostingModal from '../../modals/JobPostingModal'; // Add this import
+import { XMarkIcon, MapPinIcon, BriefcaseIcon, CurrencyDollarIcon, ClockIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
 
 function EmployerWelcomePage() {
-  const [showModal, setShowModal] = useState(false);
+  const [showApplicantModal, setShowApplicantModal] = useState(false);
+  const [showJobPostingModal, setShowJobPostingModal] = useState(false);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
 
   const services = [
@@ -51,12 +54,12 @@ function EmployerWelcomePage() {
     visible: { opacity: 1, y: 0 }
   };
 
-  const paginateTestimonial = (dir: number) => {
+  const paginateTestimonial = (dir) => {
     setTestimonialIndex((prev) => (prev + dir + testimonials.length) % testimonials.length);
   };
 
   return (
-    <div className="font-sans bg-gray-50 text-gray-800">
+    <div className={`font-sans bg-gray-50 text-gray-800 ${(showApplicantModal || showJobPostingModal) ? 'overflow-hidden h-screen' : ''}`}>
       {/* Hero Section */}
       <header className="bg-gradient-to-r from-indigo-700 to-blue-800 text-white py-20 px-4 text-center">
         <motion.h1
@@ -89,13 +92,13 @@ function EmployerWelcomePage() {
       <section className="bg-white py-8 px-4 text-center">
         <div className="flex flex-col sm:flex-row justify-center gap-6">
           <button
-            onClick={() => setShowModal(true)}
+            onClick={() => setShowApplicantModal(true)}
             className="bg-blue-700 text-white font-semibold px-6 py-3 rounded-full hover:bg-blue-800 transition shadow-md"
           >
             View All PWD & Indigenous Applicants
           </button>
           <button
-            onClick={() => alert('Redirect to job posting form')}
+            onClick={() => setShowJobPostingModal(true)}
             className="bg-green-600 text-white font-semibold px-6 py-3 rounded-full hover:bg-green-700 transition shadow-md"
           >
             Post a Job
@@ -103,9 +106,14 @@ function EmployerWelcomePage() {
         </div>
       </section>
 
-      {/* Modal */}
+      {/* Modals */}
       <AnimatePresence>
-        <ApplicantModal showModal={showModal} onClose={() => setShowModal(false)} />
+        {showApplicantModal && (
+          <ApplicantModal showModal={showApplicantModal} onClose={() => setShowApplicantModal(false)} />
+        )}
+        {showJobPostingModal && (
+          <JobPostingModal onClose={() => setShowJobPostingModal(false)} />
+        )}
       </AnimatePresence>
 
       {/* About Section */}
