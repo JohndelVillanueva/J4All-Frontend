@@ -121,7 +121,7 @@ const LoginPage: React.FC = () => {
           navigate("/ApplicantDashboard");
         } else if (userType === "employer") {
           navigate("/EmployerDashboard");
-        } else if (userType === "admin") {
+        } else if (userType === "general") {
           navigate("/AdminDashboard");
         } else {
           // Default redirect if user type not recognized
