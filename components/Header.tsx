@@ -14,7 +14,7 @@ import {
   FaExclamationTriangle,
   FaCheckCircle,
 } from "react-icons/fa";
-import InfoSideBar from "./InfoSideBar";
+import InfoSideBar from "./InfoSidebar";
 import NotificationBar from "./NotificationBar";
 import MessageSidebar from "./MessageSideBar";
 import { useAuth } from "../contexts/AuthContext";
@@ -149,9 +149,9 @@ const Header = () => {
   const getDashboardPath = (user_type: UserType): string => {
     switch (user_type) {
       case "pwd":
-        return "/PWDDashboard";
+        return "/ApplicantDashboard";
       case "indigenous":
-        return "/IndigenousDashboard";
+        return "/ApplicantDashboard";
       case "employer":
         return "/EmployerDashboard";
       case "general":

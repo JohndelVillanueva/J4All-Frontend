@@ -5,10 +5,7 @@ import {
   FaLock,
   FaEye,
   FaEyeSlash,
-  FaAccessibleIcon,
-  FaGlobeAmericas,
   FaQuestionCircle,
-  FaBriefcase,
 } from "react-icons/fa";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,14 +14,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
 
-
 // Type definitions
-type UserType = "general" | "pwd" | "indigenous" | "employer";
-
 interface LoginFormData {
   email: string;
   password: string;
-  userType: UserType;
   rememberMe: boolean;
 }
 
@@ -32,54 +25,8 @@ interface LoginFormData {
 const loginSchema = z.object({
   email: z.string().min(1, "Email is required").email("Invalid email format"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  userType: z.enum(["general", "pwd", "indigenous", "employer"]),
   rememberMe: z.boolean(),
 });
-
-const UserTypeButton: React.FC<{
-  type: UserType;
-  currentType: UserType;
-  onChange: (type: UserType) => void;
-}> = ({ type, currentType, onChange }) => {
-  const isActive = type === currentType;
-  const labelMap: Record<UserType, string> = {
-    general: "General",
-    pwd: "PWD",
-    indigenous: "Indigenous",
-    employer: "Employer",
-  };
-
-  const iconMap: Record<UserType, React.JSX.Element> = {
-    general: <FaUser className="w-4 h-4" />,
-    pwd: <FaAccessibleIcon className="w-4 h-4" />,
-    indigenous: <FaGlobeAmericas className="w-4 h-4" />,
-    employer: <FaBriefcase className="w-4 h-4" />,
-  };
-
-  return (
-    <motion.button
-      type="button"
-      onClick={() => onChange(type)}
-      className={`flex flex-col items-center justify-center gap-1 p-3 rounded-xl text-xs font-medium transition-all ${
-        isActive
-          ? "bg-gradient-to-br from-indigo-500 to-purple-500 text-white shadow-lg"
-          : "bg-white text-gray-600 hover:bg-gray-50 shadow-md"
-      }`}
-      whileHover={{ scale: 1.03 }}
-      whileTap={{ scale: 0.98 }}
-      aria-pressed={isActive}
-    >
-      <div
-        className={`p-2 rounded-full ${
-          isActive ? "bg-white/20" : "bg-gray-100"
-        }`}
-      >
-        {iconMap[type]}
-      </div>
-      <span>{labelMap[type]}</span>
-    </motion.button>
-  );
-};
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -101,27 +48,21 @@ const LoginPage: React.FC = () => {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      userType: "general",
       rememberMe: false,
     },
   });
 
-  const userType = watch("userType");
   const rememberMe = watch("rememberMe");
 
   // Load saved credentials
   useEffect(() => {
     const savedEmail = localStorage.getItem("rememberedEmail");
     const savedPassword = localStorage.getItem("rememberedPassword");
-    const savedUserType = localStorage.getItem(
-      "rememberedUserType"
-    ) as UserType | null;
 
     if (savedEmail && savedPassword) {
       setValue("email", savedEmail);
       setValue("password", savedPassword);
       setValue("rememberMe", true);
-      if (savedUserType) setValue("userType", savedUserType);
     }
   }, [setValue]);
 
@@ -140,80 +81,61 @@ const LoginPage: React.FC = () => {
 
   // Form submission
   const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
-  setIsSubmitting(true);
-  setLoginError(null);
+    setIsSubmitting(true);
+    setLoginError(null);
 
-  try {
-    const response = await axios.post("/api/login", {
-      email: data.email,
-      password: data.password,
-      userType: data.userType,
-    });
-
-    if (response.status === 200 && response.data.message === "Login successful") {
-      // Save credentials if "Remember Me" is checked
-      if (data.rememberMe) {
-        localStorage.setItem("rememberedEmail", data.email);
-        localStorage.setItem("rememberedPassword", data.password);
-        localStorage.setItem("rememberedUserType", data.userType);
-      } else {
-        localStorage.removeItem("rememberedEmail");
-        localStorage.removeItem("rememberedPassword");
-        localStorage.removeItem("rememberedUserType");
-      }
-
-      // Save token
-      localStorage.setItem("token", response.data.token);
-
-      // Store user data in auth context
-      login({
-        id: response.data.user.id,
-        username: response.data.user.username,
-        email: response.data.user.email,
-        user_type: data.userType,
+    try {
+      const response = await axios.post("/api/login", {
+        email: data.email,
+        password: data.password,
       });
 
-      // Add a small delay to show loading state (optional)
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (response.status === 200 && response.data.message === "Login successful") {
+        // Save credentials if "Remember Me" is checked
+        if (data.rememberMe) {
+          localStorage.setItem("rememberedEmail", data.email);
+          localStorage.setItem("rememberedPassword", data.password);
+        } else {
+          localStorage.removeItem("rememberedEmail");
+          localStorage.removeItem("rememberedPassword");
+        }
 
-      // Redirect based on user type with lazy loading
-      switch (data.userType) {
-        case "indigenous":
-          // Preload the dashboard component
-          import("../indigenous-people/WelcomePage").then(() => {
-            navigate("/IndigenousDashboard");
-          });
-          break;
-        case "employer":
-          import("../employer/WelcomePage").then(() => {
-            navigate("/EmployerDashboard");
-          });
-          break;
-        case "pwd":
-          import("../pwd/WelcomePage").then(() => {
-            navigate("/PWDDashboard");
-          });
-          break;
+        // Save token
+        localStorage.setItem("token", response.data.token);
 
-          case "general":
-          import("../admin/WelcomePage").then(() => {
-            navigate("/AdminDashboard");
-          });
-          break;
-        default:
-          import("../admin/WelcomePage").then(() => {
-            navigate("/");
-          });
+        // Store user data in auth context
+        login({
+          id: response.data.user.id,
+          username: response.data.user.username,
+          email: response.data.user.email,
+          user_type: response.data.user.user_type,
+        });
+
+        // Add a small delay to show loading state (optional)
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Redirect based on user type
+        const userType = response.data.user.user_type.toLowerCase();
+        
+        if (userType === "pwd" || userType === "indigenous") {
+          navigate("/ApplicantDashboard");
+        } else if (userType === "employer") {
+          navigate("/EmployerDashboard");
+        } else if (userType === "admin") {
+          navigate("/AdminDashboard");
+        } else {
+          // Default redirect if user type not recognized
+          navigate("/");
+        }
+      } else {
+        setLoginError(response.data.message || "Login failed. Please try again.");
       }
-    } else {
-      setLoginError(response.data.message || "Login failed. Please try again.");
+    } catch (error: any) {
+      setLoginError(error.response?.data?.message || "Incorrect Email or Password. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-  } catch (error: any) {
-    setLoginError(error.response?.data?.message || "Incorrect Email or Password. Please try again.");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   // Background animation
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -280,7 +202,7 @@ const LoginPage: React.FC = () => {
         >
           <div className="flex items-center gap-3 mb-6">
             <div className="p-3 bg-indigo-500 rounded-xl text-white">
-              <FaAccessibleIcon className="text-2xl" />
+              <FaUser className="text-2xl" />
             </div>
             <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
               J4All
@@ -384,25 +306,6 @@ const LoginPage: React.FC = () => {
                   {loginError}
                 </motion.div>
               )}
-
-              {/* User type selector */}
-              <div className="space-y-3">
-                <label className="block text-sm font-medium text-gray-700">
-                  I am signing in as:
-                </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {(
-                    ["general", "pwd", "indigenous", "employer"] as UserType[]
-                  ).map((type) => (
-                    <UserTypeButton
-                      key={type}
-                      type={type}
-                      currentType={userType}
-                      onChange={(t) => setValue("userType", t)}
-                    />
-                  ))}
-                </div>
-              </div>
 
               {/* Email field */}
               <div className="space-y-2">

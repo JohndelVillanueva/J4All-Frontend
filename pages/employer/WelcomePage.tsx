@@ -1,205 +1,421 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import ApplicantModal from '../../modals/ApplicantModal';
-import JobPostingModal from '../../modals/JobPostingModal'; // Add this import
+import { FaBriefcase, FaUserTie, FaChartLine, FaEnvelope, FaSearch, FaFilter, FaCalendarAlt, FaCheckCircle, FaTimesCircle, FaClock } from 'react-icons/fa';
 
-function EmployerWelcomePage() {
-  const [showApplicantModal, setShowApplicantModal] = useState(false);
-  const [showJobPostingModal, setShowJobPostingModal] = useState(false);
-  const [testimonialIndex, setTestimonialIndex] = useState(0);
+const EmployerDashboard = () => {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const services = [
-    '🧱 Construction Staffing',
-    '🩺 Healthcare Professionals',
-    '💻 IT & Technical Experts',
-    '⚙️ Manufacturing Workers',
-    '🧼 Housekeeping & Maintenance',
-    '🛫 Overseas Job Placement'
+  // Mock data
+  const jobOpenings = [
+    { id: 1, title: 'Senior Frontend Developer', applicants: 24, status: 'active', posted: '2023-05-15' },
+    { id: 2, title: 'Frontend Tech Lead', applicants: 12, status: 'active', posted: '2023-06-01' },
+    { id: 3, title: 'React Specialist', applicants: 8, status: 'closed', posted: '2023-04-10' },
   ];
 
-  const workers = [
-    { name: 'John D.', role: 'Certified Welder with 5+ years of experience' },
-    { name: 'Maria L.', role: 'Registered Nurse, fluent in English & Arabic' },
-    { name: 'Ahmed K.', role: 'Web Developer – Frontend & Backend expert' }
+  const applicants = [
+    { id: 1, name: 'Alex Johnson', position: 'Senior Frontend Developer', status: 'review', experience: '7 years', skills: ['React', 'TypeScript', 'Redux'], applied: '2023-06-10' },
+    { id: 2, name: 'Sarah Chen', position: 'Senior Frontend Developer', status: 'interview', experience: '5 years', skills: ['Angular', 'RxJS', 'NgRx'], applied: '2023-06-05' },
+    { id: 3, name: 'Michael Brown', position: 'Frontend Tech Lead', status: 'rejected', experience: '9 years', skills: ['React', 'GraphQL', 'Next.js'], applied: '2023-05-28' },
+    { id: 4, name: 'Emma Wilson', position: 'Senior Frontend Developer', status: 'hired', experience: '6 years', skills: ['Vue', 'Nuxt', 'Vuex'], applied: '2023-05-20' },
   ];
 
-  const testimonials = [
-    {
-      quote: "This agency helped us build a stronger and more inclusive workforce.",
-      name: "Mark T.",
-      company: "ConstructionPro Inc."
-    },
-    {
-      quote: "We hired amazing talent while supporting diversity. Highly recommended.",
-      name: "Sarah N.",
-      company: "Tech Solutions"
-    },
-    {
-      quote: "They connected us with skilled Indigenous professionals—seamless process.",
-      name: "Liam K.",
-      company: "GreenFuture Manufacturing"
-    }
+  const metrics = [
+    { title: 'Open Positions', value: 2, change: '+1', trend: 'up' },
+    { title: 'Total Applicants', value: 44, change: '+12', trend: 'up' },
+    { title: 'Interview Rate', value: '32%', change: '+5%', trend: 'up' },
+    { title: 'Hire Rate', value: '18%', change: '-2%', trend: 'down' },
   ];
 
-  const logos = [
-    'https://upload.wikimedia.org/wikipedia/commons/a/ab/Logo_TV_2015.png',
-    'https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg',
-    'https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg',
-    'https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg'
-  ];
-
-  const fadeUp = {
-    hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0 }
-  };
-
-  const paginateTestimonial = (dir: number) => {
-    setTestimonialIndex((prev) => (prev + dir + testimonials.length) % testimonials.length);
-  };
+  const filteredApplicants = applicants.filter(applicant =>
+    applicant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    applicant.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    applicant.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   return (
-    <div className={`font-sans bg-gray-50 text-gray-800 ${(showApplicantModal || showJobPostingModal) ? 'overflow-hidden h-screen' : ''}`}>
-      {/* Hero Section */}
-      <header className="bg-gradient-to-r from-indigo-700 to-blue-800 text-white py-20 px-4 text-center">
-        <motion.h1
-          className="text-5xl font-extrabold mb-4"
-          initial="hidden"
-          whileInView="visible"
-          variants={fadeUp}
-          transition={{ duration: 0.6 }}
-        >
-          Empowering PWD & Indigenous Workers
-        </motion.h1>
-        <motion.p
-          className="text-xl mb-6 max-w-2xl mx-auto"
-          initial="hidden"
-          whileInView="visible"
-          variants={fadeUp}
-          transition={{ delay: 0.2 }}
-        >
-          Bridging inclusive talent with companies that believe in equal opportunity and workforce diversity.
-        </motion.p>
-        <motion.button
-          className="bg-white text-blue-700 font-semibold px-6 py-3 rounded-full hover:bg-gray-100 shadow-md transition"
-          whileHover={{ scale: 1.05 }}
-        >
-          Partner With Us
-        </motion.button>
-      </header>
-
-      {/* Call-to-Action Buttons */}
-      <section className="bg-white py-8 px-4 text-center">
-        <div className="flex flex-col sm:flex-row justify-center gap-6">
-          <button
-            onClick={() => setShowApplicantModal(true)}
-            className="bg-blue-700 text-white font-semibold px-6 py-3 rounded-full hover:bg-blue-800 transition shadow-md"
-          >
-            View All PWD & Indigenous Applicants
-          </button>
-          <button
-            onClick={() => setShowJobPostingModal(true)}
-            className="bg-green-600 text-white font-semibold px-6 py-3 rounded-full hover:bg-green-700 transition shadow-md"
-          >
-            Post a Job
-          </button>
-        </div>
-      </section>
-
-      {/* Modals */}
-      <AnimatePresence>
-        {showApplicantModal && (
-          <ApplicantModal showModal={showApplicantModal} onClose={() => setShowApplicantModal(false)} />
-        )}
-        {showJobPostingModal && (
-          <JobPostingModal onClose={() => setShowJobPostingModal(false)} />
-        )}
-      </AnimatePresence>
-
-      {/* About Section */}
-      <section className="py-12 px-4 text-center">
-        <h2 className="text-3xl font-bold mb-6">Why Choose Us?</h2>
-        <p className="text-gray-600 max-w-3xl mx-auto">
-          We specialize in connecting Persons With Disabilities (PWD) and Indigenous individuals with companies that value inclusive hiring practices. Our vetted pool of talented individuals ensures a perfect fit for your organizational needs.
-        </p>
-      </section>
-
-      {/* Services */}
-      <section className="bg-gray-100 py-12 px-4 text-center">
-        <h2 className="text-3xl font-bold mb-8">Our Services</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {services.map((service, i) => (
-            <motion.div
-              key={i}
-              className="bg-white rounded-xl shadow p-6"
-              initial="hidden"
-              whileInView="visible"
-              variants={fadeUp}
-              transition={{ delay: i * 0.1 }}
-            >
-              <p className="text-xl">{service}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* Featured Workers */}
-      <section className="py-12 px-4 text-center">
-        <h2 className="text-3xl font-bold mb-6">Featured Workers</h2>
-        <div className="flex flex-wrap justify-center gap-6">
-          {workers.map((worker, i) => (
-            <div key={i} className="bg-white rounded-xl p-4 shadow-md w-72">
-              <h3 className="font-bold text-lg">{worker.name}</h3>
-              <p className="text-gray-600 text-sm">{worker.role}</p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900">TechHire Dashboard</h1>
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FaSearch className="text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search..."
+                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="bg-blue-50 py-12 px-4 text-center">
-        <h2 className="text-3xl font-bold mb-6">What Our Partners Say</h2>
-        <div className="max-w-xl mx-auto">
-          <motion.div
-            key={testimonialIndex}
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
-            transition={{ duration: 0.4 }}
-            className="bg-white p-6 rounded-lg shadow-md"
-          >
-            <p className="italic mb-4">"{testimonials[testimonialIndex].quote}"</p>
-            <p className="font-semibold">{testimonials[testimonialIndex].name}, {testimonials[testimonialIndex].company}</p>
-          </motion.div>
-          <div className="flex justify-center mt-4 gap-4">
-            <button onClick={() => paginateTestimonial(-1)}>&larr;</button>
-            <button onClick={() => paginateTestimonial(1)}>&rarr;</button>
+            <div className="flex items-center">
+              <img className="h-8 w-8 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Profile" />
+            </div>
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* Trusted By Logos */}
-      <section className="py-12 px-4 text-center">
-        <h2 className="text-3xl font-bold mb-4">Trusted By</h2>
-        <div className="flex flex-wrap justify-center gap-8 items-center">
-          {logos.map((logo, i) => (
-            <img key={i} src={logo} alt={`Partner ${i}`} className="h-12 object-contain" />
-          ))}
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Tabs */}
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`${activeTab === 'overview' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              <FaChartLine className="inline mr-2" />
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('positions')}
+              className={`${activeTab === 'positions' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              <FaBriefcase className="inline mr-2" />
+              Job Positions
+            </button>
+            <button
+              onClick={() => setActiveTab('applicants')}
+              className={`${activeTab === 'applicants' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              <FaUserTie className="inline mr-2" />
+              Applicants
+            </button>
+            <button
+              onClick={() => setActiveTab('messages')}
+              className={`${activeTab === 'messages' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm`}
+            >
+              <FaEnvelope className="inline mr-2" />
+              Messages
+            </button>
+          </nav>
         </div>
-      </section>
 
-      {/* Contact Section */}
-      <section className="bg-gray-900 text-white py-12 px-4 text-center">
-        <h2 className="text-3xl font-bold mb-4">Ready to Build an Inclusive Team?</h2>
-        <p className="mb-6">Contact us today and discover a diverse talent pool waiting to contribute.</p>
-        <button className="bg-white text-blue-900 font-bold px-6 py-3 rounded-full hover:bg-gray-200 transition">Get In Touch</button>
-      </section>
+        {/* Tab Content */}
+        <div className="py-6">
+          {activeTab === 'overview' && (
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Recruitment Overview</h2>
+              
+              {/* Metrics */}
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+                {metrics.map((metric, index) => (
+                  <div key={index} className="bg-white overflow-hidden shadow rounded-lg">
+                    <div className="px-4 py-5 sm:p-6">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 bg-blue-500 rounded-md p-3">
+                          <FaChartLine className="h-6 w-6 text-white" />
+                        </div>
+                        <div className="ml-5 w-0 flex-1">
+                          <dt className="text-sm font-medium text-gray-500 truncate">
+                            {metric.title}
+                          </dt>
+                          <dd className="flex items-baseline">
+                            <div className="text-2xl font-semibold text-gray-900">
+                              {metric.value}
+                            </div>
+                            <div className={`ml-2 flex items-baseline text-sm font-semibold ${metric.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                              {metric.change}
+                            </div>
+                          </dd>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
-      {/* Footer */}
-      <footer className="bg-gray-800 text-white text-center py-4">
-        &copy; {new Date().getFullYear()} InclusiveHire Agency. All rights reserved.
-      </footer>
+              {/* Recent Activity */}
+              <div className="bg-white shadow overflow-hidden sm:rounded-lg mb-8">
+                <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">
+                    Recent Hiring Activity
+                  </h3>
+                </div>
+                <div className="bg-white overflow-hidden">
+                  <ul className="divide-y divide-gray-200">
+                    {applicants.slice(0, 4).map((applicant) => (
+                      <li key={applicant.id}>
+                        <div className="px-4 py-4 sm:px-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <p className="text-sm font-medium text-blue-600 truncate">
+                                {applicant.name}
+                              </p>
+                              <p className="ml-2 flex-shrink-0 text-xs text-gray-500">
+                                for {applicant.position}
+                              </p>
+                            </div>
+                            <div className="ml-2 flex-shrink-0 flex">
+                              {applicant.status === 'hired' && (
+                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                  Hired
+                                </span>
+                              )}
+                              {applicant.status === 'interview' && (
+                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                  Interview
+                                </span>
+                              )}
+                              {applicant.status === 'review' && (
+                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                  Under Review
+                                </span>
+                              )}
+                              {applicant.status === 'rejected' && (
+                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                  Rejected
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="mt-2 sm:flex sm:justify-between">
+                            <div className="sm:flex">
+                              <p className="flex items-center text-sm text-gray-500">
+                                <FaBriefcase className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                                {applicant.experience} experience
+                              </p>
+                              <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
+                                <FaCalendarAlt className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                                Applied on {applicant.applied}
+                              </p>
+                            </div>
+                            <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                              {applicant.skills.map((skill, i) => (
+                                <span key={i} className="mr-2 px-2 py-1 text-xs font-medium bg-gray-100 rounded-full">
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'positions' && (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Job Positions</h2>
+                <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                  Create New Position
+                </button>
+              </div>
+
+              <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+                <ul className="divide-y divide-gray-200">
+                  {jobOpenings.map((job) => (
+                    <li key={job.id}>
+                      <div className="px-4 py-4 sm:px-6">
+                        <div className="flex items-center justify-between">
+                          <p className="text-lg font-medium text-blue-600 truncate">
+                            {job.title}
+                          </p>
+                          <div className="ml-2 flex-shrink-0 flex">
+                            {job.status === 'active' ? (
+                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                Active
+                              </span>
+                            ) : (
+                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                Closed
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="mt-2 sm:flex sm:justify-between">
+                          <div className="sm:flex">
+                            <p className="flex items-center text-sm text-gray-500">
+                              <FaUserTie className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                              {job.applicants} applicants
+                            </p>
+                            <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
+                              <FaCalendarAlt className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                              Posted on {job.posted}
+                            </p>
+                          </div>
+                          <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                            <button className="mr-3 text-blue-600 hover:text-blue-800">
+                              View Applicants
+                            </button>
+                            <button className="text-gray-600 hover:text-gray-800">
+                              Edit
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'applicants' && (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Applicants</h2>
+                <div className="flex space-x-3">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaFilter className="text-gray-400" />
+                    </div>
+                    <select className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                      <option>All Statuses</option>
+                      <option>Under Review</option>
+                      <option>Interview</option>
+                      <option>Hired</option>
+                      <option>Rejected</option>
+                    </select>
+                  </div>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaBriefcase className="text-gray-400" />
+                    </div>
+                    <select className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                      <option>All Positions</option>
+                      <option>Senior Frontend Developer</option>
+                      <option>Frontend Tech Lead</option>
+                      <option>React Specialist</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+                <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FaSearch className="text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search applicants..."
+                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <ul className="divide-y divide-gray-200">
+                  {filteredApplicants.map((applicant) => (
+                    <li key={applicant.id}>
+                      <div className="px-4 py-4 sm:px-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                              <span className="text-gray-600 text-lg font-medium">
+                                {applicant.name.charAt(0)}
+                              </span>
+                            </div>
+                            <div className="ml-4">
+                              <p className="text-sm font-medium text-blue-600">
+                                {applicant.name}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {applicant.position}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="ml-2 flex-shrink-0 flex">
+                            {applicant.status === 'hired' && (
+                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                Hired
+                              </span>
+                            )}
+                            {applicant.status === 'interview' && (
+                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                Interview
+                              </span>
+                            )}
+                            {applicant.status === 'review' && (
+                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                Under Review
+                              </span>
+                            )}
+                            {applicant.status === 'rejected' && (
+                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                Rejected
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="mt-2 sm:flex sm:justify-between">
+                          <div className="sm:flex">
+                            <p className="flex items-center text-sm text-gray-500">
+                              <FaBriefcase className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                              {applicant.experience} experience
+                            </p>
+                            <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
+                              <FaCalendarAlt className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                              Applied on {applicant.applied}
+                            </p>
+                          </div>
+                          <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                            {applicant.skills.map((skill, i) => (
+                              <span key={i} className="mr-2 px-2 py-1 text-xs font-medium bg-gray-100 rounded-full">
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="mt-3 flex space-x-3">
+                          <button className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            View Profile
+                          </button>
+                          <button className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Message
+                          </button>
+                          {applicant.status === 'review' && (
+                            <button className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                              Schedule Interview
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'messages' && (
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Messages</h2>
+              <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+                <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">
+                    Candidate Communications
+                  </h3>
+                </div>
+                <div className="bg-white p-6 text-center">
+                  <FaEnvelope className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No messages</h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    You don't have any messages with candidates yet.
+                  </p>
+                  <div className="mt-6">
+                    <button className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                      <FaEnvelope className="-ml-1 mr-2 h-5 w-5" />
+                      New Message
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
-}
+};
 
-export default EmployerWelcomePage;
+export default EmployerDashboard;

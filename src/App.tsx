@@ -10,9 +10,8 @@ import LoadingScreen from "../components/LoadingScreen"; // Create this componen
 // Lazy-loaded components
 const PwdPage = lazy(() => import("../pages/admin/PwdPage"));
 const IndiPeoplePage = lazy(() => import("../pages/admin/IndiPeoplePage"));
-const PWDDashboard = lazy(() => import("../pages/pwd/WelcomePage"));
-const IndigenousDashboard = lazy(
-  () => import("../routing/indigenous/IndigenousDashboard")
+const ApplicantDashboard = lazy(
+  () => import("../routing/applicant/ApplicantDashboard")
 );
 const AdminDashboard = lazy(() => import("../routing/admin/AdminDashboard"));
 const EmployerDashboard = lazy(() => import("../routing/employer/EmployerDashboard"));
@@ -30,21 +29,21 @@ export default function App() {
 
               {/* Lazy-loaded routes with Suspense */}
               <Route
-                path="/IndigenousDashboard"
+                path="/ApplicantDashboard"
                 element={
                   <Suspense fallback={<LoadingScreen />}>
-                    <IndigenousDashboard />
+                    <ApplicantDashboard />
                   </Suspense>
                 }
               />
-              <Route
+              {/* <Route
                 path="/PWDDashboard"
                 element={
                   <Suspense fallback={<LoadingScreen />}>
                     <PWDDashboard />
                   </Suspense>
                 }
-              />
+              /> */}
               <Route
                 path="/indigenous-people"
                 element={
