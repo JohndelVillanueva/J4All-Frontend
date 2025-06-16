@@ -5,6 +5,8 @@ type User = {
   username: string;
   email: string;
   user_type: 'general' | 'pwd' | 'indigenous' | 'employer' | 'admin';
+  first_name: string;
+  last_name: string;
 };
 
 type AuthContextType = {

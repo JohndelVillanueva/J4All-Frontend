@@ -14,7 +14,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
 
+
 // Type definitions
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  user_type: string;
+  first_name: string;
+  last_name: string;
+}
 interface LoginFormData {
   email: string;
   password: string;
@@ -37,6 +46,7 @@ const LoginPage: React.FC = () => {
   const [showHelpTooltip, setShowHelpTooltip] = useState(false);
   const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  
 
   // Form handling
   const {
@@ -81,61 +91,64 @@ const LoginPage: React.FC = () => {
 
   // Form submission
   const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
-    setIsSubmitting(true);
-    setLoginError(null);
+  setIsSubmitting(true);
+  setLoginError(null);
 
-    try {
-      const response = await axios.post("/api/login", {
-        email: data.email,
-        password: data.password,
+      try {
+    const response = await axios.post("/api/login", {
+      email: data.email,
+      password: data.password,
+    });
+
+    if (response.status === 200 && response.data.message === "Login successful") {
+      // Save credentials if "Remember Me" is checked
+      if (data.rememberMe) {
+        localStorage.setItem("rememberedEmail", data.email);
+        localStorage.setItem("rememberedPassword", data.password);
+      } else {
+        localStorage.removeItem("rememberedEmail");
+        localStorage.removeItem("rememberedPassword");
+      }
+
+      // Store all authentication data
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("userId", response.data.user.id); // ✅ Critical addition
+
+      // Store user data in auth context
+      login({
+        id: response.data.user.id,
+        username: response.data.user.username,
+        email: response.data.user.email,
+        user_type: response.data.user.user_type,
+        first_name: response.data.user.first_name, // Make sure these are included
+        last_name: response.data.user.last_name    // in your backend response
       });
 
-      if (response.status === 200 && response.data.message === "Login successful") {
-        // Save credentials if "Remember Me" is checked
-        if (data.rememberMe) {
-          localStorage.setItem("rememberedEmail", data.email);
-          localStorage.setItem("rememberedPassword", data.password);
-        } else {
-          localStorage.removeItem("rememberedEmail");
-          localStorage.removeItem("rememberedPassword");
-        }
+      // Add a small delay to show loading state (optional)
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-        // Save token
-        localStorage.setItem("token", response.data.token);
-
-        // Store user data in auth context
-        login({
-          id: response.data.user.id,
-          username: response.data.user.username,
-          email: response.data.user.email,
-          user_type: response.data.user.user_type,
-        });
-
-        // Add a small delay to show loading state (optional)
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        // Redirect based on user type
-        const userType = response.data.user.user_type.toLowerCase();
-        
-        if (userType === "pwd" || userType === "indigenous") {
-          navigate("/ApplicantDashboard");
-        } else if (userType === "employer") {
-          navigate("/EmployerDashboard");
-        } else if (userType === "general") {
-          navigate("/AdminDashboard");
-        } else {
-          // Default redirect if user type not recognized
-          navigate("/");
-        }
+      // Redirect based on user type
+      const userType = response.data.user.user_type.toLowerCase();
+      
+      if (userType === "pwd" || userType === "indigenous") {
+        navigate("/ApplicantDashboard");
+      } else if (userType === "employer") {
+        navigate("/EmployerDashboard");
+      } else if (userType === "general") {
+        navigate("/AdminDashboard");
       } else {
-        setLoginError(response.data.message || "Login failed. Please try again.");
+        // Default redirect if user type not recognized
+        navigate("/");
       }
-    } catch (error: any) {
-      setLoginError(error.response?.data?.message || "Incorrect Email or Password. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+    } else {
+      setLoginError(response.data.message || "Login failed. Please try again.");
     }
-  };
+  } catch (error: any) {
+    setLoginError(error.response?.data?.message || "Incorrect Email or Password. Please try again.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // Background animation
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
