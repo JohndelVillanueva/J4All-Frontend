@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { FaSearch } from "react-icons/fa";
-import { DynamicHeaderProps } from "../types/types";
+import { ApplicantHeaderProps } from "../types/types";
 
-const DynamicHeader: React.FC<DynamicHeaderProps> = ({
-  title = "DevCareer Dashboard",
+const DynamicHeader: React.FC<ApplicantHeaderProps> = ({
+  // title = "DevCareer Dashboard",
   user,
   showSearch = true,
   onSearchChange,

@@ -72,11 +72,37 @@ export type StatItem = {
   trend: "up" | "down";
 };
 
-export interface DynamicHeaderProps {
+export interface ApplicantHeaderProps {
   title?: string;
-  user?: { firstName: string; lastName: string };
+  user?: { firstName: string; lastName: string;  };
   showSearch?: boolean;
   onSearchChange?: (term: string) => void;
   className?: string;
 }
+// export interface EmployerHeaderProps {
+//   title?: string;
+//   user?: { firstName: string; lastName: string };
+//   showSearch?: boolean;
+//   onSearchChange?: (term: string) => void;
+//   className?: string;
+// }
+
+export type FormData = {
+  email: string;
+  username: string;
+  password: string;
+  confirmPassword: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  companyName: string;
+  contactPerson: string;
+  industry: string;
+  companySize: string;
+  websiteUrl: string;
+  foundedYear: number | string;
+  address: string;
+  agreeToTerms: boolean;
+  userType: "EMPLOYER";
+};
 

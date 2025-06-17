@@ -1,9 +1,19 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FaBriefcase, FaUserTie, FaChartLine, FaEnvelope, FaSearch, FaFilter, FaCalendarAlt, FaCheckCircle, FaTimesCircle, FaClock } from 'react-icons/fa';
+import DynamicHeader from "../../components/JobSeekerDashboard/DynamicHeader";
+import { useNavigate } from "react-router-dom";
+import {
+  UserData,
+  JobListing,
+  Application,
+  StatItem,
+} from "../../components/types/types";
 
 const EmployerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [currentUser, setCurrentUser] = useState<UserData | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
 
   // Mock data
   const jobOpenings = [
@@ -32,31 +42,58 @@ const EmployerDashboard = () => {
     applicant.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  useEffect(() => {
+      const fetchUserData = async () => {
+        const token = localStorage.getItem("token");
+        console.log("Current token:", token);
+        try {
+          const userId = localStorage.getItem("userId");
+          const token = localStorage.getItem("token");
+  
+          if (!userId || !token) {
+            throw new Error("Please login to access this page");
+          }
+  
+          const response = await fetch(`/api/users/${userId}`, {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          });
+  
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to fetch user data");
+          }
+  
+          const userData = await response.json();
+          setCurrentUser(userData);
+        } catch (err) {
+          console.error("Fetch error:", err);
+          localStorage.removeItem("token");
+          localStorage.removeItem("userId");
+          navigate("/");
+        }
+      };
+  
+      fetchUserData();
+    }, []);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">TechHire Dashboard</h1>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaSearch className="text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search..."
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <div className="flex items-center">
-              <img className="h-8 w-8 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="Profile" />
-            </div>
-          </div>
-        </div>
-      </header>
+      <DynamicHeader
+        title="DevCareer Dashboard"
+        user={{
+          firstName: currentUser?.first_name || "",
+          lastName: currentUser?.last_name || "",
+        }}
+        showSearch={true}
+        onSearchChange={setSearchTerm}
+        className="bg-white shadow-sm"
+      />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
