@@ -8,12 +8,14 @@ import {
   Application,
   StatItem,
 } from "../../components/types/types";
+import CreatePositionModal from '../../components/EmployerDashboard/CreatePositionModal';
 
 const EmployerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [currentUser, setCurrentUser] = useState<UserData | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Mock data
   const jobOpenings = [
@@ -80,6 +82,8 @@ const EmployerDashboard = () => {
   
       fetchUserData();
     }, []);
+
+    
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -241,9 +245,12 @@ const EmployerDashboard = () => {
             <div>
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">Job Positions</h2>
-                <button className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                  Create New Position
-                </button>
+                <button 
+  onClick={() => setIsModalOpen(true)}
+  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+>
+  Create New Position
+</button>
               </div>
 
               <div className="bg-white shadow overflow-hidden sm:rounded-lg">
@@ -451,6 +458,15 @@ const EmployerDashboard = () => {
           )}
         </div>
       </main>
+      <CreatePositionModal 
+  isOpen={isModalOpen}
+  onClose={() => setIsModalOpen(false)}
+  onSubmit={async (position) => {
+    console.log('New position:', position);
+    // Here you would typically send the data to your backend
+    // and update your jobOpenings state
+  }}
+/>
     </div>
   );
 };

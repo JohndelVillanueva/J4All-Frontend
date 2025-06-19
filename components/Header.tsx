@@ -30,13 +30,13 @@ const Header = () => {
   const [isInfoSidebarOpen, setIsInfoSidebarOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isMessageSidebarOpen, setIsMessageSidebarOpen] = useState(false);
-  
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
   const infoSidebarRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
   const messageSidebarRef = useRef<HTMLDivElement>(null);
-  
+
   const HeaderStyle = "J4All";
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -73,51 +73,51 @@ const Header = () => {
     []
   );
   const conversations = useMemo(
-  () => [
-    {
-      id: 1,
-      title: "Project Status Update",
-      participants: ["John Doe", "You"],
-      lastMessage: "Actually, could you review the API docs...",
-      lastMessageTime: "10:35 AM",
-      unreadCount: 0,
-      participant: "John Doe",
-      time: "10:35 AM",
-    },
-    {
-      id: 2,
-      title: "Meeting Request",
-      participants: ["Sarah Johnson", "You"],
-      lastMessage: "Perfect! Looking forward to our discussion...",
-      lastMessageTime: "11:48 AM",
-      unreadCount: 0,
-      participant: "Sarah Johnson",
-      time: "11:48 AM",
-    },
-    {
-      id: 3,
-      title: "Design Specs Review",
-      participants: ["Alex Chen", "You"],
-      lastMessage: "Just sent them. Let me know if...",
-      lastMessageTime: "3:25 PM",
-      unreadCount: 1,
-      participant: "Alex Chen",
-      time: "3:25 PM",
-    },
-    {
-      id: 4,
-      title: "System Notifications",
-      participants: ["System"],
-      lastMessage: "Your storage is 85% full...",
-      lastMessageTime: "12:00 PM",
-      unreadCount: 0,
-      isSystem: true,
-      participant: "System",
-      time: "12:00 PM",
-    },
-  ],
-  []
-);
+    () => [
+      {
+        id: 1,
+        title: "Project Status Update",
+        participants: ["John Doe", "You"],
+        lastMessage: "Actually, could you review the API docs...",
+        lastMessageTime: "10:35 AM",
+        unreadCount: 0,
+        participant: "John Doe",
+        time: "10:35 AM",
+      },
+      {
+        id: 2,
+        title: "Meeting Request",
+        participants: ["Sarah Johnson", "You"],
+        lastMessage: "Perfect! Looking forward to our discussion...",
+        lastMessageTime: "11:48 AM",
+        unreadCount: 0,
+        participant: "Sarah Johnson",
+        time: "11:48 AM",
+      },
+      {
+        id: 3,
+        title: "Design Specs Review",
+        participants: ["Alex Chen", "You"],
+        lastMessage: "Just sent them. Let me know if...",
+        lastMessageTime: "3:25 PM",
+        unreadCount: 1,
+        participant: "Alex Chen",
+        time: "3:25 PM",
+      },
+      {
+        id: 4,
+        title: "System Notifications",
+        participants: ["System"],
+        lastMessage: "Your storage is 85% full...",
+        lastMessageTime: "12:00 PM",
+        unreadCount: 0,
+        isSystem: true,
+        participant: "System",
+        time: "12:00 PM",
+      },
+    ],
+    []
+  );
   // Sample messages data
   const messages = useMemo(
     () => [
@@ -328,7 +328,6 @@ const Header = () => {
         onClick: toggleMessageSidebar,
       },
 
-      
       {
         icon: (
           <div className="relative">
@@ -504,17 +503,17 @@ const Header = () => {
         notifications={notifications}
       />
 
-<MessageSidebar
-  sidebarRef={messageSidebarRef}
-  isSidebarOpen={isMessageSidebarOpen}
-  toggleSidebar={toggleMessageSidebar}
-  messages={messages}
-  currentUser={user?.username || "You"}
-  conversations={conversations}
-  onNewConversation={() => {
-    // Handle new conversation logic
-  }}
-/>
+      <MessageSidebar
+        sidebarRef={messageSidebarRef}
+        isSidebarOpen={isMessageSidebarOpen}
+        toggleSidebar={toggleMessageSidebar}
+        messages={messages}
+        currentUser={user?.username || "You"}
+        conversations={conversations}
+        onNewConversation={() => {
+          // Handle new conversation logic
+        }}
+      />
 
       <InfoSideBar
         infoSidebarRef={infoSidebarRef as React.RefObject<HTMLDivElement>}
