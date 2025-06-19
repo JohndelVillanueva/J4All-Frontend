@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/solid';
 import { useNavigate } from 'react-router-dom';
+import { FaCheckCircle } from 'react-icons/fa';
 
 type RequiredSkill = {
   skill_name: string;
@@ -45,6 +46,7 @@ const CreatePositionModal = ({ isOpen, onClose, onSubmit }: JobPostingModalProps
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
 
   // Hono API client configuration
   const callHonoApi = async (endpoint: string, method: string, body?: any) => {
@@ -120,54 +122,71 @@ const CreatePositionModal = ({ isOpen, onClose, onSubmit }: JobPostingModalProps
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setError('');
+  e.preventDefault();
+  setIsSubmitting(true);
+  setError('');
 
-    try {
-      // Validate form data
-      if (!formData.job_title.trim() || !formData.job_description.trim()) {
-        throw new Error('Job title and description are required');
-      }
-
-      if (formData.required_skills.some(skill => !skill.skill_name.trim())) {
-        throw new Error('All skills must have a name');
-      }
-
-      // Prepare the payload for Hono
-      const payload = {
-        job_title: formData.job_title,
-        job_description: formData.job_description,
-        job_requirements: formData.job_requirements,
-        job_location: formData.job_location,
-        job_type: formData.job_type,
-        salary_range_min: formData.salary_range_min ? Number(formData.salary_range_min) : undefined,
-        salary_range_max: formData.salary_range_max ? Number(formData.salary_range_max) : undefined,
-        expiration_date: formatDateForAPI(formData.expiration_date),
-        required_skills: formData.required_skills.map(skill => ({
-          skill_name: skill.skill_name.trim(),
-          is_required: skill.is_required,
-          importance_level: skill.importance_level,
-          category: 'Technical'
-        }))
-      };
-
-      // Call Hono API endpoint
-      const result = await callHonoApi('/createJob', 'POST', payload);
-
-      if (!result.success) {
-        throw new Error(result.message || 'Job creation failed');
-      }
-
-      await onSubmit(result.data);
-      onClose();
-    } catch (error) {
-      console.error('Error creating job posting:', error);
-      setError(error instanceof Error ? error.message : 'An unknown error occurred');
-    } finally {
-      setIsSubmitting(false);
+  try {
+    // Validate form data
+    if (!formData.job_title.trim() || !formData.job_description.trim()) {
+      throw new Error('Job title and description are required');
     }
-  };
+
+    if (formData.required_skills.some(skill => !skill.skill_name.trim())) {
+      throw new Error('All skills must have a name');
+    }
+
+    // Prepare the payload for Hono
+    const payload = {
+      job_title: formData.job_title,
+      job_description: formData.job_description,
+      job_requirements: formData.job_requirements,
+      job_location: formData.job_location,
+      job_type: formData.job_type,
+      salary_range_min: formData.salary_range_min ? Number(formData.salary_range_min) : undefined,
+      salary_range_max: formData.salary_range_max ? Number(formData.salary_range_max) : undefined,
+      expiration_date: formatDateForAPI(formData.expiration_date),
+      required_skills: formData.required_skills.map(skill => ({
+        skill_name: skill.skill_name.trim(),
+        is_required: skill.is_required,
+        importance_level: skill.importance_level,
+        category: 'Technical'
+      }))
+    };
+
+    // Call Hono API endpoint
+    const result = await callHonoApi('/createJob', 'POST', payload);
+
+    if (!result.success) {
+      throw new Error(result.message || 'Job creation failed');
+    }
+
+    await onSubmit(result.data);
+    setIsSuccess(true); // Show success message first
+    
+    // Reset form and close after delay
+    setTimeout(() => {
+      setFormData({
+        job_title: '',
+        job_description: '',
+        job_requirements: '',
+        job_location: '',
+        job_type: '',
+        salary_range_min: '',
+        salary_range_max: '',
+        expiration_date: '',
+        required_skills: []
+      });
+      setIsSuccess(false);
+      onClose(); // Then close the modal
+    }, 2000);
+  } catch (error) {
+    console.error('Error creating job posting:', error);
+    setError(error instanceof Error ? error.message : 'An unknown error occurred');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   if (!isOpen) return null;
 
@@ -199,6 +218,12 @@ const CreatePositionModal = ({ isOpen, onClose, onSubmit }: JobPostingModalProps
                 {error}
               </div>
             )}
+            {isSuccess && (
+  <div className="p-4 bg-green-50 text-green-600 rounded-lg flex items-center">
+    <FaCheckCircle className="h-5 w-5 mr-2" />
+    Job posting created successfully!
+  </div>
+)}
             
             <div className="space-y-4">
               <div>
