@@ -10,12 +10,20 @@ interface JobsTabProps {
 }
 
 const JobsTab: React.FC<JobsTabProps> = ({ searchTerm, onSearchChange, jobListings }) => {
-  const filteredJobs = jobListings.filter(
-    (job) =>
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.skills.some((skill) => skill.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  // Add null checks and safe access to properties
+  const filteredJobs = jobListings?.filter((job) => {
+    if (!job) return false;
+    
+    const safeTitle = job.title?.toLowerCase() || "";
+    const safeCompany = job.company?.toLowerCase() || "";
+    const safeSkills = job.skills?.map(skill => skill?.toLowerCase()) || [];
+    
+    return (
+      safeTitle.includes(searchTerm.toLowerCase()) ||
+      safeCompany.includes(searchTerm.toLowerCase()) ||
+      safeSkills.some(skill => skill.includes(searchTerm.toLowerCase()))
+    );
+  }) || [];
 
   return (
     <div>

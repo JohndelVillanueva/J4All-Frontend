@@ -151,13 +151,33 @@ const ApplicationsSection: React.FC<{
     <div className="bg-white overflow-hidden">
       <ul className="divide-y divide-gray-200">
         {applications.map((app) => {
-          const job = jobListings.find((j) => j.id === app.jobId) || jobListings[0];
-          return <ApplicationListItem key={app.id} application={app} job={job} />;
+          const job = jobListings.find((j) => j.id === app.jobId);
+          return (
+            <ApplicationListItem 
+              key={app.id}
+              application={app} 
+              job={job || createDefaultJob(app.jobId)}
+            />
+          );
         })}
       </ul>
     </div>
   </div>
 );
+
+// Helper function to create a default job when not found
+const createDefaultJob = (jobId: number): JobListing => ({
+  id: jobId,
+  title: "Position no longer available",
+  company: "Unknown Company",
+  location: "Unknown Location",
+  salary: "Not specified",
+  type: "Unknown",
+  posted: "Unknown",
+  skills: [],
+  status: "new",
+  match: 0
+});
 
 const ApplicationListItem: React.FC<{ 
   application: Application; 
