@@ -18,10 +18,32 @@ const JobListItem: React.FC<JobListItemProps> = ({ job }) => {
               </span>
             </div>
             <div className="ml-4">
-              <p className="text-lg font-medium text-blue-600">{job.title}</p>
-              <p className="text-sm text-gray-500">
-                {job.company} • {job.location}
-              </p>
+              <div className="ml-4">
+                <div className="flex items-center">
+                  <p className="text-lg font-medium text-blue-600">
+                    {job.title}
+                  </p>
+                  {job.work_mode && (
+                    <span
+                      className={`
+                ml-2 px-2 py-0.5 text-xs font-medium rounded-full
+                ${
+                  job.work_mode === "Remote"
+                    ? "bg-green-100 text-green-800"
+                    : job.work_mode === "Hybrid"
+                    ? "bg-purple-100 text-purple-800"
+                    : "bg-blue-100 text-blue-800"
+                }
+              `}
+                    >
+                      {job.work_mode}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-500">
+                  {job.company} • {job.location} • {job.work_mode}
+                </p>
+              </div>
             </div>
           </div>
           <div className="ml-2 flex-shrink-0 flex flex-col items-end">

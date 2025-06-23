@@ -1,5 +1,6 @@
 // types.ts
 export type UserType = 'general' | 'pwd' | 'indigenous' | 'employer' | 'admin';
+type WorkMode = 'Onsite' | 'Remote' | 'Hybrid';
 
 export interface MenuItem {
   icon: React.ReactNode;
@@ -52,6 +53,7 @@ export type JobListing = {
   skills: string[];
   status: "new" | "applied" | "saved";
   match: number;
+  work_mode: WorkMode;
 };
 
 export type Application = {

@@ -1,5 +1,10 @@
 import React from "react";
-import { FaChartLine, FaBriefcase, FaEnvelope, FaExternalLinkAlt } from "react-icons/fa";
+import {
+  FaChartLine,
+  FaBriefcase,
+  FaEnvelope,
+  FaExternalLinkAlt,
+} from "react-icons/fa";
 import { Application, JobListing, StatItem } from "../types/types";
 
 interface DashboardTabProps {
@@ -8,10 +13,16 @@ interface DashboardTabProps {
   applications: Application[];
 }
 
-const DashboardTab: React.FC<DashboardTabProps> = ({ stats, jobListings, applications }) => {
+const DashboardTab: React.FC<DashboardTabProps> = ({
+  stats,
+  jobListings,
+  applications,
+}) => {
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-900 mb-6">Your Job Search Overview</h2>
+      <h2 className="text-xl font-semibold text-gray-900 mb-6">
+        Your Job Search Overview
+      </h2>
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -21,17 +32,17 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ stats, jobListings, applica
       </div>
 
       {/* Recommended Jobs */}
-      <JobListingsSection 
-        title="Recommended Jobs For You" 
-        jobs={jobListings.slice(0, 3)} 
-        className="mb-8" 
+      <JobListingsSection
+        title="Recommended Jobs For You"
+        jobs={jobListings.slice(0, 3)}
+        className="mb-8"
       />
 
       {/* Recent Activity */}
-      <ApplicationsSection 
-        title="Recent Activity" 
-        applications={applications} 
-        jobListings={jobListings} 
+      <ApplicationsSection
+        title="Recent Activity"
+        applications={applications}
+        jobListings={jobListings}
       />
     </div>
   );
@@ -45,10 +56,18 @@ const StatCard: React.FC<{ stat: StatItem }> = ({ stat }) => (
           <FaChartLine className="h-6 w-6 text-white" />
         </div>
         <div className="ml-5 w-0 flex-1">
-          <dt className="text-sm font-medium text-gray-500 truncate">{stat.name}</dt>
+          <dt className="text-sm font-medium text-gray-500 truncate">
+            {stat.name}
+          </dt>
           <dd className="flex items-baseline">
-            <div className="text-2xl font-semibold text-gray-900">{stat.value}</div>
-            <div className={`ml-2 flex items-baseline text-sm font-semibold ${stat.trend === "up" ? "text-green-600" : "text-red-600"}`}>
+            <div className="text-2xl font-semibold text-gray-900">
+              {stat.value}
+            </div>
+            <div
+              className={`ml-2 flex items-baseline text-sm font-semibold ${
+                stat.trend === "up" ? "text-green-600" : "text-red-600"
+              }`}
+            >
               {stat.change}
             </div>
           </dd>
@@ -58,10 +77,10 @@ const StatCard: React.FC<{ stat: StatItem }> = ({ stat }) => (
   </div>
 );
 
-const JobListingsSection: React.FC<{ 
-  title: string; 
-  jobs: JobListing[]; 
-  className?: string 
+const JobListingsSection: React.FC<{
+  title: string;
+  jobs: JobListing[];
+  className?: string;
 }> = ({ title, jobs, className }) => (
   <div className={`bg-white shadow overflow-hidden sm:rounded-lg ${className}`}>
     <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
@@ -83,7 +102,9 @@ const JobListItem: React.FC<{ job: JobListing }> = ({ job }) => (
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
-            <span className="text-gray-600 text-lg font-medium">{job.company.charAt(0)}</span>
+            <span className="text-gray-600 text-lg font-medium">
+              {job.company.charAt(0)}
+            </span>
           </div>
           <div className="ml-4">
             <p className="text-lg font-medium text-blue-600">{job.title}</p>
@@ -93,9 +114,14 @@ const JobListItem: React.FC<{ job: JobListing }> = ({ job }) => (
           </div>
         </div>
         <div className="ml-2 flex-shrink-0 flex flex-col items-end">
-          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 mb-2">
-            {job.match}% Match
-          </span>
+          <div className="flex items-center">
+            <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 mr-2">
+              {job.work_mode || null}
+            </span>
+            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 mb-2">
+              {job.match}% Match
+            </span>
+          </div>
           <span className="text-sm text-gray-500">{job.posted}</span>
         </div>
       </div>
@@ -111,7 +137,10 @@ const JobListItem: React.FC<{ job: JobListing }> = ({ job }) => (
         </div>
         <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
           {job.skills.map((skill, i) => (
-            <span key={i} className="mr-2 px-2 py-1 text-xs font-medium bg-gray-100 rounded-full">
+            <span
+              key={i}
+              className="mr-2 px-2 py-1 text-xs font-medium bg-gray-100 rounded-full"
+            >
               {skill}
             </span>
           ))}
@@ -139,10 +168,10 @@ const JobListItem: React.FC<{ job: JobListing }> = ({ job }) => (
   </li>
 );
 
-const ApplicationsSection: React.FC<{ 
-  title: string; 
-  applications: Application[]; 
-  jobListings: JobListing[] 
+const ApplicationsSection: React.FC<{
+  title: string;
+  applications: Application[];
+  jobListings: JobListing[];
 }> = ({ title, applications, jobListings }) => (
   <div className="bg-white shadow overflow-hidden sm:rounded-lg">
     <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
@@ -153,9 +182,9 @@ const ApplicationsSection: React.FC<{
         {applications.map((app) => {
           const job = jobListings.find((j) => j.id === app.jobId);
           return (
-            <ApplicationListItem 
+            <ApplicationListItem
               key={app.id}
-              application={app} 
+              application={app}
               job={job || createDefaultJob(app.jobId)}
             />
           );
@@ -176,12 +205,13 @@ const createDefaultJob = (jobId: number): JobListing => ({
   posted: "Unknown",
   skills: [],
   status: "new",
-  match: 0
+  match: 0,
+  work_mode: "Remote",
 });
 
-const ApplicationListItem: React.FC<{ 
-  application: Application; 
-  job: JobListing 
+const ApplicationListItem: React.FC<{
+  application: Application;
+  job: JobListing;
 }> = ({ application, job }) => (
   <li>
     <div className="px-4 py-4 sm:px-6">
@@ -227,14 +257,18 @@ const ApplicationListItem: React.FC<{
   </li>
 );
 
-const ProgressBar: React.FC<{ status: "under review" | "interview" }> = ({ status }) => (
+const ProgressBar: React.FC<{ status: "under review" | "interview" }> = ({
+  status,
+}) => (
   <div className="flex items-center text-sm text-gray-500">
     <div className="relative pt-1 w-full">
       <div className="flex mb-2 items-center justify-between">
         <div>
           <span
             className={`text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full ${
-              status === "interview" ? "text-yellow-600 bg-yellow-200" : "text-blue-600 bg-blue-200"
+              status === "interview"
+                ? "text-yellow-600 bg-yellow-200"
+                : "text-blue-600 bg-blue-200"
             }`}
           >
             {status}
