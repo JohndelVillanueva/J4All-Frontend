@@ -1,9 +1,14 @@
-import React from "react";
-import { FaBriefcase } from "react-icons/fa";
+import React, { useState } from "react";
+import { FaBriefcase, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { JobListing } from "../types/types";
 
 interface JobListItemProps {
   job: JobListing;
+}
+
+interface PaginatedJobListProps {
+  jobs: JobListing[];
+  itemsPerPage?: number;
 }
 
 const JobListItem: React.FC<JobListItemProps> = ({ job }) => {
@@ -23,22 +28,6 @@ const JobListItem: React.FC<JobListItemProps> = ({ job }) => {
                   <p className="text-lg font-medium text-blue-600">
                     {job.title}
                   </p>
-                  {job.work_mode && (
-                    <span
-                      className={`
-                ml-2 px-2 py-0.5 text-xs font-medium rounded-full
-                ${
-                  job.work_mode === "Remote"
-                    ? "bg-green-100 text-green-800"
-                    : job.work_mode === "Hybrid"
-                    ? "bg-purple-100 text-purple-800"
-                    : "bg-blue-100 text-blue-800"
-                }
-              `}
-                    >
-                      {job.work_mode}
-                    </span>
-                  )}
                 </div>
                 <p className="text-sm text-gray-500">
                   {job.company} • {job.location} • {job.work_mode}
@@ -94,6 +83,103 @@ const JobListItem: React.FC<JobListItemProps> = ({ job }) => {
         </div>
       </div>
     </li>
+  );
+};
+
+export const PaginatedJobList: React.FC<PaginatedJobListProps> = ({
+  jobs,
+  itemsPerPage = 10,
+}) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.ceil(jobs.length / itemsPerPage);
+
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentJobs = jobs.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  return (
+    <div className="space-y-4">
+      <ul className="divide-y divide-gray-200">
+        {currentJobs.map((job) => (
+          <JobListItem key={job.id} job={job} />
+        ))}
+      </ul>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6">
+          <div className="flex flex-1 justify-between sm:hidden">
+            <button
+              onClick={() => goToPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => goToPage(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Next
+            </button>
+          </div>
+          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-gray-700">
+                Showing <span className="font-medium">{startIndex + 1}</span> to{" "}
+                <span className="font-medium">
+                  {Math.min(endIndex, jobs.length)}
+                </span>{" "}
+                of <span className="font-medium">{jobs.length}</span> results
+              </p>
+            </div>
+            <div>
+              <nav
+                className="isolate inline-flex -space-x-px rounded-md shadow-sm"
+                aria-label="Pagination"
+              >
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                >
+                  <span className="sr-only">Previous</span>
+                  <FaChevronLeft className="h-4 w-4" aria-hidden="true" />
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <button
+                      key={page}
+                      onClick={() => goToPage(page)}
+                      aria-current={currentPage === page ? "page" : undefined}
+                      className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                        currentPage === page
+                          ? "bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                          : "text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  )
+                )}
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                >
+                  <span className="sr-only">Next</span>
+                  <FaChevronRight className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
