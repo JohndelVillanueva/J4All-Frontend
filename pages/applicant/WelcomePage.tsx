@@ -161,7 +161,7 @@ const JobSeekerDashboard = () => {
           throw new Error("No authentication token found");
         }
 
-        const response = await fetch("/api/getJoblisting", {
+        const response = await fetch("/api/getAllJobs", {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
