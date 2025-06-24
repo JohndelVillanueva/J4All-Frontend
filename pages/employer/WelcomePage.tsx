@@ -38,7 +38,7 @@ interface JobPosting {
     skill_name: string;
     is_required: boolean;
     importance_level: number;
-    category: string;
+    category?: string;
   }[];
 }
 
@@ -188,39 +188,132 @@ const EmployerDashboard = () => {
     fetchJobPostings();
   }, [activeTab]);
 
-  const handleCreateJobPosting = async (position: any) => {
-    try {
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-      if (!token) {
-        throw new Error('Authentication required');
-      }
+  type Skill = {
+  skill_name: string;
+  is_required: boolean;
+  importance_level: number;
+  category?: string;
+};
 
-      const response = await fetch('/api/createJob', {
-        method: 'POST',
-        headers: {
+const handleCreateJobPosting = async (data: {
+  job_title: string;
+  job_description: string;
+  job_requirements: string;
+  job_location: string;
+  job_type: string;
+  work_mode: string;
+  salary_range_min?: number;
+  salary_range_max?: number;
+  expiration_date?: string;
+  required_skills: Skill[];
+  idempotencyKey?: string;
+}) => {
+  try {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    // Prepare the payload with proper skill structure
+    const payload = {
+      job_title: data.job_title,
+      job_description: data.job_description,
+      job_requirements: data.job_requirements,
+      job_location: data.job_location,
+      job_type: data.job_type,
+      work_mode: data.work_mode,
+      salary_range_min: data.salary_range_min,
+      salary_range_max: data.salary_range_max,
+      expiration_date: data.expiration_date,
+      required_skills: data.required_skills.map(skill => ({
+        skill_name: skill.skill_name,
+        category: skill.category || 'Technical',
+        is_required: skill.is_required !== false,
+        importance_level: skill.importance_level || 1
+      })),
+      idempotencyKey: data.idempotencyKey
+    };
+
+    console.log('Submitting job with payload:', JSON.stringify(payload, null, 2));
+
+    const response = await fetch('/api/createJob', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Idempotency-Key': data.idempotencyKey || ''
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      console.error('Server error:', responseData);
+      
+      // Handle duplicate job case specifically
+      if (response.status === 409) {
+        console.log('Duplicate job detected, refreshing listings...');
+        
+        try {
+          const jobsResponse = await fetch('/api/getJoblisting', {
+            headers: { 
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (jobsResponse.ok) {
+            const jobsData = await jobsResponse.json();
+            if (jobsData.success) {
+              console.log('Successfully refreshed job listings');
+              setJobPostings(jobsData.data);
+            }
+          } else {
+            console.error('Failed to refresh job listings');
+          }
+        } catch (refreshError) {
+          console.error('Error refreshing job listings:', refreshError);
+        }
+        
+        throw new Error(responseData.message || 'Job already exists');
+      }
+      
+      throw new Error(responseData.message || 'Request failed');
+    }
+
+    console.log('Job created successfully, refreshing listings...');
+
+    // Refresh job listings after successful creation
+    try {
+      const jobsResponse = await fetch('/api/getJoblisting', {
+        headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(position)
+        }
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create job posting');
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        // Refresh the job postings
-        setActiveTab('positions');
-        setIsModalOpen(false);
+      if (jobsResponse.ok) {
+        const jobsData = await jobsResponse.json();
+        if (jobsData.success) {
+          console.log('Successfully updated job listings');
+          setJobPostings(jobsData.data);
+        }
       } else {
-        throw new Error(data.message || 'Failed to create job posting');
+        console.error('Failed to refresh job listings after creation');
       }
-    } catch (err) {
-      console.error('Error creating job posting:', err);
-      setJobError(err instanceof Error ? err.message : 'An unknown error occurred');
+    } catch (refreshError) {
+      console.error('Error refreshing job listings:', refreshError);
     }
-  };
+
+    return responseData;
+
+  } catch (error) {
+    console.error('Error creating job posting:', error);
+    setJobError(error instanceof Error ? error.message : 'An unknown error occurred');
+    throw error;
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-50">
