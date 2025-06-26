@@ -84,6 +84,8 @@ const CreatePositionModal = ({
   const [isLoadingSkills, setIsLoadingSkills] = useState(false);
   const [submissionIdempotencyKey, setSubmissionIdempotencyKey] = useState<string | null>(null);
   const [lastSubmissionData, setLastSubmissionData] = useState<any>(null);
+  const [newSkillName, setNewSkillName] = useState("");
+  const [showSkillInput, setShowSkillInput] = useState(false);
 
   const callHonoApi = async (endpoint: string, method: string, body?: any) => {
     const token =
@@ -154,19 +156,38 @@ const CreatePositionModal = ({
   }, [isOpen]);
 
   const addSkill = (skill?: { id?: number; name: string; category: string | null }) => {
-    setFormData((prev) => ({
-      ...prev,
-      required_skills: [
-        ...prev.required_skills,
-        {
-          id: skill?.id,
-          skill_name: skill?.name || "",
-          category: skill?.category || "Technical",
-          is_required: true,
-          importance_level: 1,
-        },
-      ],
-    }));
+    if (skill) {
+      // Add existing skill from dropdown
+      setFormData((prev) => ({
+        ...prev,
+        required_skills: [
+          ...prev.required_skills,
+          {
+            id: skill.id,
+            skill_name: skill.name,
+            category: skill.category || "Technical",
+            is_required: true,
+            importance_level: 1,
+          },
+        ],
+      }));
+    } else if (newSkillName.trim()) {
+      // Add custom skill
+      setFormData((prev) => ({
+        ...prev,
+        required_skills: [
+          ...prev.required_skills,
+          {
+            skill_name: newSkillName.trim(),
+            category: "Technical",
+            is_required: true,
+            importance_level: 1,
+          },
+        ],
+      }));
+      setNewSkillName("");
+      setShowSkillInput(false);
+    }
   };
 
   const removeSkill = (index: number) => {
@@ -586,14 +607,45 @@ const CreatePositionModal = ({
                     </div>
                   ))}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => addSkill()}
-                  className="mt-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-800"
-                  aria-label="Add skill"
-                >
-                  + Add Custom Skill
-                </button>
+                {showSkillInput ? (
+                  <div className="flex items-center gap-2 mt-2">
+                    <input
+                      type="text"
+                      value={newSkillName}
+                      onChange={(e) => setNewSkillName(e.target.value)}
+                      placeholder="Enter skill name"
+                      className="flex-1 px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={() => addSkill()}
+                      disabled={!newSkillName.trim()}
+                      className="px-2 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    >
+                      Add
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowSkillInput(false);
+                        setNewSkillName("");
+                      }}
+                      className="px-2 py-1 text-gray-500 hover:text-gray-700 text-sm"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowSkillInput(true)}
+                    className="mt-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-800"
+                    aria-label="Add skill"
+                  >
+                    + Add Custom Skill
+                  </button>
+                )}
               </div>
             </div>
           </div>
