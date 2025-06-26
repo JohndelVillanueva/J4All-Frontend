@@ -42,10 +42,18 @@ export type UserData = {
   email: string;
 };
 
+export type EmployerInfo = {
+    name: string;
+  logo?: string | null;
+  description?: string;
+}
+
 export type JobListing = {
-  id: number;
+id: number;
   title: string;
   company: string;
+  logo_path?: string | null;
+  employer?: EmployerInfo;
   location: string;
   salary: string;
   type: string;
@@ -53,9 +61,7 @@ export type JobListing = {
   skills: string[];
   status: "new" | "applied" | "saved";
   match: number;
-  work_mode: WorkMode;
-  logo_path: string;
-  employer
+  work_mode: "Onsite" | "Remote" | "Hybrid";
 };
 
 export type Application = {

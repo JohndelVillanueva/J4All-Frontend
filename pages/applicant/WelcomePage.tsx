@@ -175,6 +175,7 @@ const JobSeekerDashboard = () => {
         }
 
         const data = await response.json();
+        console.log("Raw API data:", data);
         console.log(
           "API data:",
           data.data.map((job) => ({ id: job.id, work_mode: job.work_mode }))
@@ -183,7 +184,8 @@ const JobSeekerDashboard = () => {
         const transformedJobs = data.data.map((job: any) => ({
           id: job.id,
           title: job.job_title,
-          company: job.company_name || "Unknown Company",
+          company: job.company?.name || "Unknown Company", // Now using job.company.name
+          logo_path: job.company.logo_path, // Now using job.company.logo
           location: job.job_location || "Remote",
           salary:
             job.salary_range_min && job.salary_range_max
@@ -191,13 +193,12 @@ const JobSeekerDashboard = () => {
               : "Negotiable",
           type: job.job_type || "Full-time",
           posted: formatPostedDate(job.posted_date),
-          skills: job.required_skills?.map((skill: any) => skill.name) || [],
+          skills: [], // You'll need to adjust this based on your actual skills data
           status: "new",
-          match: calculateMatchPercentage(job.required_skills),
-          // Corrected work_mode handling:
-          work_mode: (["Onsite", "Remote", "Hybrid"].includes(job.work_mode)
+          match: calculateMatchPercentage([]), // Adjust if you have skills data
+          work_mode: ["Onsite", "Remote", "Hybrid"].includes(job.work_mode)
             ? job.work_mode
-            : "Onsite") as WorkMode,
+            : "Onsite",
         }));
         console.log("Transformed job listings:", transformedJobs);
 

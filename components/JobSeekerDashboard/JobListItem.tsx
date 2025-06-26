@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FaBriefcase, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { JobListing } from "../types/types";
+import CompanyLogo from "./CompanyLogo"; // Assuming you have a CompanyLogo component
 
 interface JobListItemProps {
   job: JobListing;
@@ -13,26 +14,25 @@ interface PaginatedJobListProps {
 
 const JobListItem: React.FC<JobListItemProps> = ({ job }) => {
   return (
-    <li>
+    <li className="border-b border-gray-200 last:border-b-0">
       <div className="px-4 py-4 sm:px-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-600 text-lg font-medium">
-                {job.company.charAt(0)}
-              </span>
-            </div>
+        <div className="flex items-start justify-between">
+          <div className="flex items-start">
+            <CompanyLogo 
+              company={job.company} 
+              logoPath={job.logo_path} 
+              className="flex-shrink-0 mt-1"
+            />
             <div className="ml-4">
-              <div className="ml-4">
-                <div className="flex items-center">
-                  <p className="text-lg font-medium text-blue-600">
-                    {job.title}
-                  </p>
-                </div>
-                <p className="text-sm text-gray-500">
-                  {job.company} • {job.location} • {job.work_mode}
+              <h3 className="text-lg font-medium text-blue-600">{job.title}</h3>
+              <p className="text-sm text-gray-600 mt-1">
+                {job.company} • {job.location} • {job.work_mode}
+              </p>
+              {job.logo_path && (
+                <p className="text-xs text-gray-400 mt-1">
+                  Logo URL: {job.logo_path}
                 </p>
-              </div>
+              )}
             </div>
           </div>
           <div className="ml-2 flex-shrink-0 flex flex-col items-end">
