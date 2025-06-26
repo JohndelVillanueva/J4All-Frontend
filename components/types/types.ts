@@ -54,6 +54,8 @@ export type JobListing = {
   status: "new" | "applied" | "saved";
   match: number;
   work_mode: WorkMode;
+  logo_path: string;
+  employer
 };
 
 export type Application = {
@@ -89,7 +91,7 @@ export interface ApplicantHeaderProps {
 //   className?: string;
 // }
 
-export type FormData = {
+export interface  FormData {
   email: string;
   username: string;
   password: string;
@@ -106,5 +108,6 @@ export type FormData = {
   address: string;
   agreeToTerms: boolean;
   userType: "EMPLOYER";
+  logo_path?: FileList ; // optional for employer registration
 };
 

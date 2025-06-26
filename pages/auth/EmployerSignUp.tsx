@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FormData } from "../../components/types/types";
+// import { FormData } from "../../components/types/types";
 import {
   FaUser,
   FaLock,
@@ -26,6 +26,26 @@ export default function EmployerSignupForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  interface FormData {
+    email: string;
+    username: string;
+    password: string;
+    confirmPassword: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    companyName: string;
+    contactPerson: string;
+    industry: string;
+    companySize: string;
+    websiteUrl: string;
+    foundedYear: number | string;
+    address: string;
+    agreeToTerms: boolean;
+    userType: "EMPLOYER";
+    logo_path?: FileList;
+  }
 
   const {
     register,
@@ -50,87 +70,122 @@ export default function EmployerSignupForm() {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
-  const onSubmit = async (data: FormData) => {
-    setIsSubmitting(true);
-    setFormError(null);
+const onSubmit = async (data: FormData) => {
+  setIsSubmitting(true);
+  setFormError(null);
 
-    try {
-      const payload = {
-        user: {
-          email: data.email,
-          username: data.username,
-          password: data.password,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          phone: data.phone,
-          userType: "EMPLOYER",
-        },
-        employer: {
-          companyName: data.companyName,
-          contactPerson: data.contactPerson,
-          industry: data.industry,
-          companySize: data.companySize,
-          websiteUrl: data.websiteUrl,
-          foundedYear: Number(data.foundedYear),
-          address: data.address,
-        },
-        confirmPassword: data.confirmPassword,
-        agreeToTerms: data.agreeToTerms,
-      };
+  try {
+    const formData = new FormData();
 
-      const response = await axios.post("/api/createEmployer", payload);
+    // 1. Create the complete payload object that matches your schema
+    const payload = {
+      user: {
+        username: data.username,
+        email: data.email.toLowerCase(),
+        password: data.password,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone,
+        userType: "EMPLOYER" as const
+      },
+      employer: {
+        companyName: data.companyName,
+        contactPerson: data.contactPerson,
+        industry: data.industry,
+        companySize: data.companySize,
+        websiteUrl: data.websiteUrl,
+        foundedYear: Number(data.foundedYear),
+        address: data.address
+      },
+      confirmPassword: data.confirmPassword,
+      agreeToTerms: data.agreeToTerms
+    };
 
-      if (response.status === 200 || response.status === 201) {
-        setShowSuccess(true);
-        setTimeout(() => {
-          navigate("/");
-        }, 2000);
+    // 2. Append the JSON string of the complete payload
+    formData.append('data', JSON.stringify(payload));
+
+    // 3. Append the logo file separately if exists
+    if (data.logo_path && data.logo_path[0]) {
+      formData.append('logo', data.logo_path[0]);
+    }
+
+    // Debug: Log the complete form data before sending
+    console.log('Final FormData being sent:');
+    for (const [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
+
+    const response = await axios.post("/api/createEmployer", formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Accept': 'application/json'
       }
-    } catch (error: any) {
-      console.error("Error:", error);
-      const responseData = error?.response?.data;
+    });
 
-      // 🔍 Handle known duplicate errors from backend
-      if (responseData?.message === "Username already taken") {
-        setError("username", {
-          type: "server",
-          message: "Username is already in use",
-        });
-        return;
-      }
+    if (response.status === 200 || response.status === 201) {
+      setShowSuccess(true);
+      setTimeout(() => {
+        navigate("/");
+      }, 2000);
+    }
+  } catch (error: any) {
+    console.error("Full error:", error);
+    const responseData = error?.response?.data;
 
-      if (responseData?.message === "Email already exists") {
-        setError("email", {
-          type: "server",
-          message: "Email is already registered",
-        });
-        return;
-      }
+    // Handle specific error cases
+    if (responseData?.errors) {
+      // Handle field errors
+      if (responseData.errors.fieldErrors) {
+        const { user, employer, ...rootErrors } = responseData.errors.fieldErrors;
 
-      // Fallback: Zod or schema-based field validation
-      const fieldErrors = responseData?.errors?.fieldErrors || {};
-      for (const field in fieldErrors) {
-        const messages = fieldErrors[field];
-        if (Array.isArray(messages) && messages.length > 0) {
-          setError(field as keyof FormData, {
-            type: "server",
-            message: messages[0],
-          });
+        // Handle user field errors
+        if (user) {
+          for (const [field, messages] of Object.entries(user)) {
+            if (Array.isArray(messages) && messages.length > 0) {
+              setError(`user.${field}` as any, {
+                type: "server",
+                message: messages[0]
+              });
+            }
+          }
+        }
+
+        // Handle employer field errors
+        if (employer) {
+          for (const [field, messages] of Object.entries(employer)) {
+            if (Array.isArray(messages) && messages.length > 0) {
+              setError(`employer.${field}` as any, {
+                type: "server",
+                message: messages[0]
+              });
+            }
+          }
+        }
+
+        // Handle root level errors (confirmPassword, agreeToTerms)
+        for (const [field, messages] of Object.entries(rootErrors)) {
+          if (Array.isArray(messages) && messages.length > 0) {
+            setError(field as keyof FormData, {
+              type: "server",
+              message: messages[0]
+            });
+          }
         }
       }
 
-      const formErrors = responseData?.errors?.formErrors || [];
-      if (formErrors.length > 0) {
-        setFormError(formErrors.join("\n"));
-      } else {
-        setFormError(
-          "An error occurred during registration. Please try again."
-        );
+      // Handle form errors
+      if (responseData.errors.formErrors?.length) {
+        setFormError(responseData.errors.formErrors[0]);
       }
-    } finally {
-      setIsSubmitting(false);
+    } else if (responseData?.message) {
+      setFormError(responseData.message);
+    } else {
+      setFormError("An unexpected error occurred. Please try again.");
     }
-  };
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 overflow-hidden relative">
@@ -223,13 +278,16 @@ export default function EmployerSignupForm() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className="w-full md:w-3/5 lg:w-2/3 max-w-4xl" // Increased width
+          className="w-full md:w-3/5 lg:w-2/3 max-w-4xl"
         >
           <div className="bg-white rounded-2xl shadow-xl p-8 relative overflow-hidden">
             {/* Decorative element */}
             <div className="absolute -top-20 -right-20 w-40 h-40 bg-indigo-100 rounded-full filter blur-3xl opacity-20" />
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              encType="multipart/form-data"
+            >
               <div className="text-center">
                 <h2 className="text-2xl font-bold text-gray-800 mb-1">
                   Create Employer Account
@@ -261,7 +319,7 @@ export default function EmployerSignupForm() {
                 </motion.div>
               )}
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8"> {/* Increased gap */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Left Column - Account Information */}
                 <div className="space-y-4">
                   <h3 className="text-sm font-medium text-gray-500 border-b pb-2">
@@ -283,7 +341,9 @@ export default function EmployerSignupForm() {
                           errors.email ? "border-red-300" : "border-gray-200"
                         } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`}
                         placeholder="your@email.com"
-                        {...register("email", { required: "Email is required" })}
+                        {...register("email", {
+                          required: "Email is required",
+                        })}
                       />
                     </div>
                     {errors.email && (
@@ -426,11 +486,22 @@ export default function EmployerSignupForm() {
                       </div>
                       <input
                         type="text"
-                        className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
+                        className={`block w-full pl-10 pr-3 py-2.5 border ${
+                          errors.companyName
+                            ? "border-red-300"
+                            : "border-gray-200"
+                        } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`}
                         placeholder="Acme Inc."
-                        {...register("companyName")}
+                        {...register("companyName", {
+                          required: "Company name is required",
+                        })}
                       />
                     </div>
+                    {errors.companyName && (
+                      <p className="text-xs text-red-500">
+                        {errors.companyName.message}
+                      </p>
+                    )}
                   </div>
 
                   {/* Contact Person */}
@@ -444,11 +515,22 @@ export default function EmployerSignupForm() {
                       </div>
                       <input
                         type="text"
-                        className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
+                        className={`block w-full pl-10 pr-3 py-2.5 border ${
+                          errors.contactPerson
+                            ? "border-red-300"
+                            : "border-gray-200"
+                        } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`}
                         placeholder="Jane Smith"
-                        {...register("contactPerson")}
+                        {...register("contactPerson", {
+                          required: "Contact person is required",
+                        })}
                       />
                     </div>
+                    {errors.contactPerson && (
+                      <p className="text-xs text-red-500">
+                        {errors.contactPerson.message}
+                      </p>
+                    )}
                   </div>
 
                   {/* Industry */}
@@ -462,11 +544,20 @@ export default function EmployerSignupForm() {
                       </div>
                       <input
                         type="text"
-                        className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
+                        className={`block w-full pl-10 pr-3 py-2.5 border ${
+                          errors.industry ? "border-red-300" : "border-gray-200"
+                        } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`}
                         placeholder="Technology"
-                        {...register("industry")}
+                        {...register("industry", {
+                          required: "Industry is required",
+                        })}
                       />
                     </div>
+                    {errors.industry && (
+                      <p className="text-xs text-red-500">
+                        {errors.industry.message}
+                      </p>
+                    )}
                   </div>
 
                   {/* Company Size */}
@@ -479,7 +570,11 @@ export default function EmployerSignupForm() {
                         <FaUser className="w-4 h-4" />
                       </div>
                       <select
-                        className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors appearance-none"
+                        className={`block w-full pl-10 pr-3 py-2.5 border ${
+                          errors.companySize
+                            ? "border-red-300"
+                            : "border-gray-200"
+                        } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors appearance-none`}
                         {...register("companySize", {
                           required: "Company size is required",
                         })}
@@ -519,11 +614,22 @@ export default function EmployerSignupForm() {
                       </div>
                       <input
                         type="text"
-                        className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
+                        className={`block w-full pl-10 pr-3 py-2.5 border ${
+                          errors.firstName
+                            ? "border-red-300"
+                            : "border-gray-200"
+                        } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`}
                         placeholder="John"
-                        {...register("firstName")}
+                        {...register("firstName", {
+                          required: "First name is required",
+                        })}
                       />
                     </div>
+                    {errors.firstName && (
+                      <p className="text-xs text-red-500">
+                        {errors.firstName.message}
+                      </p>
+                    )}
                   </div>
 
                   {/* Last Name */}
@@ -537,11 +643,20 @@ export default function EmployerSignupForm() {
                       </div>
                       <input
                         type="text"
-                        className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
+                        className={`block w-full pl-10 pr-3 py-2.5 border ${
+                          errors.lastName ? "border-red-300" : "border-gray-200"
+                        } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`}
                         placeholder="Doe"
-                        {...register("lastName")}
+                        {...register("lastName", {
+                          required: "Last name is required",
+                        })}
                       />
                     </div>
+                    {errors.lastName && (
+                      <p className="text-xs text-red-500">
+                        {errors.lastName.message}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -556,80 +671,141 @@ export default function EmployerSignupForm() {
                     </div>
                     <input
                       type="text"
-                      className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
+                      className={`block w-full pl-10 pr-3 py-2.5 border ${
+                        errors.phone ? "border-red-300" : "border-gray-200"
+                      } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`}
                       placeholder="+1 (555) 123-4567"
-                      {...register("phone")}
+                      {...register("phone", {
+                        required: "Phone number is required",
+                        pattern: {
+                          value: /^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/,
+                          message: "Please enter a valid phone number",
+                        },
+                      })}
                     />
                   </div>
+                  {errors.phone && (
+                    <p className="text-xs text-red-500">
+                      {errors.phone.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
               {/* Company Information (continued) */}
-                {/* Left Column (empty to maintain grid structure) */}
-                <div></div>
-                
-                {/* Right Column - Company Info continued */}
-                  {/* Website URL */}
-                  <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Website URL
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                        <FaGlobe className="w-4 h-4" />
-                      </div>
-                      <input
-                        type="text"
-                        className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
-                        placeholder="https://yourcompany.com"
-                        {...register("websiteUrl")}
-                      />
+              <div className="space-y-4">
+                {/* Website URL */}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Website URL
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                      <FaGlobe className="w-4 h-4" />
                     </div>
+                    <input
+                      type="text"
+                      className={`block w-full pl-10 pr-3 py-2.5 border ${
+                        errors.websiteUrl ? "border-red-300" : "border-gray-200"
+                      } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`}
+                      placeholder="https://yourcompany.com"
+                      {...register("websiteUrl", {
+                        required: "Website URL is required",
+                        pattern: {
+                          value:
+                            /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/,
+                          message: "Please enter a valid URL",
+                        },
+                      })}
+                    />
                   </div>
+                  {errors.websiteUrl && (
+                    <p className="text-xs text-red-500">
+                      {errors.websiteUrl.message}
+                    </p>
+                  )}
+                </div>
 
-                  {/* Founded Year */}
-                  <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Founded Year
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                        <FaCalendarAlt className="w-4 h-4" />
-                      </div>
-                      <input
-                        type="number"
-                        className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
-                        placeholder="2020"
-                        {...register("foundedYear")}
-                      />
+                {/* Founded Year */}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Founded Year
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                      <FaCalendarAlt className="w-4 h-4" />
                     </div>
-                    {errors.foundedYear && (
-                      <p className="text-xs text-red-500">
-                        {errors.foundedYear.message}
-                      </p>
-                    )}
+                    <input
+                      type="number"
+                      className={`block w-full pl-10 pr-3 py-2.5 border ${
+                        errors.foundedYear
+                          ? "border-red-300"
+                          : "border-gray-200"
+                      } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`}
+                      placeholder="2020"
+                      {...register("foundedYear", {
+                        required: "Founded year is required",
+                        min: {
+                          value: 1900,
+                          message: "Year must be after 1900",
+                        },
+                        max: {
+                          value: new Date().getFullYear(),
+                          message: `Year cannot be in the future`,
+                        },
+                      })}
+                    />
                   </div>
+                  {errors.foundedYear && (
+                    <p className="text-xs text-red-500">
+                      {errors.foundedYear.message}
+                    </p>
+                  )}
+                </div>
 
-                  {/* Address */}
-                  <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Address
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-                        <FaMapMarkerAlt className="w-4 h-4" />
-                      </div>
-                      <input
-                        type="text"
-                        className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
-                        placeholder="123 Main St, City, Country"
-                        {...register("address")}
-                      />
+                {/* Address */}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Address
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                      <FaMapMarkerAlt className="w-4 h-4" />
                     </div>
+                    <input
+                      type="text"
+                      className={`block w-full pl-10 pr-3 py-2.5 border ${
+                        errors.address ? "border-red-300" : "border-gray-200"
+                      } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`}
+                      placeholder="123 Main St, City, Country"
+                      {...register("address", {
+                        required: "Address is required",
+                      })}
+                    />
                   </div>
+                  {errors.address && (
+                    <p className="text-xs text-red-500">
+                      {errors.address.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Company Logo */}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Company Logo
+                  </label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:border file:rounded-lg file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
+                    {...register("logo_path")}
+                  />
+                </div>
+              </div>
 
               {/* Terms and Conditions */}
-              <div className="space-y-2">
+              <div className="space-y-2 mt-4">
                 <label className="flex items-start space-x-3">
                   <div className="flex items-center h-5">
                     <input
@@ -663,7 +839,7 @@ export default function EmployerSignupForm() {
               <motion.button
                 type="submit"
                 disabled={isSubmitting}
-                className={`w-full flex justify-center items-center py-3.5 px-4 rounded-xl text-sm font-medium text-white ${
+                className={`w-full flex justify-center items-center py-3.5 px-4 rounded-xl text-sm font-medium text-white mt-4 ${
                   isSubmitting
                     ? "bg-indigo-400 cursor-not-allowed"
                     : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 shadow-md"
