@@ -207,6 +207,8 @@ const createDefaultJob = (jobId: number): JobListing => ({
   status: "new",
   match: 0,
   work_mode: "Remote",
+  logo_path: "",
+  employer: "Unknown Employer",
 });
 
 const ApplicationListItem: React.FC<{
