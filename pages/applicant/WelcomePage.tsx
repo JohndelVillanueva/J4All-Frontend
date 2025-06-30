@@ -182,24 +182,32 @@ const JobSeekerDashboard = () => {
         );
         // Transform the backend data to match the frontend JobListing type
         const transformedJobs = data.data.map((job: any) => ({
-          id: job.id,
-          title: job.job_title,
-          company: job.company?.name || "Unknown Company", // Now using job.company.name
-          logo_path: job.company.logo_path, // Now using job.company.logo
-          location: job.job_location || "Remote",
-          salary:
-            job.salary_range_min && job.salary_range_max
-              ? `${job.salary_range_min} - ${job.salary_range_max}`
-              : "Negotiable",
-          type: job.job_type || "Full-time",
-          posted: formatPostedDate(job.posted_date),
-          skills: [], // You'll need to adjust this based on your actual skills data
-          status: "new",
-          match: calculateMatchPercentage([]), // Adjust if you have skills data
-          work_mode: ["Onsite", "Remote", "Hybrid"].includes(job.work_mode)
-            ? job.work_mode
-            : "Onsite",
-        }));
+  id: job.id,
+  title: job.job_title,
+  company: job.company?.name || "Unknown Company",
+  logo_path: job.company.logo_path,
+  location: job.job_location || "Remote",
+  job_description: job.job_description || "No description available.",
+  job_requirements: job.job_requirements || "No requirements specified.",
+  salary:
+    job.salary_range_min && job.salary_range_max
+      ? `${job.salary_range_min} - ${job.salary_range_max}`
+      : "Negotiable",
+  type: job.job_type || "Full-time",
+  posted: formatPostedDate(job.posted_date),
+  skills: job.required_skills?.map((skill: any) => ({
+    id: skill.skill.id,
+    name: skill.skill.name,
+    category: skill.skill.category,
+    is_required: skill.is_required,
+    importance_level: skill.importance_level
+  })) || [],
+  status: "new",
+  match: calculateMatchPercentage([]),
+  work_mode: ["Onsite", "Remote", "Hybrid"].includes(job.work_mode)
+    ? job.work_mode
+    : "Onsite",
+}));
         console.log("Transformed job listings:", transformedJobs);
 
         setJobListings(transformedJobs);

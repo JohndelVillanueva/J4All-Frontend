@@ -141,7 +141,7 @@ const JobListItem: React.FC<{ job: JobListing }> = ({ job }) => (
               key={i}
               className="mr-2 px-2 py-1 text-xs font-medium bg-gray-100 rounded-full"
             >
-              {skill}
+              {skill.name}
             </span>
           ))}
         </div>
@@ -207,6 +207,8 @@ const createDefaultJob = (jobId: number): JobListing => ({
   status: "new",
   match: 0,
   work_mode: "Remote",
+  job_description: "No description available.",
+  job_requirements: "No requirements available.",
 });
 const ApplicationListItem: React.FC<{
   application: Application;

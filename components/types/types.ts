@@ -49,7 +49,7 @@ export type EmployerInfo = {
 }
 
 export type JobListing = {
-id: number;
+  id: number;
   title: string;
   company: string;
   logo_path?: string | null;
@@ -58,10 +58,24 @@ id: number;
   salary: string;
   type: string;
   posted: string;
-  skills: string[];
+   skills: {
+    id: number;
+    name: string;
+    category?: string;
+    is_required: boolean;
+    importance_level: number;
+  }[]; // Updated to match Prisma structure
   status: "new" | "applied" | "saved";
   match: number;
-  work_mode: "Onsite" | "Remote" | "Hybrid";
+  work_mode: WorkMode;
+  job_description: string;
+  job_requirements: string;
+};
+
+export type Skills = {
+  id: number;
+  skill_name: string;
+  skill_category: string;
 };
 
 export type Application = {

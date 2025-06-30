@@ -16,7 +16,7 @@ const JobsTab: React.FC<JobsTabProps> = ({ searchTerm, onSearchChange, jobListin
     
     const safeTitle = job.title?.toLowerCase() || "";
     const safeCompany = job.company?.toLowerCase() || "";
-    const safeSkills = job.skills?.map(skill => skill?.toLowerCase()) || [];
+    const safeSkills = job.skills?.map(skillObj => skillObj?.name?.toLowerCase() || "") || [];
     
     return (
       safeTitle.includes(searchTerm.toLowerCase()) ||

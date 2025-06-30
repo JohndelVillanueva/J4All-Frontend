@@ -61,7 +61,7 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = ({ jobListings }) => {
                           key={i}
                           className="mr-2 px-2 py-1 text-xs font-medium bg-gray-100 rounded-full"
                         >
-                          {skill}
+                          {typeof skill === "string" ? skill : skill.name}
                         </span>
                       ))}
                     </div>
