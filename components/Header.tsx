@@ -157,9 +157,15 @@ const Header = () => {
       case "general":
         return "/AdminDashboard";
       default:
-        return "/DefaultDashboard";
+        return "/";
     }
   };
+
+  const handleLogoClick = useCallback(() => {
+    const path = getDashboardPath(user?.user_type || "general");
+    console.log("Navigating to:", path);
+    navigate(path);
+  }, [navigate, user?.user_type]);
 
   const handleLogout = useCallback(() => {
     logout();
@@ -278,8 +284,7 @@ const Header = () => {
         label: "Dashboard",
         path: getDashboardPath(user?.user_type || "general"),
       },
-      { icon: <FaCog />, label: "Settings", path: "/settings" },
-      { icon: <FaUserShield />, label: "Admin Portal", path: "/admin" },
+      // { icon: <FaUserShield />, label: "Admin Portal", path: "/admin" },
     ],
     [user?.user_type]
   );
@@ -288,6 +293,7 @@ const Header = () => {
     () => [
       { icon: <FaUserCircle />, label: "Profile", path: "/profile" },
       { icon: <FaUserEdit />, label: "Edit Account", path: "/profile/edit" },
+      { icon: <FaCog />, label: "Settings", path: "/settings" },
       {
         icon: <FaSignOutAlt />,
         label: "Logout",
@@ -301,17 +307,6 @@ const Header = () => {
 
   const navIcons = useMemo(
     () => [
-      // {
-      //   icon: <FaInfoCircle />,
-      //   path: "#",
-      //   label: "About",
-      //   onClick: toggleInfoSidebar,
-      // },
-      //       {
-      //   icon: <FaHome />,
-      //   path: getDashboardPath(user?.user_type || "general"),
-      //   label: "Home",
-      // },
       {
         icon: (
           <div className="relative">
@@ -327,7 +322,6 @@ const Header = () => {
         label: "Messages",
         onClick: toggleMessageSidebar,
       },
-
       {
         icon: (
           <div className="relative">
@@ -404,45 +398,21 @@ const Header = () => {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 bg-gray-800 text-white p-4 flex justify-between items-center z-50 shadow-md">
-        {/* Logo + Header Dropdown */}
-        <div className="relative" ref={dropdownRef}>
-          <button
-            type="button"
-            className="flex items-center focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
-            onClick={toggleDropdown}
-            aria-expanded={isDropdownOpen}
-            aria-haspopup="true"
-            aria-label="Main menu"
-          >
-            <img
-              src="/Images/logo1.jpg"
-              alt="Company Logo"
-              className="h-8 w-8 mr-3 rounded-full object-cover"
-              onError={handleImageError}
-            />
-            <h1 className="text-2xl font-bold mr-2">{HeaderStyle}</h1>
-            <FaChevronDown
-              className={`transition-transform duration-200 ${
-                isDropdownOpen ? "rotate-180" : ""
-              }`}
-              aria-hidden="true"
-            />
-          </button>
-
-          {isDropdownOpen && (
-            <div
-              className="absolute left-0 top-full mt-2 bg-gray-700 rounded-md shadow-lg z-50 w-48"
-              role="menu"
-            >
-              <ul>
-                {mainMenuItems.map((item, index) => (
-                  <li key={index} role="none">
-                    {renderDropdownItem(item)}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+        {/* Logo + Header - now with click handler */}
+        <div 
+          className="flex items-center cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={handleLogoClick}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && handleLogoClick()}
+        >
+          <img
+            src="/Images/logo1.jpg"
+            alt="Company Logo"
+            className="h-8 w-8 mr-3 rounded-full object-cover"
+            onError={handleImageError}
+          />
+          <h1 className="text-2xl font-bold mr-2">{HeaderStyle}</h1>
         </div>
 
         {/* Navigation Icons + Profile Dropdown */}
