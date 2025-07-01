@@ -1,4 +1,4 @@
-import WelcomePage from "../../pages/employer/WelcomePage";
+import WelcomePage from "../../pages/employer/EmployerDashboardPage";
 const EmployerDashboard = () => {
     return ( 
         <WelcomePage />

@@ -20,6 +20,7 @@ import {
   StatItem,
 } from "../../components/types/types";
 import CreatePositionModal from "../../components/EmployerDashboard/CreatePositionModal";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface JobPosting {
   id: number;
@@ -42,15 +43,38 @@ interface JobPosting {
   }[];
 }
 
-const EmployerDashboard = () => {
+const EmployerDashboardPage = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [currentUser, setCurrentUser] = useState<UserData | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
   const [isLoadingJobs, setIsLoadingJobs] = useState(false);
   const [jobError, setJobError] = useState<string | null>(null);
+
+  // Guard: Show loading spinner while auth is loading
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  // Guard: If not authenticated, redirect to login
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/login");
+    } else if (user) {
+      if (user.user_type === "pwd" || user.user_type === "indigenous" || user.user_type === "general") {
+        navigate("/ApplicantDashboard");
+      } else if (user.user_type === "admin") {
+        navigate("/AdminDashboard");
+      }
+    }
+    // eslint-disable-next-line
+  }, [user, loading, navigate]);
+
+  // If not authenticated, don't render dashboard
+  if (!user) return null;
 
   // Mock data for other sections
   const applicants = [
@@ -111,16 +135,12 @@ const EmployerDashboard = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       const token = localStorage.getItem("token");
-      // console.log("Current token:", token);
       try {
-        const userId = localStorage.getItem("userId");
-        const token = localStorage.getItem("token");
-
-        if (!userId || !token) {
+        if (!user.id || !token) {
           throw new Error("Please login to access this page");
         }
 
-        const response = await fetch(`/api/users/${userId}`, {
+        const response = await fetch(`/api/users/${user.id}`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -139,13 +159,14 @@ const EmployerDashboard = () => {
       } catch (err) {
         console.error("Fetch error:", err);
         localStorage.removeItem("token");
-        localStorage.removeItem("userId");
         navigate("/");
       }
     };
 
-    fetchUserData();
-  }, []);
+    if (user) {
+      fetchUserData();
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     const fetchJobPostings = async () => {
@@ -314,6 +335,7 @@ const handleCreateJobPosting = async (data: {
     throw error;
   }
 };
+console.log('EmployerDashboard mounted');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -762,4 +784,4 @@ const handleCreateJobPosting = async (data: {
   );
 };
 
-export default EmployerDashboard;
+export default EmployerDashboardPage;

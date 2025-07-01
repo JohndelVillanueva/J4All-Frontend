@@ -121,21 +121,20 @@ const LoginPage: React.FC = () => {
           localStorage.removeItem("rememberedPassword");
         }
   
-        // Add slight delay for better UX
-        await new Promise(resolve => setTimeout(resolve, 500));
-  
-        // Enhanced redirect logic
-        const userType = String(response.data.user.user_type).toLowerCase();
-        const redirectPaths: Record<string, string> = {
-          pwd: "/ApplicantDashboard",
-          indigenous: "/ApplicantDashboard",
-          employer: "/EmployerDashboard",
-          admin: "/AdminDashboard",
-          general: "/AdminDashboard"
-        };
-        
-        const redirectPath = userType in redirectPaths ? redirectPaths[userType] : "/";
-        navigate(redirectPath);
+        // Wait for context to update before navigating
+        setTimeout(() => {
+          // Enhanced redirect logic
+          const userType = String(response.data.user.user_type).toLowerCase();
+          const redirectPaths: Record<string, string> = {
+            pwd: "/ApplicantDashboard",
+            indigenous: "/ApplicantDashboard",
+            employer: "/EmployerDashboard",
+            admin: "/AdminDashboard",
+            general: "/AdminDashboard"
+          };
+          const redirectPath = userType in redirectPaths ? redirectPaths[userType] : "/";
+          navigate(redirectPath);
+        }, 100); // 100ms delay to ensure context updates
       } else {
         setLoginError(response.data.error || "Login failed. Please try again.");
       }

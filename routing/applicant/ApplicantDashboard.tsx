@@ -1,5 +1,4 @@
-import React from 'react';
-import WelcomePage from "../../pages/applicant/WelcomePage";
+import WelcomePage from "../../pages/applicant/ApplicantDashboardPage";
 const ApplicantDashboard = () => {
     return ( 
         <WelcomePage />

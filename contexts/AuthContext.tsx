@@ -14,12 +14,14 @@ type AuthContextType = {
   login: (userData: User) => void;
   logout: () => void;
   isAuthenticated: boolean;
+  loading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Check if user data exists in localStorage
@@ -27,6 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
+    setLoading(false);
   }, []);
 
   const login = (userData: User) => {
@@ -44,7 +47,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     logout,
     isAuthenticated: !!user,
+    loading,
   };
+
+  if (loading) return <div>Loading...</div>;
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

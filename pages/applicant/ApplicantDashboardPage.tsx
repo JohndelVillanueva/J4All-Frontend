@@ -19,6 +19,7 @@ import {
   Application,
   StatItem,
 } from "../../components/types/types";
+import { useAuth } from "../../contexts/AuthContext";
 
 // Define WorkMode type for job work modes
 type WorkMode = "Onsite" | "Remote" | "Hybrid";
@@ -73,6 +74,8 @@ class ErrorBoundary extends React.Component<
 }
 
 const JobSeekerDashboard = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentUser, setCurrentUser] = useState<UserData | null>(null);
@@ -81,7 +84,28 @@ const JobSeekerDashboard = () => {
   const [jobError, setJobError] = useState<string | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [userError, setUserError] = useState<string | null>(null);
-  const navigate = useNavigate();
+
+  console.log('JobSeekerDashboard user:', user);
+
+  if (loading) return <div>Loading...</div>;
+
+  // Only allow job seekers
+  if (user && user.user_type === "employer") {
+    navigate("/EmployerDashboard");
+    return null;
+  }
+  if (user && user.user_type === "admin") {
+    navigate("/AdminDashboard");
+    return null;
+  }
+
+  // Only fetch data for job seekers
+  useEffect(() => {
+    if (user && (user.user_type === "pwd" || user.user_type === "indigenous" || user.user_type === "general")) {
+      fetchUserData();
+      fetchJobListings();
+    }
+  }, [user]);
 
   // Mock data for applications and stats (keep exactly as is)
   const applications: Application[] = [
@@ -146,6 +170,7 @@ const JobSeekerDashboard = () => {
       setIsLoadingUser(false);
     }
   };
+  console.log('ApplicantDashboard mounted');
 
   // Enhanced job fetch with loading states and error handling
   const fetchJobListings = async () => {
@@ -222,11 +247,6 @@ const JobSeekerDashboard = () => {
     // In a real app, you'd compare with user's skills
     return Math.floor(Math.random() * 30) + 70; // Random between 70-100%
   };
-
-  useEffect(() => {
-    fetchUserData();
-    fetchJobListings();
-  }, []);
 
   return (
     <ErrorBoundary
