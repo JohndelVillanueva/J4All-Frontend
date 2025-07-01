@@ -148,7 +148,7 @@ const ApplicationsTab: React.FC<ApplicationsTabProps> = ({ applications, jobList
           ) : (
             <ul className="divide-y divide-gray-200">
               {validApplications.map((app) => {
-                const job = jobListings.find((j) => j.id === app.jobId);
+                const job = jobListings.find((j) => String(j.id) === String(app.jobId));
                 return (
                   <ErrorBoundary 
                     key={app.id}

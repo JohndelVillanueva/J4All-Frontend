@@ -91,64 +91,73 @@ const LoginPage: React.FC = () => {
 
   // Form submission
   const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
-  setIsSubmitting(true);
-  setLoginError(null);
-
-      try {
-    const response = await axios.post("/api/login", {
-      email: data.email,
-      password: data.password,
-    });
-
-    if (response.status === 200 && response.data.message === "Login successful") {
-      // Save credentials if "Remember Me" is checked
-      if (data.rememberMe) {
-        localStorage.setItem("rememberedEmail", data.email);
-        localStorage.setItem("rememberedPassword", data.password);
-      } else {
-        localStorage.removeItem("rememberedEmail");
-        localStorage.removeItem("rememberedPassword");
-      }
-
-      // Store all authentication data
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("userId", response.data.user.id); // ✅ Critical addition
-
-      // Store user data in auth context
-      login({
-        id: response.data.user.id,
-        username: response.data.user.username,
-        email: response.data.user.email,
-        user_type: response.data.user.user_type,
-        first_name: response.data.user.first_name, // Make sure these are included
-        last_name: response.data.user.last_name    // in your backend response
+    setIsSubmitting(true);
+    setLoginError(null);
+  
+    try {
+      const response = await axios.post("/api/login", {
+        email: data.email,
+        password: data.password,
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
-
-      // Add a small delay to show loading state (optional)
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Redirect based on user type
-      const userType = response.data.user.user_type.toLowerCase();
-      
-      if (userType === "pwd" || userType === "indigenous") {
-        navigate("/ApplicantDashboard");
-      } else if (userType === "employer") {
-        navigate("/EmployerDashboard");
-      } else if (userType === "general") {
-        navigate("/AdminDashboard");
+  
+      if (response.data.success) {
+        // Store authentication data
+        localStorage.setItem("token", response.data.token);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+        
+        // Store user data in context
+        login(response.data.user);
+  
+        // Store credentials if "Remember Me" is checked
+        if (data.rememberMe) {
+          localStorage.setItem("rememberedEmail", data.email);
+          localStorage.setItem("rememberedPassword", data.password);
+        } else {
+          localStorage.removeItem("rememberedEmail");
+          localStorage.removeItem("rememberedPassword");
+        }
+  
+        // Add slight delay for better UX
+        await new Promise(resolve => setTimeout(resolve, 500));
+  
+        // Enhanced redirect logic
+        const userType = String(response.data.user.user_type).toLowerCase();
+        const redirectPaths: Record<string, string> = {
+          pwd: "/ApplicantDashboard",
+          indigenous: "/ApplicantDashboard",
+          employer: "/EmployerDashboard",
+          admin: "/AdminDashboard",
+          general: "/AdminDashboard"
+        };
+        
+        const redirectPath = userType in redirectPaths ? redirectPaths[userType] : "/";
+        navigate(redirectPath);
       } else {
-        // Default redirect if user type not recognized
-        navigate("/");
+        setLoginError(response.data.error || "Login failed. Please try again.");
       }
-    } else {
-      setLoginError(response.data.message || "Login failed. Please try again.");
+    } catch (error: any) {
+      console.error("Login error:", error);
+      
+      // Enhanced error handling
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message || 
+                          "An unexpected error occurred. Please try again.";
+      
+      setLoginError(errorMessage);
+      
+      // Specific handling for 401 errors
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-  } catch (error: any) {
-    setLoginError(error.response?.data?.message || "Incorrect Email or Password. Please try again.");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   // Background animation
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });

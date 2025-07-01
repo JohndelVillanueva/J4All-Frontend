@@ -43,15 +43,23 @@ export type UserData = {
 };
 
 export type EmployerInfo = {
+  id: string;
     name: string;
   logo?: string | null;
   description?: string;
 }
 
+export type Company = {
+  id: string;
+  name: string;
+  logo?: string | null;
+  description?: string;
+}
+
 export type JobListing = {
-  id: number;
+  id: string;
   title: string;
-  company: string;
+  company: string | Company;
   logo_path?: string | null;
   employer?: EmployerInfo;
   location: string;
@@ -70,6 +78,7 @@ export type JobListing = {
   work_mode: WorkMode;
   job_description: string;
   job_requirements: string;
+  employer_id: string;
 };
 
 export type Skills = {

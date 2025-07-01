@@ -79,6 +79,8 @@ const JobSeekerDashboard = () => {
   const [jobListings, setJobListings] = useState<JobListing[]>([]);
   const [isLoadingJobs, setIsLoadingJobs] = useState(true);
   const [jobError, setJobError] = useState<string | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [userError, setUserError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Mock data for applications and stats (keep exactly as is)
@@ -116,135 +118,115 @@ const JobSeekerDashboard = () => {
     { name: "Saved Jobs", value: 5, change: "+1", trend: "up" },
   ];
 
-  useEffect(() => {
-    const fetchUserData = async () => {
+  // Enhanced fetch functions with better error handling
+  const fetchUserData = async () => {
+    setIsLoadingUser(true);
+    setUserError(null);
+    try {
+      const storedUser = localStorage.getItem("user");
+      const userId = storedUser ? JSON.parse(storedUser).id : null;
+      if (!userId) throw new Error("Authentication required");
       const token = localStorage.getItem("token");
-      console.log("Current token:", token);
-      try {
-        const userId = localStorage.getItem("userId");
-        const token = localStorage.getItem("token");
-
-        if (!userId || !token) {
-          throw new Error("Please login to access this page");
+      if (!token) throw new Error("Authentication required");
+      const response = await fetch(`/api/users/${userId}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
         }
-
-        const response = await fetch(`/api/users/${userId}`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to fetch user data");
-        }
-
-        const userData = await response.json();
-        setCurrentUser(userData);
-      } catch (err) {
-        console.error("Fetch error:", err);
-        localStorage.removeItem("token");
-        localStorage.removeItem("userId");
-        navigate("/");
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch user data");
       }
-    };
+      const data = await response.json();
+      setCurrentUser(data);
+    } catch (err) {
+      setUserError(err instanceof Error ? err.message : "Failed to fetch user data");
+      console.error("User data fetch error:", err);
+    } finally {
+      setIsLoadingUser(false);
+    }
+  };
 
-    const fetchJobListings = async () => {
-      setIsLoadingJobs(true);
-      setJobError(null);
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          throw new Error("No authentication token found");
+  // Enhanced job fetch with loading states and error handling
+  const fetchJobListings = async () => {
+    setIsLoadingJobs(true);
+    setJobError(null);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Authentication required");
+      const response = await fetch("/api/getAllJobs", {
+        headers: {
+          "Authorization": `Bearer ${token}`
         }
-
-        const response = await fetch("/api/getAllJobs", {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Failed to fetch job listings");
-        }
-
-        const data = await response.json();
-        console.log("Raw API data:", data);
-        console.log(
-          "API data:",
-          data.data.map((job) => ({ id: job.id, work_mode: job.work_mode }))
-        );
-        // Transform the backend data to match the frontend JobListing type
-        const transformedJobs = data.data.map((job: any) => ({
-  id: job.id,
-  title: job.job_title,
-  company: job.company?.name || "Unknown Company",
-  logo_path: job.company.logo_path,
-  location: job.job_location || "Remote",
-  job_description: job.job_description || "No description available.",
-  job_requirements: job.job_requirements || "No requirements specified.",
-  salary:
-    job.salary_range_min && job.salary_range_max
-      ? `${job.salary_range_min} - ${job.salary_range_max}`
-      : "Negotiable",
-  type: job.job_type || "Full-time",
-  posted: formatPostedDate(job.posted_date),
-  skills: job.required_skills?.map((skill: any) => ({
-    id: skill.skill.id,
-    name: skill.skill.name,
-    category: skill.skill.category,
-    is_required: skill.is_required,
-    importance_level: skill.importance_level
-  })) || [],
-  status: "new",
-  match: calculateMatchPercentage([]),
-  work_mode: ["Onsite", "Remote", "Hybrid"].includes(job.work_mode)
-    ? job.work_mode
-    : "Onsite",
-}));
-        console.log("Transformed job listings:", transformedJobs);
-
-        setJobListings(transformedJobs);
-      } catch (error) {
-        console.error("Error fetching job listings:", error);
-        setJobError(
-          error instanceof Error ? error.message : "An unknown error occurred"
-        );
-      } finally {
-        setIsLoadingJobs(false);
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to fetch jobs");
       }
-    };
+      const data = await response.json();
+      
+      const transformedJobs = data.data.map((job: any) => ({
+        id: job.id,
+        title: job.job_title,
+        company: job.company?.name || "Unknown Company",
+        logo_path: job.company?.logo || "/default-logo.png", // Added default logo
+        location: job.job_location || "Remote",
+        job_description: job.job_description || "No description available.",
+        job_requirements: job.job_requirements || "No requirements specified.",
+        salary: job.salary_range 
+          ? `${job.salary_range.min} - ${job.salary_range.max}`
+          : "Negotiable",
+        type: job.job_type || "Full-time",
+        posted: formatPostedDate(job.posted_date),
+        skills: job.required_skills?.map((skill: any) => ({
+          id: skill.skill.id,
+          name: skill.skill.name,
+          category: skill.skill.category,
+          is_required: skill.is_required,
+          importance_level: skill.importance_level
+        })) || [],
+        status: "new",
+        match: calculateMatchPercentage([]),
+        work_mode: ["Onsite", "Remote", "Hybrid"].includes(job.work_mode)
+          ? job.work_mode
+          : "Onsite",
+        employer_id: job.employer_id,
+      }));
 
-    // Helper function to format the posted date (keep exactly as is)
-    const formatPostedDate = (dateString: string) => {
-      const postedDate = new Date(dateString);
-      const now = new Date();
-      const diffInDays = Math.floor(
-        (now.getTime() - postedDate.getTime()) / (1000 * 60 * 60 * 24)
-      );
+      setJobListings(transformedJobs);
+    } catch (error) {
+      setJobError(error instanceof Error ? error.message : "Failed to fetch jobs");
+      console.error("Job fetch error:", error);
+    } finally {
+      setIsLoadingJobs(false);
+    }
+  };
 
-      if (diffInDays < 1) return "Today";
-      if (diffInDays < 2) return "Yesterday";
-      if (diffInDays < 7) return `${Math.floor(diffInDays)} days ago`;
-      if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
-      return `${Math.floor(diffInDays / 30)} months ago`;
-    };
+  // Helper function to format the posted date (keep exactly as is)
+  const formatPostedDate = (dateString: string) => {
+    const postedDate = new Date(dateString);
+    const now = new Date();
+    const diffInDays = Math.floor(
+      (now.getTime() - postedDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
 
-    // Helper function to calculate match percentage (keep exactly as is)
-    const calculateMatchPercentage = (skills: any[]) => {
-      // In a real app, you'd compare with user's skills
-      return Math.floor(Math.random() * 30) + 70; // Random between 70-100%
-    };
+    if (diffInDays < 1) return "Today";
+    if (diffInDays < 2) return "Yesterday";
+    if (diffInDays < 7) return `${Math.floor(diffInDays)} days ago`;
+    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
+    return `${Math.floor(diffInDays / 30)} months ago`;
+  };
 
+  // Helper function to calculate match percentage (keep exactly as is)
+  const calculateMatchPercentage = (skills: any[]) => {
+    // In a real app, you'd compare with user's skills
+    return Math.floor(Math.random() * 30) + 70; // Random between 70-100%
+  };
+
+  useEffect(() => {
     fetchUserData();
     fetchJobListings();
-  }, [navigate]);
+  }, []);
 
   return (
     <ErrorBoundary

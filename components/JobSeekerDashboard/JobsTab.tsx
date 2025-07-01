@@ -7,10 +7,23 @@ interface JobsTabProps {
   searchTerm: string;
   onSearchChange: (term: string) => void;
   jobListings: JobListing[];
+  refreshJobs?: () => void; // Add this prop
 }
 
-const JobsTab: React.FC<JobsTabProps> = ({ searchTerm, onSearchChange, jobListings }) => {
+const JobsTab: React.FC<JobsTabProps> = ({ 
+  searchTerm, 
+  onSearchChange, 
+  jobListings,
+  refreshJobs 
+}) => {
   // Add null checks and safe access to properties
+  const handleApplySuccess = () => {
+    // Refresh job listings or show success message
+    if (refreshJobs) {
+      refreshJobs();
+    }
+  };
+
   const filteredJobs = jobListings?.filter((job) => {
     if (!job) return false;
     
@@ -59,7 +72,11 @@ const JobsTab: React.FC<JobsTabProps> = ({ searchTerm, onSearchChange, jobListin
       <div className="bg-white shadow overflow-hidden sm:rounded-lg">
         <ul className="divide-y divide-gray-200">
           {filteredJobs.map((job) => (
-            <JobListItem key={job.id} job={job} />
+            <JobListItem 
+              key={job.id} 
+              job={job} 
+              onApplySuccess={handleApplySuccess}
+            />
           ))}
         </ul>
       </div>

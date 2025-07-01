@@ -22,9 +22,9 @@ const JobDescriptionModal: React.FC<JobDescriptionModalProps> = ({
     setIsSaving(true);
     try {
       if (isSaved) {
-        await onUnsaveJob(job.id);
+        await onUnsaveJob(Number(job.id));
       } else {
-        await onSaveJob(job.id);
+        await onSaveJob(Number(job.id));
       }
       setIsSaved(!isSaved);
     } catch (error) {

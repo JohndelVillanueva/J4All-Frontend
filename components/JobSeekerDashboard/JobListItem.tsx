@@ -1,16 +1,15 @@
 import React, { useState } from "react";
-import {
-  FaBriefcase,
-  FaChevronLeft,
-  FaChevronRight,
-  FaTimes,
-} from "react-icons/fa";
+import { FaBriefcase, FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import { JobListing } from "../types/types";
 import CompanyLogo from "./CompanyLogo";
 import JobDescriptionModal from "./JobDescriptionModal";
+import ApplyModal from "./ApplyModal";
+import { useAuth } from "../../contexts/AuthContext";
+
 
 interface JobListItemProps {
   job: JobListing;
+  onApplySuccess?: () => void;
 }
 
 interface PaginatedJobListProps {
@@ -18,8 +17,71 @@ interface PaginatedJobListProps {
   itemsPerPage?: number;
 }
 
-const JobListItem: React.FC<JobListItemProps> = ({ job }) => {
+const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+
+  const handleApply = async (resume: File | null, coverLetter: string) => {
+    setIsSubmitting(true);
+    setError(null);
+  
+    try {
+      // 1. Verify token exists and is valid
+      const rawToken = localStorage.getItem("token");
+      if (!rawToken) {
+        throw new Error("Please log in to apply");
+      }
+  
+      // 2. Create form data
+      const formData = new FormData();
+      formData.append("job_listing_id", job.id.toString());
+      formData.append("employer_id", job.employer_id.toString());
+      formData.append("cover_letter", coverLetter || "");
+      if (resume) {
+        formData.append("resume", resume);
+      }
+  
+      // 3. Make API call
+      const response = await fetch("/api/job-applications", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${rawToken.trim()}` // Ensure proper formatting
+        },
+        body: formData,
+      });
+  
+      // 4. Handle response
+      if (!response.ok) {
+        const errorData = await response.json();
+        let errorMessage = errorData.message || errorData.error || "Application failed";
+        // Show a user-friendly message for duplicate application
+        if (errorMessage.toLowerCase().includes("already applied")) {
+          errorMessage = "You already submitted your application.";
+        }
+        throw new Error(errorMessage);
+      }
+  
+      // 5. Success handling
+      setIsApplyModalOpen(false);
+      if (onApplySuccess) onApplySuccess();
+    } catch (err) {
+      // 6. Error handling
+      const errorMessage = err instanceof Error ? err.message : "Application failed";
+      setError(errorMessage);
+      
+      // 7. Special case for auth errors
+      if (errorMessage.toLowerCase().includes("token")) {
+        // Optionally clear invalid token
+        localStorage.removeItem("token");
+        // Consider redirecting to login
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <>
@@ -28,7 +90,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job }) => {
           <div className="flex items-start justify-between">
             <div className="flex items-start">
               <CompanyLogo
-                company={job.company}
+                company={typeof job.company === "string" ? job.company : job.company?.name || "Unknown Company"}
                 logoPath={job.logo_path}
                 className="flex-shrink-0 mt-1"
               />
@@ -37,7 +99,9 @@ const JobListItem: React.FC<JobListItemProps> = ({ job }) => {
                   {job.title}
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
-                  {job.company} • {job.location} • {job.work_mode}
+                {(typeof job.company === "string"
+    ? job.company
+    : job.company?.name || "Unknown Company")} • {job.location} • {job.work_mode}
                 </p>
                 {job.logo_path && (
                   <p className="text-xs text-gray-400 mt-1">
@@ -64,23 +128,27 @@ const JobListItem: React.FC<JobListItemProps> = ({ job }) => {
               </p>
             </div>
             <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-  {job.skills.map((skillItem, i) => (
-    <span
-      key={i}
-      className="mr-2 px-2 py-1 text-xs font-medium bg-gray-100 rounded-full"
-      title={`${
-        skillItem.is_required ? "Required" : "Optional"
-      } skill (Level ${skillItem.importance_level})`}
-    >
-      {skillItem.name} {/* Changed from skillItem.skill.name to skillItem.name */}
-    </span>
-  ))}
-</div>
+              {job.skills.map((skillItem, i) => (
+                <span
+                  key={i}
+                  className="mr-2 px-2 py-1 text-xs font-medium bg-gray-100 rounded-full"
+                  title={`${
+                    skillItem.is_required ? "Required" : "Optional"
+                  } skill (Level ${skillItem.importance_level})`}
+                >
+                  {skillItem.name}
+                </span>
+              ))}
+            </div>
           </div>
           <div className="mt-3 flex space-x-3">
             {job.status === "new" ? (
-              <button className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                Apply Now
+              <button
+                onClick={() => setIsApplyModalOpen(true)}
+                disabled={isSubmitting}
+                className={`inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${isSubmitting ? 'opacity-50' : ''}`}
+              >
+                {isSubmitting ? 'Applying...' : 'Apply Now'}
               </button>
             ) : job.status === "applied" ? (
               <span className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100">
@@ -105,19 +173,27 @@ const JobListItem: React.FC<JobListItemProps> = ({ job }) => {
         <JobDescriptionModal
           job={job}
           onClose={() => setIsModalOpen(false)}
-          onSaveJob={() => {
-            /* implement save job logic here */
+          onSaveJob={() => {}}
+          onUnsaveJob={() => {}}
+        />
+      )}
+
+      {isApplyModalOpen && (
+        <ApplyModal
+          job={job}
+          onClose={() => {
+            setIsApplyModalOpen(false);
+            setError(null);
           }}
-          onUnsaveJob={() => {
-            /* implement unsave job logic here */
-          }}
+          onApply={handleApply}
+          isSubmitting={isSubmitting}
+          error={error}
         />
       )}
     </>
   );
 };
 
-// The PaginatedJobList component remains the same as in your original code
 export const PaginatedJobList: React.FC<PaginatedJobListProps> = ({
   jobs,
   itemsPerPage = 10,
