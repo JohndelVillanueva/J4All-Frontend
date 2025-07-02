@@ -90,12 +90,55 @@ export type Skills = {
 export type Application = {
   id: number;
   jobId: number;
-  status: "under review" | "interview";
+  status: string;
   date: string;
+  coverLetter?: string;
+  resume?: string;
+  job?: {
+    id: number;
+    title: string;
+    company: string;
+    location: string;
+    salary: string;
+    type: string;
+    posted: string;
+    workMode?: string;
+    logo?: string;
+  };
   updates: {
     date: string;
     message: string;
   }[];
+};
+
+export type Applicant = {
+  id: number;
+  applicationId: number;
+  name: string;
+  email: string;
+  phone: string;
+  position: string;
+  status: string;
+  experience: string;
+  applied: string;
+  coverLetter?: string;
+  resume?: string;
+  education?: string;
+  currentJobTitle?: string;
+  desiredJobTitle?: string;
+  desiredSalary?: number;
+  locationPreference?: string;
+  resumeText?: string;
+  job?: {
+    id: number;
+    title: string;
+    type: string;
+    location: string;
+    salary: string;
+    workMode?: string;
+    posted: string;
+  };
+  skills: string[];
 };
 
 export type StatItem = {

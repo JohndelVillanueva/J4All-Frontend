@@ -103,6 +103,11 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess }) => {
     ? job.company
     : job.company?.name || "Unknown Company")} • {job.location} • {job.work_mode}
                 </p>
+                {(job as any).hrFirstName || (job as any).hrLastName ? (
+                  <p className="text-xs text-gray-500 mt-1">
+                    HR: {((job as any).hrFirstName ?? '')} {((job as any).hrLastName ?? '')}
+                  </p>
+                ) : null}
                 {job.logo_path && (
                   <p className="text-xs text-gray-400 mt-1">
                     Logo URL: {job.logo_path}

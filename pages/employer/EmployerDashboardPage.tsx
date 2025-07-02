@@ -18,6 +18,7 @@ import {
   JobListing,
   Application,
   StatItem,
+  Applicant,
 } from "../../components/types/types";
 import CreatePositionModal from "../../components/EmployerDashboard/CreatePositionModal";
 import { useAuth } from "../../contexts/AuthContext";
@@ -51,8 +52,11 @@ const EmployerDashboardPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [jobPostings, setJobPostings] = useState<JobPosting[]>([]);
+  const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [isLoadingJobs, setIsLoadingJobs] = useState(false);
+  const [isLoadingApplicants, setIsLoadingApplicants] = useState(false);
   const [jobError, setJobError] = useState<string | null>(null);
+  const [applicantsError, setApplicantsError] = useState<string | null>(null);
 
   // Guard: Show loading spinner while auth is loading
   if (loading) {
@@ -76,49 +80,49 @@ const EmployerDashboardPage = () => {
   // If not authenticated, don't render dashboard
   if (!user) return null;
 
-  // Mock data for other sections
-  const applicants = [
-    {
-      id: 1,
-      name: "Alex Johnson",
-      position: "Senior Frontend Developer",
-      status: "review",
-      experience: "7 years",
-      skills: ["React", "TypeScript", "Redux"],
-      applied: "2023-06-10",
-    },
-    {
-      id: 2,
-      name: "Sarah Chen",
-      position: "Senior Frontend Developer",
-      status: "interview",
-      experience: "5 years",
-      skills: ["Angular", "RxJS", "NgRx"],
-      applied: "2023-06-05",
-    },
-    {
-      id: 3,
-      name: "Michael Brown",
-      position: "Frontend Tech Lead",
-      status: "rejected",
-      experience: "9 years",
-      skills: ["React", "GraphQL", "Next.js"],
-      applied: "2023-05-28",
-    },
-    {
-      id: 4,
-      name: "Emma Wilson",
-      position: "Senior Frontend Developer",
-      status: "hired",
-      experience: "6 years",
-      skills: ["Vue", "Nuxt", "Vuex"],
-      applied: "2023-05-20",
-    },
-  ];
+  // Fetch applicants from backend
+  const fetchApplicants = async () => {
+    setIsLoadingApplicants(true);
+    setApplicantsError(null);
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch('/api/employer-applicants', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch applicants');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setApplicants(data.data);
+      } else {
+        setApplicants([]);
+      }
+    } catch (err) {
+      console.error('Error fetching applicants:', err);
+      setApplicantsError(err instanceof Error ? err.message : 'An unknown error occurred');
+      setApplicants([]);
+    } finally {
+      setIsLoadingApplicants(false);
+    }
+  };
+
+  const openPositions = jobPostings.filter(job => job.status === "active");
 
   const metrics = [
-    { title: "Open Positions", value: 2, change: "+1", trend: "up" },
-    { title: "Total Applicants", value: 44, change: "+12", trend: "up" },
+    { title: "Open Positions", value: openPositions.length, change: "+1", trend: "up" },
+    { title: "Total Applicants", value: applicants.length, change: "+12", trend: "up" },
     { title: "Interview Rate", value: "32%", change: "+5%", trend: "up" },
     { title: "Hire Rate", value: "18%", change: "-2%", trend: "down" },
   ];
@@ -168,46 +172,59 @@ const EmployerDashboardPage = () => {
     }
   }, [user, navigate]);
 
-  useEffect(() => {
-    const fetchJobPostings = async () => {
-      if (activeTab === "positions") {
-        setIsLoadingJobs(true);
-        setJobError(null);
-        try {
-          const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-          if (!token) {
-            throw new Error('Authentication required');
-          }
-
-          const response = await fetch('/api/getJoblisting', {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to fetch job postings');
-          }
-
-          const data = await response.json();
-          if (data.success) {
-            setJobPostings(data.data);
-          } else {
-            throw new Error(data.message || 'Failed to fetch job postings');
-          }
-        } catch (err) {
-          console.error('Error fetching job postings:', err);
-          setJobError(err instanceof Error ? err.message : 'An unknown error occurred');
-        } finally {
-          setIsLoadingJobs(false);
-        }
+  // Fetch job postings from backend
+  const fetchJobPostings = async () => {
+    setIsLoadingJobs(true);
+    setJobError(null);
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication required');
       }
-    };
 
+      const response = await fetch('/api/getJoblisting', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch job postings');
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setJobPostings(data.data);
+      } else {
+        throw new Error(data.message || 'Failed to fetch job postings');
+      }
+    } catch (err) {
+      console.error('Error fetching job postings:', err);
+      setJobError(err instanceof Error ? err.message : 'An unknown error occurred');
+    } finally {
+      setIsLoadingJobs(false);
+    }
+  };
+
+  // Fetch job postings on mount
+  useEffect(() => {
     fetchJobPostings();
+    // eslint-disable-next-line
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === "applicants") {
+      fetchApplicants();
+    }
   }, [activeTab]);
+
+  // Fetch applicants on mount
+  useEffect(() => {
+    fetchApplicants();
+    // eslint-disable-next-line
+  }, []);
 
   type Skill = {
   skill_name: string;
@@ -474,9 +491,9 @@ console.log('EmployerDashboard mounted');
                                   Interview
                                 </span>
                               )}
-                              {applicant.status === "review" && (
+                              {applicant.status === "pending" && (
                                 <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                  Under Review
+                                  Pending
                                 </span>
                               )}
                               {applicant.status === "rejected" && (
@@ -643,104 +660,130 @@ console.log('EmployerDashboard mounted');
                 </div>
               </div>
 
-              <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-                <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <FaSearch className="text-gray-400" />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Search applicants..."
-                      className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
+              {isLoadingApplicants ? (
+                <div className="flex justify-center items-center py-10">
+                  <span className="inline-block animate-spin mr-2">↻</span>
+                  Loading applicants...
                 </div>
-                <ul className="divide-y divide-gray-200">
-                  {filteredApplicants.map((applicant) => (
-                    <li key={applicant.id}>
-                      <div className="px-4 py-4 sm:px-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                              <span className="text-gray-600 text-lg font-medium">
-                                {applicant.name.charAt(0)}
-                              </span>
-                            </div>
-                            <div className="ml-4">
-                              <p className="text-sm font-medium text-blue-600">
-                                {applicant.name}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                {applicant.position}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="ml-2 flex-shrink-0 flex">
-                            {applicant.status === "hired" && (
-                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                Hired
-                              </span>
-                            )}
-                            {applicant.status === "interview" && (
-                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                Interview
-                              </span>
-                            )}
-                            {applicant.status === "review" && (
-                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                Under Review
-                              </span>
-                            )}
-                            {applicant.status === "rejected" && (
-                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                Rejected
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="mt-2 sm:flex sm:justify-between">
-                          <div className="sm:flex">
-                            <p className="flex items-center text-sm text-gray-500">
-                              <FaBriefcase className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                              {applicant.experience} experience
-                            </p>
-                            <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
-                              <FaCalendarAlt className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                              Applied on {applicant.applied}
-                            </p>
-                          </div>
-                          <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                            {applicant.skills.map((skill, i) => (
-                              <span
-                                key={i}
-                                className="mr-2 px-2 py-1 text-xs font-medium bg-gray-100 rounded-full"
-                              >
-                                {skill}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="mt-3 flex space-x-3">
-                          <button className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            View Profile
-                          </button>
-                          <button className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            Message
-                          </button>
-                          {applicant.status === "review" && (
-                            <button className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                              Schedule Interview
-                            </button>
-                          )}
-                        </div>
+              ) : applicantsError ? (
+                <div className="p-4 bg-red-50 text-red-600 rounded-lg mb-6">
+                  {applicantsError}
+                </div>
+              ) : applicants.length === 0 ? (
+                <div className="bg-white shadow overflow-hidden sm:rounded-lg p-6 text-center">
+                  <FaUserTie className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">
+                    No applicants
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    You haven't received any applications yet.
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+                  <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaSearch className="text-gray-400" />
                       </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+                      <input
+                        type="text"
+                        placeholder="Search applicants..."
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <ul className="divide-y divide-gray-200">
+                    {filteredApplicants.map((applicant) => (
+                      <li key={applicant.id}>
+                        <div className="px-4 py-4 sm:px-6">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                <span className="text-gray-600 text-lg font-medium">
+                                  {applicant.name.charAt(0)}
+                                </span>
+                              </div>
+                              <div className="ml-4">
+                                <p className="text-sm font-medium text-blue-600">
+                                  {applicant.name}
+                                </p>
+                                <p className="text-sm text-gray-500">
+                                  {applicant.position}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="ml-2 flex-shrink-0 flex">
+                              {applicant.status === "hired" && (
+                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                  Hired
+                                </span>
+                              )}
+                              {applicant.status === "interview" && (
+                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                  Interview
+                                </span>
+                              )}
+                              {applicant.status === "review" && (
+                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                  Under Review
+                                </span>
+                              )}
+                              {applicant.status === "rejected" && (
+                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                  Rejected
+                                </span>
+                              )}
+                              {applicant.status === "pending" && (
+                                <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                  Pending
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="mt-2 sm:flex sm:justify-between">
+                            <div className="sm:flex">
+                              <p className="flex items-center text-sm text-gray-500">
+                                <FaBriefcase className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                                {applicant.experience} experience
+                              </p>
+                              <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
+                                <FaCalendarAlt className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                                Applied on {applicant.applied}
+                              </p>
+                            </div>
+                            <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                              {applicant.skills.map((skill, i) => (
+                                <span
+                                  key={i}
+                                  className="mr-2 px-2 py-1 text-xs font-medium bg-gray-100 rounded-full"
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="mt-3 flex space-x-3">
+                            <button className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                              View Profile
+                            </button>
+                            <button className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                              Message
+                            </button>
+                            {applicant.status === "pending" && (
+                              <button className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                Schedule Interview
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 

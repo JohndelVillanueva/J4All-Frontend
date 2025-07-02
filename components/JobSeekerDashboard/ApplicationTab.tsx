@@ -9,8 +9,8 @@ interface ApplicationsTabProps {
 }
 
 const ApplicationListItem: React.FC<{ app: Application; job?: JobListing }> = ({ app, job }) => {
-  // Fallback values for missing job data
-  const safeJob = job || {
+  // Use job data from application if available, otherwise fall back to jobListings
+  const safeJob = app.job || job || {
     id: 0,
     title: "Position no longer available",
     company: "Unknown Company",
@@ -33,13 +33,13 @@ const ApplicationListItem: React.FC<{ app: Application; job?: JobListing }> = ({
           <div className="flex items-center">
             <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
               <span className="text-gray-600 text-lg font-medium">
-                {safeJob.company?.charAt(0) || "?"}
+                {typeof safeJob.company === 'string' ? safeJob.company.charAt(0) : safeJob.company?.name?.charAt(0) || "?"}
               </span>
             </div>
             <div className="ml-4">
               <p className="text-lg font-medium text-blue-600">{safeJob.title}</p>
               <p className="text-sm text-gray-500">
-                {safeJob.company} • Applied on {app.date || "unknown date"}
+                {typeof safeJob.company === 'string' ? safeJob.company : safeJob.company?.name || "Unknown Company"} • Applied on {app.date || "unknown date"}
               </p>
             </div>
           </div>
@@ -148,7 +148,8 @@ const ApplicationsTab: React.FC<ApplicationsTabProps> = ({ applications, jobList
           ) : (
             <ul className="divide-y divide-gray-200">
               {validApplications.map((app) => {
-                const job = jobListings.find((j) => String(j.id) === String(app.jobId));
+                // If application has job data, use it; otherwise find in jobListings
+                const job = app.job ? undefined : jobListings.find((j) => String(j.id) === String(app.jobId));
                 return (
                   <ErrorBoundary 
                     key={app.id}

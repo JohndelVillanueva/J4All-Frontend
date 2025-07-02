@@ -15,24 +15,66 @@ const JobDescriptionModal: React.FC<JobDescriptionModalProps> = ({
   onSaveJob,
   onUnsaveJob,
 }) => {
+  const jobWithHR = job as any;
   const [isSaved, setIsSaved] = useState(job.status === "saved");
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSaveToggle = async () => {
     setIsSaving(true);
     try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Please log in to save jobs");
+      }
+
       if (isSaved) {
+        // Unsave job
+        const response = await fetch("/api/unsave-job", {
+          method: "DELETE",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ job_id: Number(job.id) })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to unsave job");
+        }
+
         await onUnsaveJob(Number(job.id));
       } else {
+        // Save job
+        const response = await fetch("/api/save-job", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ job_id: Number(job.id) })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to save job");
+        }
+
         await onSaveJob(Number(job.id));
       }
+      
       setIsSaved(!isSaved);
     } catch (error) {
       console.error("Error saving job:", error);
+      // You might want to show a toast notification here
+      alert(error instanceof Error ? error.message : "An error occurred");
     } finally {
       setIsSaving(false);
     }
   };
+
+  console.log('Job in modal:', jobWithHR);
+  // console.log('Formatted jobs sample:', formattedJobs[0]);
 
   return (
     <>
@@ -56,7 +98,9 @@ const JobDescriptionModal: React.FC<JobDescriptionModalProps> = ({
             {/* Job header */}
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-gray-900">{job.title}</h1>
-              <h2 className="text-xl text-gray-600 mt-1">{job.company}</h2>
+              <h2 className="text-xl text-gray-600 mt-1">
+                {typeof job.company === 'string' ? job.company : job.company?.name || 'Unknown Company'}
+              </h2>
 
               <div className="mt-4 flex flex-wrap gap-2">
                 <span className="px-3 py-1 bg-gray-100 rounded-full text-sm font-medium">
@@ -140,12 +184,16 @@ const JobDescriptionModal: React.FC<JobDescriptionModalProps> = ({
               <div className="flex items-center">
                 <div className="w-12 h-12 rounded-full bg-gray-300 mr-3 flex items-center justify-center">
                   <span className="text-gray-600">
-                    {job.company.charAt(0).toUpperCase()}
+                    {(typeof job.company === 'string' ? job.company : job.company?.name || '?').charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div>
-                  <p className="font-medium">HR Representative</p>
-                  <p className="text-gray-600 text-sm">{job.company}</p>
+                  <p className="font-medium">
+                    {jobWithHR.hrFirstName || jobWithHR.hrLastName ? `${jobWithHR.hrFirstName ?? ''} ${jobWithHR.hrLastName ?? ''}`.trim() : 'HR Representative'}
+                  </p>
+                  <p className="text-gray-600 text-sm">
+                    {typeof job.company === 'string' ? job.company : job.company?.name || 'Unknown Company'}
+                  </p>
                   <p className="text-gray-500 text-xs">Posted {job.posted}</p>
                 </div>
               </div>

@@ -80,8 +80,11 @@ const JobSeekerDashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentUser, setCurrentUser] = useState<UserData | null>(null);
   const [jobListings, setJobListings] = useState<JobListing[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
   const [isLoadingJobs, setIsLoadingJobs] = useState(true);
+  const [isLoadingApplications, setIsLoadingApplications] = useState(true);
   const [jobError, setJobError] = useState<string | null>(null);
+  const [applicationsError, setApplicationsError] = useState<string | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [userError, setUserError] = useState<string | null>(null);
 
@@ -104,39 +107,49 @@ const JobSeekerDashboard = () => {
     if (user && (user.user_type === "pwd" || user.user_type === "indigenous" || user.user_type === "general")) {
       fetchUserData();
       fetchJobListings();
+      fetchApplications();
     }
   }, [user]);
 
-  // Mock data for applications and stats (keep exactly as is)
-  const applications: Application[] = [
-    {
-      id: 1,
-      jobId: 1,
-      status: "under review",
-      date: "2023-06-15",
-      updates: [
-        { date: "2023-06-16", message: "Application received" },
-        { date: "2023-06-18", message: "Under review by hiring team" },
-      ],
-    },
-    {
-      id: 2,
-      jobId: 4,
-      status: "interview",
-      date: "2023-06-10",
-      updates: [
-        { date: "2023-06-12", message: "Application received" },
-        { date: "2023-06-14", message: "Passed initial screening" },
-        {
-          date: "2023-06-16",
-          message: "Technical interview scheduled for June 20",
-        },
-      ],
-    },
-  ];
+  // Fetch applications from backend
+  const fetchApplications = async () => {
+    setIsLoadingApplications(true);
+    setApplicationsError(null);
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Authentication required");
+      
+      const response = await fetch("/api/applications", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch applications");
+      }
+      
+      const data = await response.json();
+      console.log('Fetched applications:', data);
+      
+      if (data.success && data.data) {
+        setApplications(data.data);
+      } else {
+        setApplications([]);
+      }
+    } catch (error) {
+      setApplicationsError(error instanceof Error ? error.message : "Failed to fetch applications");
+      console.error("Applications fetch error:", error);
+      setApplications([]);
+    } finally {
+      setIsLoadingApplications(false);
+    }
+  };
 
+  // Mock data for stats (keep exactly as is)
   const stats: StatItem[] = [
-    { name: "Applications Sent", value: 8, change: "+2", trend: "up" },
+    { name: "Applications Sent", value: applications.length, change: "+2", trend: "up" },
     { name: "Interview Rate", value: "25%", change: "+5%", trend: "up" },
     { name: "Profile Views", value: 24, change: "+8", trend: "up" },
     { name: "Saved Jobs", value: 5, change: "+1", trend: "up" },
@@ -216,6 +229,8 @@ const JobSeekerDashboard = () => {
           ? job.work_mode
           : "Onsite",
         employer_id: job.employer_id,
+        hrFirstName: job.hrFirstName || '',
+        hrLastName: job.hrLastName || '',
       }));
 
       setJobListings(transformedJobs);
@@ -367,10 +382,38 @@ const JobSeekerDashboard = () => {
             )}
             {activeTab === "applications" && (
               <ErrorBoundary>
-                <ApplicationsTab
-                  applications={applications}
-                  jobListings={jobListings}
-                />
+                {isLoadingApplications ? (
+                  <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                  </div>
+                ) : applicationsError ? (
+                  <div className="bg-red-50 border-l-4 border-red-400 p-4">
+                    <div className="flex">
+                      <div className="flex-shrink-0">
+                        <svg
+                          className="h-5 w-5 text-red-400"
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <p className="text-sm text-red-700">{applicationsError}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <ApplicationsTab
+                    applications={applications}
+                    jobListings={jobListings}
+                  />
+                )}
               </ErrorBoundary>
             )}
             {activeTab === "saved" && (
