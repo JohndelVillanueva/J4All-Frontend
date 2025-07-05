@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaTimes, FaArrowLeft, FaPaperPlane, FaUserCircle } from "react-icons/fa";
+import { FaTimes, FaArrowLeft, FaPaperPlane, FaUserCircle, FaWindowMinimize, FaComments } from "react-icons/fa";
 import { messageService } from "../src/services/messageService";
 
 interface Message {
@@ -44,6 +44,8 @@ interface MessageViewProps {
   onBack: () => void;
   currentUserId: number;
   onMessagesRead?: () => void;
+  isMinimized?: boolean;
+  onMinimize?: () => void;
 }
 
 const MessageView: React.FC<MessageViewProps> = ({
@@ -52,6 +54,8 @@ const MessageView: React.FC<MessageViewProps> = ({
   onBack,
   currentUserId,
   onMessagesRead,
+  isMinimized = false,
+  onMinimize,
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -148,7 +152,7 @@ const MessageView: React.FC<MessageViewProps> = ({
       : conversation.other_user.username;
   };
 
-  if (!conversationId) {
+  if (!conversationId || isMinimized) {
     return null;
   }
 
@@ -172,12 +176,22 @@ const MessageView: React.FC<MessageViewProps> = ({
               </div>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <FaTimes />
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={onMinimize}
+              className="text-gray-500 hover:text-gray-700"
+              title="Minimize"
+            >
+              <FaWindowMinimize />
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700"
+              title="Close"
+            >
+              <FaTimes />
+            </button>
+          </div>
         </div>
 
         {/* Messages */}
