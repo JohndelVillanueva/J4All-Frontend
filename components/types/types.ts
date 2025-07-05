@@ -78,7 +78,8 @@ export type JobListing = {
   work_mode: WorkMode;
   job_description: string;
   job_requirements: string;
-  employer_id: string;
+  employer_id: number;
+  employer_user_id: number;
 };
 
 export type Skills = {
@@ -129,6 +130,7 @@ export type Applicant = {
   desiredSalary?: number;
   locationPreference?: string;
   resumeText?: string;
+  user_id: number; // Job seeker's user ID for messaging
   job?: {
     id: number;
     title: string;

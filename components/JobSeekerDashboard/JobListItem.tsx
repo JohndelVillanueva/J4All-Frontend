@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { FaBriefcase, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaBriefcase, FaChevronLeft, FaChevronRight, FaComments } from "react-icons/fa";
 import { JobListing } from "../types/types";
 import CompanyLogo from "./CompanyLogo";
 import JobDescriptionModal from "./JobDescriptionModal";
 import ApplyModal from "./ApplyModal";
+import MessageModal from "./MessageModal";
 import { useAuth } from "../../contexts/AuthContext";
 
 
@@ -20,6 +21,7 @@ interface PaginatedJobListProps {
 const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
@@ -165,6 +167,13 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess }) => {
               </button>
             )}
             <button
+              onClick={() => setIsMessageModalOpen(true)}
+              className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <FaComments className="mr-1" />
+              Message
+            </button>
+            <button
               onClick={() => setIsModalOpen(true)}
               className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
@@ -193,6 +202,15 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess }) => {
           onApply={handleApply}
           isSubmitting={isSubmitting}
           error={error}
+        />
+      )}
+
+      {isMessageModalOpen && (
+        <MessageModal
+          job={job}
+          onClose={() => {
+            setIsMessageModalOpen(false);
+          }}
         />
       )}
     </>

@@ -21,6 +21,7 @@ import {
   Applicant,
 } from "../../components/types/types";
 import CreatePositionModal from "../../components/EmployerDashboard/CreatePositionModal";
+import EmployerMessageModal from "../../components/EmployerDashboard/EmployerMessageModal";
 import { useAuth } from "../../contexts/AuthContext";
 
 interface JobPosting {
@@ -57,6 +58,8 @@ const EmployerDashboardPage = () => {
   const [isLoadingApplicants, setIsLoadingApplicants] = useState(false);
   const [jobError, setJobError] = useState<string | null>(null);
   const [applicantsError, setApplicantsError] = useState<string | null>(null);
+  const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
 
   // Guard: Show loading spinner while auth is loading
   if (loading) {
@@ -353,6 +356,9 @@ const handleCreateJobPosting = async (data: {
   }
 };
 console.log('EmployerDashboard mounted');
+
+  // Debug: Show modal state
+  console.log("Render: isMessageModalOpen", isMessageModalOpen, "selectedApplicant", selectedApplicant);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -769,7 +775,17 @@ console.log('EmployerDashboard mounted');
                             <button className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                               View Profile
                             </button>
-                            <button className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <button 
+                              onClick={() => {
+                                console.log("Message button clicked", applicant);
+                                setSelectedApplicant(applicant);
+                                setIsMessageModalOpen(true);
+                                setTimeout(() => {
+                                  console.log("After set: isMessageModalOpen", isMessageModalOpen, "selectedApplicant", selectedApplicant);
+                                }, 100);
+                              }}
+                              className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
                               Message
                             </button>
                             {applicant.status === "pending" && (
@@ -823,6 +839,19 @@ console.log('EmployerDashboard mounted');
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleCreateJobPosting}
       />
+      {isMessageModalOpen && selectedApplicant && (
+        <EmployerMessageModal
+          applicant={selectedApplicant}
+          onClose={() => {
+            setIsMessageModalOpen(false);
+            setSelectedApplicant(null);
+          }}
+          onSendMessage={() => {
+            // Optionally refresh data or show success message
+            console.log('Message sent successfully');
+          }}
+        />
+      )}
     </div>
   );
 };

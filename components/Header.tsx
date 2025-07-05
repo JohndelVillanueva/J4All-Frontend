@@ -17,9 +17,12 @@ import {
 import InfoSideBar from "./InfoSidebar";
 import NotificationBar from "./NotificationBar";
 import MessageSidebar from "./MessageSideBar";
+import MessageView from "./MessageView";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { UserType, MenuItem } from "../components/types/types";
+import { notificationService } from "../src/services/notificationService";
+import { messageService } from "../src/services/messageService";
 import React from "react";
 
 const DEFAULT_PROFILE_IMAGE =
@@ -31,6 +34,7 @@ const Header = () => {
   const [isInfoSidebarOpen, setIsInfoSidebarOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isMessageSidebarOpen, setIsMessageSidebarOpen] = useState(false);
+  const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
@@ -42,83 +46,88 @@ const Header = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Sample notifications data
-  const notifications = useMemo(
-    () => [
-      {
-        id: 1,
-        type: "alert",
-        title: "System Maintenance",
-        message:
-          "Scheduled maintenance on June 20, 2023 from 2:00 AM to 4:00 AM UTC",
-        time: "10 min ago",
-        icon: <FaExclamationTriangle className="text-yellow-500" />,
-      },
-      {
-        id: 2,
-        type: "success",
-        title: "Update Completed",
-        message: "Version 2.3.1 has been successfully deployed",
-        time: "1 hour ago",
-        icon: <FaCheckCircle className="text-green-500" />,
-      },
-      {
-        id: 3,
-        type: "alert",
-        title: "Storage Warning",
-        message: "Database storage is at 85% capacity",
-        time: "3 hours ago",
-        icon: <FaExclamationTriangle className="text-yellow-500" />,
-      },
-    ],
-    []
-  );
-  const conversations = useMemo(
-    () => [
-      {
-        id: 1,
-        title: "Project Status Update",
-        participants: ["John Doe", "You"],
-        lastMessage: "Actually, could you review the API docs...",
-        lastMessageTime: "10:35 AM",
-        unreadCount: 0,
-        participant: "John Doe",
-        time: "10:35 AM",
-      },
-      {
-        id: 2,
-        title: "Meeting Request",
-        participants: ["Sarah Johnson", "You"],
-        lastMessage: "Perfect! Looking forward to our discussion...",
-        lastMessageTime: "11:48 AM",
-        unreadCount: 0,
-        participant: "Sarah Johnson",
-        time: "11:48 AM",
-      },
-      {
-        id: 3,
-        title: "Design Specs Review",
-        participants: ["Alex Chen", "You"],
-        lastMessage: "Just sent them. Let me know if...",
-        lastMessageTime: "3:25 PM",
-        unreadCount: 1,
-        participant: "Alex Chen",
-        time: "3:25 PM",
-      },
-      {
-        id: 4,
-        title: "System Notifications",
-        participants: ["System"],
-        lastMessage: "Your storage is 85% full...",
-        lastMessageTime: "12:00 PM",
-        unreadCount: 0,
-        isSystem: true,
-        participant: "System",
-        time: "12:00 PM",
-      },
-    ],
-    []
-  );
+  // Real notifications data
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+
+  // Fetch notifications
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const data = await notificationService.getNotifications();
+      // Transform service data to match component expectations
+      const transformedNotifications = data.map(notification => ({
+        id: notification.id,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        time: new Date(notification.created_at).toLocaleTimeString(),
+        icon: notification.type === 'error' ? <FaExclamationTriangle /> : 
+              notification.type === 'success' ? <FaCheckCircle /> : 
+              <FaInfoCircle />
+      }));
+      setNotifications(transformedNotifications);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  }, []);
+
+  // Fetch unread notification count
+  const fetchUnreadNotificationCount = useCallback(async () => {
+    try {
+      const count = await notificationService.getUnreadCount();
+      setUnreadNotificationCount(count);
+    } catch (error) {
+      console.error('Error fetching unread notification count:', error);
+    }
+  }, []);
+
+  // Load notifications on component mount
+  useEffect(() => {
+    fetchNotifications();
+    fetchUnreadNotificationCount();
+  }, [fetchNotifications, fetchUnreadNotificationCount]);
+  // Real conversations data
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+
+  // Fetch conversations
+  const fetchConversations = useCallback(async () => {
+    try {
+      const data = await messageService.getConversations();
+      // Transform service data to match component expectations
+      const transformedConversations = data.map(conversation => ({
+        id: conversation.id,
+        participant: conversation.other_user.first_name && conversation.other_user.last_name 
+          ? `${conversation.other_user.first_name} ${conversation.other_user.last_name}`
+          : conversation.other_user.username,
+        lastMessage: conversation.last_message?.content || 'No messages yet',
+        time: conversation.last_message 
+          ? new Date(conversation.last_message.created_at).toLocaleTimeString()
+          : new Date(conversation.updated_at).toLocaleTimeString(),
+        unreadCount: conversation.unread_count || 0,
+        avatar: undefined
+      }));
+      setConversations(transformedConversations);
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+    }
+  }, []);
+
+  // Fetch unread message count
+  const fetchUnreadMessageCount = useCallback(async () => {
+    try {
+      const count = await messageService.getUnreadCount();
+      setUnreadMessageCount(count);
+    } catch (error) {
+      console.error('Error fetching unread message count:', error);
+    }
+  }, []);
+
+  // Load conversations on component mount
+  useEffect(() => {
+    fetchConversations();
+    fetchUnreadMessageCount();
+  }, [fetchConversations, fetchUnreadMessageCount]);
   // Sample messages data
   const messages = useMemo(
     () => [
@@ -207,6 +216,19 @@ const Header = () => {
     });
   }, []);
 
+  const handleConversationClick = useCallback((conversationId: number) => {
+    setSelectedConversationId(conversationId);
+  }, []);
+
+  const handleMessageViewBack = useCallback(() => {
+    setSelectedConversationId(null);
+  }, []);
+
+  const handleMessageViewClose = useCallback(() => {
+    setSelectedConversationId(null);
+    setIsMessageSidebarOpen(false);
+  }, []);
+
   const handleImageError = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
       const target = e.target as HTMLImageElement;
@@ -221,6 +243,7 @@ const Header = () => {
     setIsProfileDropdownOpen(false);
     setIsNotificationOpen(false);
     setIsMessageSidebarOpen(false);
+    setSelectedConversationId(null);
   }, []);
 
   // Close dropdowns when clicking outside or pressing Escape
@@ -312,9 +335,9 @@ const Header = () => {
         icon: (
           <div className="relative">
             <FaComments />
-            {messages.length > 0 && (
+            {unreadMessageCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold h-4 w-4 flex items-center justify-center rounded-full">
-                {messages.length}
+                {unreadMessageCount}
               </span>
             )}
           </div>
@@ -327,9 +350,9 @@ const Header = () => {
         icon: (
           <div className="relative">
             <FaBell />
-            {notifications.length > 0 && (
+            {unreadNotificationCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold h-4 w-4 flex items-center justify-center rounded-full">
-                {notifications.length}
+                {unreadNotificationCount}
               </span>
             )}
           </div>
@@ -343,8 +366,8 @@ const Header = () => {
       toggleInfoSidebar,
       toggleNotification,
       toggleMessageSidebar,
-      notifications.length,
-      messages.length,
+      unreadNotificationCount,
+      unreadMessageCount,
       user?.user_type,
     ]
   );
@@ -472,6 +495,24 @@ const Header = () => {
         isNotificationOpen={isNotificationOpen}
         toggleNotification={toggleNotification}
         notifications={notifications}
+        onMarkAsRead={async (notificationId) => {
+          try {
+            await notificationService.markAsRead(notificationId);
+            fetchNotifications();
+            fetchUnreadNotificationCount();
+          } catch (error) {
+            console.error('Error marking notification as read:', error);
+          }
+        }}
+        onMarkAllAsRead={async () => {
+          try {
+            await notificationService.markAllAsRead();
+            fetchNotifications();
+            fetchUnreadNotificationCount();
+          } catch (error) {
+            console.error('Error marking all notifications as read:', error);
+          }
+        }}
       />
 
       <MessageSidebar
@@ -484,6 +525,9 @@ const Header = () => {
         onNewConversation={() => {
           // Handle new conversation logic
         }}
+        onRefreshConversations={fetchConversations}
+        onRefreshUnreadCount={fetchUnreadMessageCount}
+        onConversationClick={handleConversationClick}
       />
 
       <InfoSideBar
@@ -491,6 +535,20 @@ const Header = () => {
         isInfoSidebarOpen={isInfoSidebarOpen}
         toggleInfoSidebar={toggleInfoSidebar}
       />
+
+      {selectedConversationId && (
+        <MessageView
+          conversationId={selectedConversationId}
+          onClose={handleMessageViewClose}
+          onBack={handleMessageViewBack}
+          currentUserId={Number(user?.id) || 0}
+          onMessagesRead={() => {
+            // Refresh conversations and unread counts when messages are read
+            fetchConversations();
+            fetchUnreadMessageCount();
+          }}
+        />
+      )}
     </>
   );
 };

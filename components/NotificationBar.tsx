@@ -1,3 +1,4 @@
+import React from "react";
 import { FaBell, FaTimes } from "react-icons/fa";
 
 interface Notification {
@@ -14,6 +15,8 @@ interface NotificationBarProps {
   isNotificationOpen: boolean;
   toggleNotification: () => void;
   notifications: Notification[];
+  onMarkAsRead?: (notificationId: number) => Promise<void>;
+  onMarkAllAsRead?: () => Promise<void>;
 }
 
 const NotificationBar: React.FC<NotificationBarProps> = ({ 

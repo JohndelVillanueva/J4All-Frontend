@@ -229,6 +229,7 @@ const JobSeekerDashboard = () => {
           ? job.work_mode
           : "Onsite",
         employer_id: job.employer_id,
+        employer_user_id: job.employer_user_id,
         hrFirstName: job.hrFirstName || '',
         hrLastName: job.hrLastName || '',
       }));

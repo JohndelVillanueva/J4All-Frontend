@@ -1,3 +1,4 @@
+import React from "react";
 import { FaTimes, FaSearch, FaUserCircle, FaEllipsisV, FaPlus } from "react-icons/fa";
 
 interface Conversation {
@@ -22,7 +23,10 @@ export type MessageSidebarProps = {
   }[];
   conversations: Conversation[];
   currentUser: string;
-  onNewConversation: () => void; // Add this prop for the new conversation handler
+  onNewConversation: () => void;
+  onRefreshConversations?: () => Promise<void>;
+  onRefreshUnreadCount?: () => Promise<void>;
+  onConversationClick?: (conversationId: number) => void;
 };
 
 const MessageSidebar: React.FC<MessageSidebarProps> = ({ 
@@ -30,7 +34,8 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   isSidebarOpen, 
   toggleSidebar, 
   conversations,
-  onNewConversation // Add this to destructured props
+  onNewConversation,
+  onConversationClick
 }) => {
   return (
     <div 
@@ -67,7 +72,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
           <div className="flex justify-between items-center">
             <h3 className="text-sm font-medium text-gray-600">Recent Conversations</h3>
             <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-              {conversations.length} unread
+              {conversations.reduce((total, conv) => total + conv.unreadCount, 0)} unread
             </span>
           </div>
         </div>
@@ -75,7 +80,11 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
         {/* Conversations List */}
         <div className="flex-1 overflow-y-auto">
           {conversations.map(conversation => (
-            <div key={conversation.id} className="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer">
+            <div 
+              key={conversation.id} 
+              className="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
+              onClick={() => onConversationClick?.(conversation.id)}
+            >
               <div className="flex items-center">
                 <div className="flex-shrink-0 mr-3">
                   {conversation.avatar ? (

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { FaTimes, FaRegStar, FaStar } from "react-icons/fa";
+import { FaTimes, FaRegStar, FaStar, FaComments } from "react-icons/fa";
 import { JobListing } from "../types/types";
+import MessageModal from "./MessageModal";
 
 interface JobDescriptionModalProps {
   job: JobListing;
@@ -18,6 +19,7 @@ const JobDescriptionModal: React.FC<JobDescriptionModalProps> = ({
   const jobWithHR = job as any;
   const [isSaved, setIsSaved] = useState(job.status === "saved");
   const [isSaving, setIsSaving] = useState(false);
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
 
   const handleSaveToggle = async () => {
     setIsSaving(true);
@@ -125,6 +127,13 @@ const JobDescriptionModal: React.FC<JobDescriptionModalProps> = ({
                   {job.status === "applied" ? "Applied" : "Apply Now"}
                 </button>
                 <button
+                  onClick={() => setIsMessageModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-3 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition-colors"
+                >
+                  <FaComments className="h-4 w-4" />
+                  Message
+                </button>
+                <button
                   onClick={handleSaveToggle}
                   className="flex-shrink-0 p-3 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
                   disabled={isSaving}
@@ -207,6 +216,13 @@ const JobDescriptionModal: React.FC<JobDescriptionModalProps> = ({
           </div>
         </div>
       </div>
+
+      {isMessageModalOpen && (
+        <MessageModal
+          job={job}
+          onClose={() => setIsMessageModalOpen(false)}
+        />
+      )}
     </>
   );
 };
