@@ -24,9 +24,17 @@ import { UserType, MenuItem } from "../components/types/types";
 import { notificationService } from "../src/services/notificationService";
 import { messageService } from "../src/services/messageService";
 import React from "react";
+import UserAvatar from "./UserAvatar";
 
 const DEFAULT_PROFILE_IMAGE =
   "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJDNi40NzcgMiAyIDYuNDc3IDIgMTJzNC40NzcgMTAgMTAgMTAgMTAtNC40NzcgMTAtMTBTMTcuNTIzIDIgMTIgMnptMCAyYzQuNDE4IDAgOCAzLjU4MiA4IDhzLTMuNTgyIDgtOCA4LTgtMy41ODItOC04IDMuNTgyLTggOC04eiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==";
+
+const getFullPhotoUrl = (url: string | null | undefined) => {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  // Use backend URL in development
+  return `http://localhost:3111${url}`;
+};
 
 const Header = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -494,6 +502,37 @@ const Header = () => {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [openConversations]);
 
+  // Add state for user photo
+  const [userPhotoUrl, setUserPhotoUrl] = useState<string | null>(null);
+
+  // Fetch user photo on mount or when user changes
+  useEffect(() => {
+    console.log('Header user object:', user); // Debug log
+    const fetchUserPhoto = async () => {
+      if (!user?.id) {
+        setUserPhotoUrl(null);
+        return;
+      }
+      console.log('Calling fetchUserPhoto for user id:', user.id); // Debug log
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`/api/photos/${user.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error("Failed to fetch user photo");
+        const data = await res.json();
+        console.log('Fetched user photo URL:', data?.data?.photo_url); // Debug log
+        setUserPhotoUrl(data?.data?.photo_url || null);
+      } catch (err) {
+        console.error('Error fetching user photo:', err); // Debug log
+        setUserPhotoUrl(null);
+      }
+    };
+    fetchUserPhoto();
+  }, [user?.id]);
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 bg-gray-800 text-white p-4 flex justify-between items-center z-50 shadow-md">
@@ -539,12 +578,19 @@ const Header = () => {
               aria-haspopup="true"
               aria-label="Profile menu"
             >
-              <img
-                src="/profile.jpg"
-                alt="User profile"
-                className="h-8 w-8 rounded-full border-2 border-gray-400 hover:border-white transition-colors object-cover"
-                onError={handleImageError}
+              {/* Use UserAvatar for consistent fallback and styling */}
+              <UserAvatar
+                photoUrl={getFullPhotoUrl(userPhotoUrl)}
+                firstName={user?.first_name}
+                lastName={user?.last_name}
+                size="sm"
               />
+              {/* Debug: Show photo URL or error message */}
+              {userPhotoUrl === null && (
+                <span style={{ color: 'red', fontSize: 10, marginLeft: 4 }}>
+                  (No photo found or failed to load)
+                </span>
+              )}
             </button>
 
             {isProfileDropdownOpen && (

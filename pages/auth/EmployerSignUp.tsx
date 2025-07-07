@@ -3,9 +3,9 @@ import { useForm } from "react-hook-form";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { FaUser, FaCamera } from "react-icons/fa";
 // import { FormData } from "../../components/types/types";
 import {
-  FaUser,
   FaLock,
   FaEye,
   FaEyeSlash,
@@ -26,6 +26,8 @@ export default function EmployerSignupForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
 
   interface FormData {
     email: string;
@@ -45,6 +47,7 @@ export default function EmployerSignupForm() {
     agreeToTerms: boolean;
     userType: "EMPLOYER";
     logo_path?: FileList;
+    // photo?: FileList; // Not needed, handled by state
   }
 
   const {
@@ -107,6 +110,11 @@ const onSubmit = async (data: FormData) => {
     // 3. Append the logo file separately if exists
     if (data.logo_path && data.logo_path[0]) {
       formData.append('logo', data.logo_path[0]);
+    }
+
+    // 4. Append the photo file if it exists
+    if (photoFile) {
+      formData.append('photo', photoFile);
     }
 
     // Debug: Log the complete form data before sending
@@ -601,6 +609,45 @@ const onSubmit = async (data: FormData) => {
                 <h3 className="text-sm font-medium text-gray-500 border-b pb-2">
                   Personal Information
                 </h3>
+
+                {/* Profile Photo Upload */}
+                <div className="space-y-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Profile Photo
+                  </label>
+                  <div className="flex justify-center">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setPhotoFile(file);
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setPhotoPreview(reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:border file:rounded-lg file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 text-center">
+                    Upload a professional photo for your profile (optional)
+                  </p>
+                </div>
+
+                {/* Photo Preview */}
+                {photoPreview && (
+                  <div className="mt-4">
+                    <img
+                      src={photoPreview}
+                      alt="Profile Photo Preview"
+                      className="max-w-full h-auto rounded-lg"
+                    />
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* First Name */}

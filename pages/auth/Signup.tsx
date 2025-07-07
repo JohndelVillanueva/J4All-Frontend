@@ -126,6 +126,8 @@ const SignUpPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showHelpTooltip, setShowHelpTooltip] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const formRef = useFocusTrap();
 
   const {
@@ -151,34 +153,44 @@ const SignUpPage: React.FC = () => {
     setError(null);
     
     try {
-      // Log the request for debugging
-      console.log('Sending registration request to:', '/api/create');
-      console.log('Request payload:', {
-        username: data.email,
-        email: data.email,
-        password: '[HIDDEN]', // Don't log actual password
-        user_type: data.userType,
-        first_name: data.firstName,
-        last_name: data.lastName,
-        phone_number: data.phone,
-      });
-
-      const response = await fetch('/api/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: data.email,
-          email: data.email,
-          password: data.password_hash,
-          user_type: data.userType,
-          first_name: data.firstName,
-          last_name: data.lastName,
-          phone_number: data.phone,
-        }),
-        credentials: 'include',
-      });
+      let response;
+      if (photoFile) {
+        // Use FormData if photo is present
+        const formData = new FormData();
+        formData.append('username', data.email);
+        formData.append('email', data.email);
+        formData.append('password', data.password_hash);
+        formData.append('user_type', data.userType);
+        formData.append('first_name', data.firstName);
+        formData.append('last_name', data.lastName);
+        formData.append('phone_number', data.phone);
+        formData.append('address', data.address);
+        formData.append('photo', photoFile);
+        response = await fetch('/api/create', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+        });
+      } else {
+        // Fallback to JSON if no photo
+        response = await fetch('/api/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: data.email,
+            email: data.email,
+            password: data.password_hash,
+            user_type: data.userType,
+            first_name: data.firstName,
+            last_name: data.lastName,
+            phone_number: data.phone,
+            address: data.address,
+          }),
+          credentials: 'include',
+        });
+      }
 
       const responseText = await response.text();
       console.log('Raw response:', responseText);
@@ -378,7 +390,7 @@ const SignUpPage: React.FC = () => {
             </AnimatePresence>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <h2 id="signup-heading" className="text-2xl font-bold text-gray-800 text-center">
               Create Your Account
             </h2>
@@ -686,6 +698,38 @@ const SignUpPage: React.FC = () => {
                   </motion.p>
                 )}
               </div>
+            </div>
+
+            {/* Profile Photo Upload */}
+            <div>
+              <label htmlFor="photo" className="block text-sm font-medium text-gray-700">
+                Profile Photo (optional)
+              </label>
+              <input
+                id="photo"
+                name="photo"
+                type="file"
+                accept="image/*"
+                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                onChange={e => {
+                  const file = e.target.files?.[0] || null;
+                  setPhotoFile(file);
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => setPhotoPreview(reader.result as string);
+                    reader.readAsDataURL(file);
+                  } else {
+                    setPhotoPreview(null);
+                  }
+                }}
+              />
+              {photoPreview && (
+                <img
+                  src={photoPreview}
+                  alt="Profile Preview"
+                  className="mt-2 w-20 h-20 rounded-full object-cover border"
+                />
+              )}
             </div>
 
             {/* Submit button */}

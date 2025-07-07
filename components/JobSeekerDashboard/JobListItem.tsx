@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaBriefcase, FaChevronLeft, FaChevronRight, FaComments, FaUserFriends } from "react-icons/fa";
 import { JobListing } from "../types/types";
 import CompanyLogo from "./CompanyLogo";
@@ -6,6 +6,7 @@ import JobDescriptionModal from "./JobDescriptionModal";
 import ApplyModal from "./ApplyModal";
 import MessageModal from "./MessageModal";
 import { useAuth } from "../../contexts/AuthContext";
+import UserAvatar from '../UserAvatar';
 
 
 interface JobListItemProps {
@@ -18,6 +19,41 @@ interface PaginatedJobListProps {
   itemsPerPage?: number;
 }
 
+// Dynamic hook to fetch user info and photo by userId
+function useUserAvatarInfo(userId?: number) {
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState<string>('');
+  const [lastName, setLastName] = useState<string>('');
+
+  useEffect(() => {
+    if (!userId) return;
+    const fetchInfo = async () => {
+      try {
+        // Fetch user info
+        const userRes = await fetch(`/api/users/${userId}`);
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          setFirstName(userData?.data?.first_name || '');
+          setLastName(userData?.data?.last_name || '');
+        }
+        // Fetch user photo
+        const photoRes = await fetch(`/api/photos/${userId}`);
+        if (photoRes.ok) {
+          const photoData = await photoRes.json();
+          setPhotoUrl(photoData?.data?.photo_url || null);
+        } else {
+          setPhotoUrl(null);
+        }
+      } catch (e) {
+        setPhotoUrl(null);
+      }
+    };
+    fetchInfo();
+  }, [userId]);
+
+  return { photoUrl, firstName, lastName };
+}
+
 const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
@@ -25,6 +61,9 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  // Use dynamic userId for avatar (default to employer_user_id)
+  const avatarUserId = job.employer_user_id; // You can change this to any userId you want to display
+  const { photoUrl, firstName, lastName } = useUserAvatarInfo(avatarUserId);
 
   const handleApply = async (resume: File | null, coverLetter: string) => {
     setIsSubmitting(true);
@@ -91,10 +130,12 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess }) => {
         <div className="px-4 py-4 sm:px-6">
           <div className="flex items-start justify-between">
             <div className="flex items-start">
-              <CompanyLogo
-                company={typeof job.company === "string" ? job.company : job.company?.name || "Unknown Company"}
-                logoPath={job.logo_path}
-                className="flex-shrink-0 mt-1"
+              <UserAvatar
+                photoUrl={photoUrl ? `http://localhost:3111${photoUrl}` : undefined}
+                firstName={firstName}
+                lastName={lastName}
+                size="md"
+                className="flex-shrink-0 mt-1 mr-2"
               />
               <div className="ml-4">
                 <h3 className="text-lg font-medium text-blue-600">
