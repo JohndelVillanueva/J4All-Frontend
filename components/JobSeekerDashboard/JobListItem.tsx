@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FaBriefcase, FaChevronLeft, FaChevronRight, FaComments } from "react-icons/fa";
+import { FaBriefcase, FaChevronLeft, FaChevronRight, FaComments, FaUserFriends } from "react-icons/fa";
 import { JobListing } from "../types/types";
 import CompanyLogo from "./CompanyLogo";
 import JobDescriptionModal from "./JobDescriptionModal";
@@ -105,6 +105,13 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess }) => {
     ? job.company
     : job.company?.name || "Unknown Company")} • {job.location} • {job.work_mode}
                 </p>
+                {/* Applicant count display */}
+                {typeof (job as any).applicants !== 'undefined' && (
+                  <p className="text-xs text-gray-500 mt-1 flex items-center">
+                    <FaUserFriends className="mr-1" />
+                    {(job as any).applicants} applicant{(job as any).applicants === 1 ? '' : 's'}
+                  </p>
+                )}
                 {(job as any).hrFirstName || (job as any).hrLastName ? (
                   <p className="text-xs text-gray-500 mt-1">
                     HR: {((job as any).hrFirstName ?? '')} {((job as any).hrLastName ?? '')}

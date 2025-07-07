@@ -232,6 +232,7 @@ const JobSeekerDashboard = () => {
         employer_user_id: job.employer_user_id,
         hrFirstName: job.hrFirstName || '',
         hrLastName: job.hrLastName || '',
+        applicants: job.applicants || 0,
       }));
 
       setJobListings(transformedJobs);

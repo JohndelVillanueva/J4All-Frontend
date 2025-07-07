@@ -10,6 +10,7 @@ import {
   FaCheckCircle,
   FaTimesCircle,
   FaClock,
+  FaUserFriends,
 } from "react-icons/fa";
 import DynamicHeader from "../../components/JobSeekerDashboard/DynamicHeader";
 import { useNavigate } from "react-router-dom";
@@ -589,9 +590,17 @@ console.log('EmployerDashboard mounted');
                       <li key={job.id}>
                         <div className="px-4 py-4 sm:px-6">
                           <div className="flex items-center justify-between">
-                            <p className="text-lg font-medium text-blue-600 truncate">
-                              {job.job_title}
-                            </p>
+                            <div className="flex items-center">
+                              <p className="text-lg font-medium text-blue-600 truncate">
+                                {job.job_title}
+                              </p>
+                              {typeof job.applicants !== 'undefined' && (
+                                <span className="inline-flex items-center px-2 py-1 ml-3 text-xs font-semibold rounded-full bg-blue-50 text-blue-700">
+                                  <FaUserFriends className="mr-1" />
+                                  {job.applicants} applicant{job.applicants === 1 ? '' : 's'}
+                                </span>
+                              )}
+                            </div>
                             <div className="ml-2 flex-shrink-0 flex">
                               {job.status === "active" ? (
                                 <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
@@ -607,10 +616,6 @@ console.log('EmployerDashboard mounted');
                           <div className="mt-2 sm:flex sm:justify-between">
                             <div className="sm:flex">
                               <p className="flex items-center text-sm text-gray-500">
-                                <FaUserTie className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                                {job.applicants} applicants
-                              </p>
-                              <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
                                 <FaCalendarAlt className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
                                 Posted on {new Date(job.posted_date).toLocaleDateString()}
                               </p>
