@@ -33,6 +33,7 @@ export interface Notification {
   is_read: boolean;
   created_at: string;
   updated_at: string;
+  application_id?: number; // Optional field for job application notifications
 }
 
 export interface CreateNotificationData {

@@ -7,6 +7,7 @@ import EmployerSignUpForm from "../pages/auth/EmployerSignUp";
 import { AuthProvider } from "../contexts/AuthContext";
 import { ToastProvider } from "../components/ToastContainer";
 import LoadingScreen from "../components/LoadingScreen"; // Create this component
+// import ApplicationDetailsPage from '../pages/applicant/ApplicationDetails';
 
 // Lazy-loaded components
 const PwdPage = lazy(() => import("../pages/admin/PwdPage"));
@@ -78,6 +79,7 @@ export default function App() {
                     </Suspense>
                   }
                 />
+                {/* <Route path="/applications/:id" element={<ApplicationDetailsPage />} /> */}
               </Routes>
             </Layout>
                   </Router>

@@ -25,6 +25,7 @@ import { notificationService } from "../src/services/notificationService";
 import { messageService } from "../src/services/messageService";
 import React from "react";
 import UserAvatar from "./UserAvatar";
+import ApplicationDetailsModal from "../pages/applicant/ApplicationDetailsModal";
 
 const DEFAULT_PROFILE_IMAGE =
   "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJDNi40NzcgMiAyIDYuNDc3IDIgMTJzNC40NzcgMTAgMTAgMTAgMTAtNC40NzcgMTAtMTBTMTcuNTIzIDIgMTIgMnptMCAyYzQuNDE4IDAgOCAzLjU4MiA4IDhzLTMuNTgyIDgtOCA4LTgtMy41ODItOC04IDMuNTgyLTggOC04eiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==";
@@ -43,6 +44,8 @@ const Header = () => {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isMessageSidebarOpen, setIsMessageSidebarOpen] = useState(false);
   const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
+  const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(null);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
@@ -71,7 +74,12 @@ const Header = () => {
         time: new Date(notification.created_at).toLocaleTimeString(),
         icon: notification.type === 'error' ? <FaExclamationTriangle /> : 
               notification.type === 'success' ? <FaCheckCircle /> : 
-              <FaInfoCircle />
+              <FaInfoCircle />, 
+        // Set targetUrl for application notifications if application_id exists
+        targetUrl:
+          (notification.application_id ? `/applications/${notification.application_id}` :
+            (notification.type === 'info') ? '/info' : null),
+        is_read: notification.is_read, // Preserve is_read from API
       }));
       setNotifications(transformedNotifications);
     } catch (error) {
@@ -533,6 +541,41 @@ const Header = () => {
     fetchUserPhoto();
   }, [user?.id]);
 
+  // Optimistic mark as read handler
+  const handleMarkAsRead = async (notificationId: number) => {
+    try {
+      await notificationService.markAsRead(notificationId);
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === notificationId ? { ...n, is_read: true } : n
+        )
+      );
+      setUnreadNotificationCount((prev) => Math.max(prev - 1, 0));
+      // Refetch for accuracy
+      fetchUnreadNotificationCount();
+      fetchNotifications(); // Ensure notifications are always in sync with backend
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const handleNotificationClick = async (notification: any) => {
+    // If notification is for an application (targetUrl matches /applications/ID)
+    const match = notification.targetUrl && notification.targetUrl.match(/\/applications\/(\d+)/);
+    if (match) {
+      setSelectedApplicationId(Number(match[1]));
+      setIsApplicationModalOpen(true);
+      if (handleMarkAsRead) await handleMarkAsRead(notification.id);
+      return;
+    }
+    // Default: navigate
+    if (notification.targetUrl) {
+      navigate(notification.targetUrl);
+      if (handleMarkAsRead) await handleMarkAsRead(notification.id);
+      toggleNotification();
+    }
+  };
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 bg-gray-800 text-white p-4 flex justify-between items-center z-50 shadow-md">
@@ -616,15 +659,7 @@ const Header = () => {
         isNotificationOpen={isNotificationOpen}
         toggleNotification={toggleNotification}
         notifications={notifications}
-        onMarkAsRead={async (notificationId) => {
-          try {
-            await notificationService.markAsRead(notificationId);
-            fetchNotifications();
-            fetchUnreadNotificationCount();
-          } catch (error) {
-            console.error('Error marking notification as read:', error);
-          }
-        }}
+        onMarkAsRead={handleMarkAsRead}
         onMarkAllAsRead={async () => {
           try {
             await notificationService.markAllAsRead();
@@ -634,6 +669,7 @@ const Header = () => {
             console.error('Error marking all notifications as read:', error);
           }
         }}
+        onNotificationClick={handleNotificationClick}
       />
 
       <MessageSidebar
@@ -749,6 +785,17 @@ const Header = () => {
           );
         });
       })()}
+
+      <ApplicationDetailsModal
+        applicationId={selectedApplicationId}
+        isOpen={isApplicationModalOpen}
+        onClose={() => {
+          setIsApplicationModalOpen(false);
+          setSelectedApplicationId(null);
+          fetchNotifications();
+          fetchUnreadNotificationCount();
+        }}
+      />
     </>
   );
 };

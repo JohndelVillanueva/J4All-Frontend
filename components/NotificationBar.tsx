@@ -1,5 +1,6 @@
 import React from "react";
 import { FaBell, FaTimes } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 interface Notification {
   id: number;
@@ -8,6 +9,8 @@ interface Notification {
   message: string;
   time: string;
   icon: React.ReactNode;
+  targetUrl?: string; // <-- Add this line
+  is_read: boolean; // <-- Add this line
 }
 
 interface NotificationBarProps {
@@ -17,14 +20,19 @@ interface NotificationBarProps {
   notifications: Notification[];
   onMarkAsRead?: (notificationId: number) => Promise<void>;
   onMarkAllAsRead?: () => Promise<void>;
+  onNotificationClick?: (notification: Notification) => void | Promise<void>; // <-- add this line
 }
 
 const NotificationBar: React.FC<NotificationBarProps> = ({ 
   notificationRef, 
   isNotificationOpen, 
   toggleNotification, 
-  notifications 
+  notifications, 
+  onMarkAsRead, // <-- add to destructure
+  onMarkAllAsRead, // <-- add to destructure
+  onNotificationClick // <-- add to destructure
 }) => {
+  const navigate = useNavigate();
   
   return (
     <div 
@@ -60,8 +68,8 @@ const NotificationBar: React.FC<NotificationBarProps> = ({
           </span>
           <button 
             className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-            onClick={() => {
-              // Mark all as read functionality
+            onClick={async () => {
+              if (onMarkAllAsRead) await onMarkAllAsRead();
             }}
           >
             Mark all as read
@@ -72,28 +80,59 @@ const NotificationBar: React.FC<NotificationBarProps> = ({
         <div className="flex-1 overflow-y-auto">
           {notifications.length > 0 ? (
             <ul className="divide-y divide-gray-200">
-              {notifications.map((notification) => (
-                <li key={notification.id} className="hover:bg-gray-50 transition-colors">
-                  <div className="p-4">
-                    <div className="flex items-start space-x-3">
-                      <div className={`p-2 rounded-full ${
-                        notification.type === 'alert' ? 'bg-yellow-100 text-yellow-600' : 
-                        notification.type === 'success' ? 'bg-green-100 text-green-600' : 
-                        'bg-blue-100 text-blue-600'
-                      }`}>
-                        {notification.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start">
-                          <h3 className="text-md font-semibold text-gray-800">{notification.title}</h3>
-                          <span className="text-xs text-gray-400">{notification.time}</span>
+              {notifications.map((notification) => {
+                const isUnread = !notification.is_read;
+                return (
+                  <li
+                    key={notification.id}
+                    className={`transition-colors ${
+                      isUnread ? 'bg-blue-100 border-l-4 border-blue-500 shadow-md' : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <button
+                      className="w-full text-left p-0 bg-transparent border-none focus:outline-none"
+                      style={{ cursor: notification.targetUrl ? 'pointer' : 'default' }}
+                      onClick={async () => {
+                        if (onNotificationClick) {
+                          await onNotificationClick(notification);
+                          toggleNotification();
+                          return;
+                        }
+                        if (onMarkAsRead) {
+                          await onMarkAsRead(notification.id);
+                        }
+                        if (notification.targetUrl) {
+                          navigate(notification.targetUrl);
+                          toggleNotification();
+                        }
+                      }}
+                    >
+                      <div className="p-4 flex items-center">
+                        {/* Unread dot */}
+                        {isUnread && (
+                          <span className="inline-block w-2 h-2 bg-blue-500 rounded-full mr-3" title="Unread notification"></span>
+                        )}
+                        <div className="flex items-start space-x-3 flex-1">
+                          <div className={`p-2 rounded-full ${
+                            notification.type === 'alert' ? 'bg-yellow-100 text-yellow-600' : 
+                            notification.type === 'success' ? 'bg-green-100 text-green-600' : 
+                            'bg-blue-100 text-blue-600'
+                          }`}>
+                            {notification.icon}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-start">
+                              <h3 className={`text-md font-semibold ${isUnread ? 'text-blue-900' : 'text-gray-800'}`}>{notification.title}</h3>
+                              <span className="text-xs text-gray-400">{notification.time}</span>
+                            </div>
+                            <p className={`text-gray-600 text-sm mt-1 ${isUnread ? 'font-semibold' : ''}`}>{notification.message}</p>
+                          </div>
                         </div>
-                        <p className="text-gray-600 text-sm mt-1">{notification.message}</p>
                       </div>
-                    </div>
-                  </div>
-                </li>
-              ))}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <div className="h-full flex flex-col items-center justify-center p-6 text-center">
