@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { FaTimes, FaArrowLeft, FaPaperPlane, FaUserCircle, FaWindowMinimize, FaComments } from "react-icons/fa";
 import { messageService } from "../src/services/messageService";
+import UserAvatar from "./UserAvatar";
+import { getFullPhotoUrl } from "./utils/photo";
 
 interface Message {
   id: number;
@@ -32,6 +34,7 @@ interface Conversation {
     username: string;
     first_name: string | null;
     last_name: string | null;
+    photo: string | null;
   };
   last_message: Message | null;
   updated_at: string;
@@ -156,6 +159,12 @@ const MessageView: React.FC<MessageViewProps> = ({
     return null;
   }
 
+  // Debug: Log conversation and other_user
+  console.log('MessageView conversation:', conversation);
+  if (conversation) {
+    console.log('MessageView other_user:', conversation.other_user);
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg w-full max-w-2xl h-[80vh] flex flex-col">
@@ -169,7 +178,13 @@ const MessageView: React.FC<MessageViewProps> = ({
               <FaArrowLeft />
             </button>
             <div className="flex items-center">
-              <FaUserCircle className="h-8 w-8 text-gray-400 mr-3" />
+              <UserAvatar
+                photoUrl={getFullPhotoUrl(conversation?.other_user?.photo ?? undefined)}
+                firstName={conversation?.other_user?.first_name}
+                lastName={conversation?.other_user?.last_name}
+                size="sm"
+                className="mr-3"
+              />
               <div>
                 <h2 className="text-lg font-semibold">{getOtherUserName()}</h2>
                 <p className="text-sm text-gray-500">Active now</p>

@@ -1,5 +1,7 @@
 import React from "react";
 import { FaTimes, FaSearch, FaUserCircle, FaEllipsisV, FaPlus } from "react-icons/fa";
+import UserAvatar from "./UserAvatar";
+import { getFullPhotoUrl } from "../components/utils/photo";
 
 interface Conversation {
   id: number;
@@ -7,7 +9,9 @@ interface Conversation {
   lastMessage: string;
   time: string;
   unreadCount: number;
-  avatar?: string;
+  photo?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
 }
 
 export type MessageSidebarProps = {
@@ -87,11 +91,12 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
             >
               <div className="flex items-center">
                 <div className="flex-shrink-0 mr-3">
-                  {conversation.avatar ? (
-                    <img className="h-10 w-10 rounded-full" src={conversation.avatar} alt={conversation.participant} />
-                  ) : (
-                    <FaUserCircle className="h-10 w-10 text-gray-400" />
-                  )}
+                  <UserAvatar
+                    photoUrl={getFullPhotoUrl(conversation.photo ?? undefined)}
+                    firstName={conversation.first_name}
+                    lastName={conversation.last_name}
+                    size="md"
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between">

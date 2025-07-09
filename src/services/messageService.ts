@@ -29,6 +29,7 @@ export interface User {
   username: string;
   first_name: string | null;
   last_name: string | null;
+  photo: string | null;
 }
 
 export interface Message {

@@ -26,16 +26,10 @@ import { messageService } from "../src/services/messageService";
 import React from "react";
 import UserAvatar from "./UserAvatar";
 import ApplicationDetailsModal from "../pages/applicant/ApplicationDetailsModal";
+import { getFullPhotoUrl } from './utils/photo';
 
 const DEFAULT_PROFILE_IMAGE =
   "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJDNi40NzcgMiAyIDYuNDc3IDIgMTJzNC40NzcgMTAgMTAgMTAgMTAtNC40NzcgMTAtMTBTMTcuNTIzIDIgMTIgMnptMCAyYzQuNDE4IDAgOCAzLjU4MiA4IDhzLTMuNTgyIDgtOCA4LTgtMy41ODItOC04IDMuNTgyLTggOC04eiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==";
-
-const getFullPhotoUrl = (url: string | null | undefined) => {
-  if (!url) return null;
-  if (url.startsWith('http')) return url;
-  // Use backend URL in development
-  return `http://localhost:3111${url}`;
-};
 
 const Header = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -115,15 +109,19 @@ const Header = () => {
       // Transform service data to match component expectations
       const transformedConversations = data.map(conversation => ({
         id: conversation.id,
-        participant: conversation.other_user.first_name && conversation.other_user.last_name 
-          ? `${conversation.other_user.first_name} ${conversation.other_user.last_name}`
-          : conversation.other_user.username,
+        participant: conversation.other_user
+          ? (conversation.other_user.first_name && conversation.other_user.last_name
+              ? `${conversation.other_user.first_name} ${conversation.other_user.last_name}`
+              : conversation.other_user.username)
+          : "Unknown",
         lastMessage: conversation.last_message?.content || 'No messages yet',
-        time: conversation.last_message 
+        time: conversation.last_message
           ? new Date(conversation.last_message.created_at).toLocaleTimeString()
           : new Date(conversation.updated_at).toLocaleTimeString(),
         unreadCount: conversation.unread_count || 0,
-        avatar: undefined
+        photo: conversation.other_user ? conversation.other_user.photo || null : null,
+        first_name: conversation.other_user ? conversation.other_user.first_name : null,
+        last_name: conversation.other_user ? conversation.other_user.last_name : null,
       }));
       setConversations(transformedConversations);
       setConversationsLoaded(true);
@@ -721,6 +719,7 @@ const Header = () => {
         return minimizedConversations.map((c) => {
           const conv = conversations.find(conv => conv.id === c.id);
           console.log('Rendering floating icon for conversation:', c.id, 'conv:', conv);
+          if (!conv) return null;
           return (
             <div
               key={c.id}
@@ -759,14 +758,13 @@ const Header = () => {
               >
                 ×
               </button>
-              
               {/* Main chat button */}
               <button
                 style={{
                   width: 64,
                   height: 64,
-                  background: '#007bff',
-                  color: 'white',
+                  background: 'transparent',
+                  color: 'inherit',
                   borderRadius: '50%',
                   fontSize: 24,
                   border: 'none',
@@ -774,12 +772,23 @@ const Header = () => {
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  padding: 0
                 }}
                 onClick={() => handleRestore(c.id)}
-                title={conv ? `Restore chat with ${conv.participant}` : 'Restore chat'}
+                title={`Restore chat with ${conv.participant}`}
               >
-                <i className="fas fa-comment"></i>
+                <img
+                  src={getFullPhotoUrl(conv.photo ?? undefined)}
+                  alt={conv.participant}
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                  }}
+                />
               </button>
             </div>
           );
