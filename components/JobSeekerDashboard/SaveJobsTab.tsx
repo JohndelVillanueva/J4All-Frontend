@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { JobListing } from "../types/types";
-import JobListItem from "./JobListItem";
 import { FaBriefcase, FaTrash, FaEye } from "react-icons/fa";
 import JobDescriptionModal from "./JobDescriptionModal";
+import { useToast } from "../ToastContainer";
+import { handleApiError } from "../../src/utils/errorHandler";
 
 interface SavedJob {
   id: number;
@@ -26,12 +27,13 @@ interface SavedJobsTabProps {
   onRefresh?: () => void;
 }
 
-const SavedJobsTab: React.FC<SavedJobsTabProps> = ({ jobListings, onRefresh }) => {
+const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedJob, setSelectedJob] = useState<SavedJob | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { showToast } = useToast();
 
   // Fetch saved jobs from backend
   const fetchSavedJobs = async () => {
@@ -51,7 +53,20 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = ({ jobListings, onRefresh }) =
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch saved jobs");
+        
+        // Create a mock error object for the error handler
+        const mockError = {
+          response: {
+            status: response.status,
+            data: errorData
+          }
+        };
+        
+        const errorInfo = handleApiError(mockError);
+        showToast(errorInfo);
+        setError(errorInfo.message);
+        setSavedJobs([]);
+        return;
       }
 
       const data = await response.json();
@@ -61,7 +76,9 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = ({ jobListings, onRefresh }) =
         setSavedJobs([]);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch saved jobs");
+      const errorInfo = handleApiError(err);
+      showToast(errorInfo);
+      setError(errorInfo.message);
       console.error("Saved jobs fetch error:", err);
       setSavedJobs([]);
     } finally {
@@ -88,14 +105,33 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = ({ jobListings, onRefresh }) =
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to remove job");
+        
+        // Create a mock error object for the error handler
+        const mockError = {
+          response: {
+            status: response.status,
+            data: errorData
+          }
+        };
+        
+        const errorInfo = handleApiError(mockError);
+        showToast(errorInfo);
+        return;
       }
 
       // Remove from local state
       setSavedJobs(prev => prev.filter(job => job.id !== jobId));
+      showToast({
+        type: 'success',
+        title: 'Job Removed',
+        message: 'Job has been removed from your saved jobs.',
+        autoHide: true,
+        autoHideDelay: 3000
+      });
     } catch (err) {
       console.error("Error removing job:", err);
-      alert(err instanceof Error ? err.message : "Failed to remove job");
+      const errorInfo = handleApiError(err);
+      showToast(errorInfo);
     }
   };
 

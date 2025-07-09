@@ -2,11 +2,55 @@ import React from "react";
 import { FaEnvelope, FaExternalLinkAlt } from "react-icons/fa";
 import { Application, JobListing } from "../types/types";
 import ErrorBoundary from "./ErrorBoundary"; // Import the ErrorBoundary component
+import UserAvatar from '../UserAvatar';
+
+// Dynamic hook to fetch user info and photo by userId (copied from JobListItem)
+function useUserAvatarInfo(userId?: number) {
+  const [photoUrl, setPhotoUrl] = React.useState<string | null>(null);
+  const [firstName, setFirstName] = React.useState<string>('');
+  const [lastName, setLastName] = React.useState<string>('');
+
+  React.useEffect(() => {
+    if (!userId) return;
+    const fetchInfo = async () => {
+      try {
+        // Fetch user info
+        const userRes = await fetch(`/api/users/${userId}`);
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          setFirstName(userData?.data?.first_name || '');
+          setLastName(userData?.data?.last_name || '');
+        }
+        // Fetch user photo
+        const photoRes = await fetch(`/api/photos/${userId}`);
+        if (photoRes.ok) {
+          const photoData = await photoRes.json();
+          setPhotoUrl(photoData?.data?.photo_url || null);
+        } else {
+          setPhotoUrl(null);
+        }
+      } catch (e) {
+        setPhotoUrl(null);
+      }
+    };
+    fetchInfo();
+  }, [userId]);
+
+  return { photoUrl, firstName, lastName };
+}
 
 interface ApplicationsTabProps {
   applications: Application[];
   jobListings: JobListing[];
 }
+
+const getFullImageUrl = (path: string | undefined | null) => {
+  if (!path) return undefined;
+  if (path.startsWith('http')) return path;
+  // If you need a base URL, set it here, e.g. const baseUrl = 'http://localhost:3001';
+  // For now, just return the path as-is:
+  return path;
+};
 
 const ApplicationListItem: React.FC<{ app: Application; job?: JobListing }> = ({ app, job }) => {
   // Use job data from application if available, otherwise fall back to jobListings
@@ -26,21 +70,31 @@ const ApplicationListItem: React.FC<{ app: Application; job?: JobListing }> = ({
   // Ensure updates exists before mapping
   const updates = app.updates || [];
 
+  // Use the employer's user profile photo (hrPhoto) as the avatar
+  const photoUrl = app.job && app.job.hrPhoto ? `http://localhost:3111${app.job.hrPhoto}` : undefined;
+
   return (
     <li>
       <div className="px-4 py-4 sm:px-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-600 text-lg font-medium">
-                {typeof safeJob.company === 'string' ? safeJob.company.charAt(0) : safeJob.company?.name?.charAt(0) || "?"}
-              </span>
+            <div className="flex-shrink-0 h-12 w-12 flex items-center justify-center">
+              <UserAvatar
+                photoUrl={photoUrl}
+                firstName={typeof safeJob.company === 'string' ? safeJob.company : safeJob.company?.name || ''}
+                lastName={''}
+                size="md"
+                className="flex-shrink-0"
+              />
             </div>
             <div className="ml-4">
               <p className="text-lg font-medium text-blue-600">{safeJob.title}</p>
               <p className="text-sm text-gray-500">
-                {typeof safeJob.company === 'string' ? safeJob.company : safeJob.company?.name || "Unknown Company"} • Applied on {app.date || "unknown date"}
+                {typeof safeJob.company === 'string' ? safeJob.company : safeJob.company?.name || 'Unknown Company'} • Applied on {app.date || 'unknown date'}
               </p>
+              {('hrName' in safeJob && safeJob.hrName) && (
+                <p className="text-xs text-gray-500">HR: {safeJob.hrName}</p>
+              )}
             </div>
           </div>
           <div className="ml-2 flex-shrink-0 flex">

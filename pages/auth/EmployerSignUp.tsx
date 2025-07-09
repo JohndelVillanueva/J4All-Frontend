@@ -18,9 +18,12 @@ import {
   FaCheck,
   FaBriefcase,
 } from "react-icons/fa";
+import { useToast } from "../../components/ToastContainer";
+import { handleRegistrationError } from "../../src/utils/errorHandler";
 
 export default function EmployerSignupForm() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -131,49 +134,34 @@ const onSubmit = async (data: FormData) => {
     });
 
     if (response.status === 200 || response.status === 201) {
-      setShowSuccess(true);
+      showToast({
+        type: 'success',
+        title: 'Registration Successful',
+        message: 'Welcome to J4All! Your employer account has been created successfully.',
+        autoHide: true,
+        autoHideDelay: 3000
+      });
+      
       setTimeout(() => {
         navigate("/");
       }, 2000);
     }
   } catch (error: any) {
     console.error("Full error:", error);
+    
+    const errorInfo = handleRegistrationError(error);
+    showToast(errorInfo);
+    
+    // Also set form errors for field-specific validation
     const responseData = error?.response?.data;
+    if (responseData?.errors?.fieldErrors) {
+      const { user, employer, ...rootErrors } = responseData.errors.fieldErrors;
 
-    // Handle specific error cases
-    if (responseData?.errors) {
-      // Handle field errors
-      if (responseData.errors.fieldErrors) {
-        const { user, employer, ...rootErrors } = responseData.errors.fieldErrors;
-
-        // Handle user field errors
-        if (user) {
-          for (const [field, messages] of Object.entries(user)) {
-            if (Array.isArray(messages) && messages.length > 0) {
-              setError(`user.${field}` as any, {
-                type: "server",
-                message: messages[0]
-              });
-            }
-          }
-        }
-
-        // Handle employer field errors
-        if (employer) {
-          for (const [field, messages] of Object.entries(employer)) {
-            if (Array.isArray(messages) && messages.length > 0) {
-              setError(`employer.${field}` as any, {
-                type: "server",
-                message: messages[0]
-              });
-            }
-          }
-        }
-
-        // Handle root level errors (confirmPassword, agreeToTerms)
-        for (const [field, messages] of Object.entries(rootErrors)) {
+      // Handle user field errors
+      if (user) {
+        for (const [field, messages] of Object.entries(user)) {
           if (Array.isArray(messages) && messages.length > 0) {
-            setError(field as keyof FormData, {
+            setError(`user.${field}` as any, {
               type: "server",
               message: messages[0]
             });
@@ -181,14 +169,27 @@ const onSubmit = async (data: FormData) => {
         }
       }
 
-      // Handle form errors
-      if (responseData.errors.formErrors?.length) {
-        setFormError(responseData.errors.formErrors[0]);
+      // Handle employer field errors
+      if (employer) {
+        for (const [field, messages] of Object.entries(employer)) {
+          if (Array.isArray(messages) && messages.length > 0) {
+            setError(`employer.${field}` as any, {
+              type: "server",
+              message: messages[0]
+            });
+          }
+        }
       }
-    } else if (responseData?.message) {
-      setFormError(responseData.message);
-    } else {
-      setFormError("An unexpected error occurred. Please try again.");
+
+      // Handle root level errors (confirmPassword, agreeToTerms)
+      for (const [field, messages] of Object.entries(rootErrors)) {
+        if (Array.isArray(messages) && messages.length > 0) {
+          setError(field as keyof FormData, {
+            type: "server",
+            message: messages[0]
+          });
+        }
+      }
     }
   } finally {
     setIsSubmitting(false);

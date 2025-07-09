@@ -5,6 +5,7 @@ import Login from "../pages/auth/Login";
 import SignUpPage from "../pages/auth/SignUp";
 import EmployerSignUpForm from "../pages/auth/EmployerSignUp";
 import { AuthProvider } from "../contexts/AuthContext";
+import { ToastProvider } from "../components/ToastContainer";
 import LoadingScreen from "../components/LoadingScreen"; // Create this component
 
 // Lazy-loaded components
@@ -19,67 +20,69 @@ const EmployerDashboard = lazy(() => import("../routing/employer/EmployerDashboa
 export default function App() {
   return (
     <AuthProvider>
-      <div className="App">
-        <Router>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Login />} />
-              <Route path="/SignUpPage" element={<SignUpPage />} />
-              <Route path="/EmployerSignUpForm" element={<EmployerSignUpForm />} />
+      <ToastProvider>
+        <div className="App">
+          <Router>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Login />} />
+                <Route path="/SignUpPage" element={<SignUpPage />} />
+                <Route path="/EmployerSignUpForm" element={<EmployerSignUpForm />} />
 
-              {/* Lazy-loaded routes with Suspense */}
-              <Route
-                path="/ApplicantDashboard"
-                element={
-                  <Suspense fallback={<LoadingScreen />}>
-                    <ApplicantDashboard />
-                  </Suspense>
-                }
-              />
-              {/* <Route
-                path="/PWDDashboard"
-                element={
-                  <Suspense fallback={<LoadingScreen />}>
-                    <PWDDashboard />
-                  </Suspense>
-                }
-              /> */}
-              <Route
-                path="/indigenous-people"
-                element={
-                  <Suspense fallback={<LoadingScreen />}>
-                    <IndiPeoplePage />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="/Pwd"
-                element={
-                  <Suspense fallback={<LoadingScreen />}>
-                    <PwdPage />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="/EmployerDashboard"
-                element={
-                  <Suspense fallback={<LoadingScreen />}>
-                    <EmployerDashboard />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="/AdminDashboard"
-                element={
-                  <Suspense fallback={<LoadingScreen />}>
-                    <AdminDashboard />
-                  </Suspense>
-                }
-              />
-            </Routes>
-          </Layout>
-        </Router>
+                {/* Lazy-loaded routes with Suspense */}
+                <Route
+                  path="/ApplicantDashboard"
+                  element={
+                    <Suspense fallback={<LoadingScreen />}>
+                      <ApplicantDashboard />
+                    </Suspense>
+                  }
+                />
+                {/* <Route
+                  path="/PWDDashboard"
+                  element={
+                    <Suspense fallback={<LoadingScreen />}>
+                      <PWDDashboard />
+                    </Suspense>
+                  }
+                /> */}
+                <Route
+                  path="/indigenous-people"
+                  element={
+                    <Suspense fallback={<LoadingScreen />}>
+                      <IndiPeoplePage />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/Pwd"
+                  element={
+                    <Suspense fallback={<LoadingScreen />}>
+                      <PwdPage />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/EmployerDashboard"
+                  element={
+                    <Suspense fallback={<LoadingScreen />}>
+                      <EmployerDashboard />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/AdminDashboard"
+                  element={
+                    <Suspense fallback={<LoadingScreen />}>
+                      <AdminDashboard />
+                    </Suspense>
+                  }
+                />
+              </Routes>
+            </Layout>
+                  </Router>
       </div>
-    </AuthProvider>
-  );
+    </ToastProvider>
+  </AuthProvider>
+);
 }

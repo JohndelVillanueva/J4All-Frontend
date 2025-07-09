@@ -6,6 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { JSX } from 'react';
+import { useToast } from '../../components/ToastContainer';
+import { handleRegistrationError } from '../../src/utils/errorHandler';
 
 // Type definitions
 type UserType = 'general' | 'pwd' | 'indigenous';
@@ -121,6 +123,7 @@ const UserTypeButton: React.FC<{
 
 const SignUpPage: React.FC = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [showPassword_hash, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -204,20 +207,30 @@ const SignUpPage: React.FC = () => {
           console.error('Failed to parse error response:', e);
         }
         
-        if (response.status === 409) {
-          throw new Error('This email is already registered. Please use a different email or try logging in.');
-        } else if (response.status === 400) {
-          throw new Error(errorData.error || 'Invalid request. Please check your input and try again.');
-        } else if (response.status === 429) {
-          throw new Error('Too many attempts. Please try again later.');
-        } else {
-          throw new Error(errorData.error || `Server error: ${response.status} ${response.statusText}`);
-        }
+        // Create a mock error object for the error handler
+        const mockError = {
+          response: {
+            status: response.status,
+            data: errorData
+          }
+        };
+        
+        const errorInfo = handleRegistrationError(mockError);
+        showToast(errorInfo);
+        return;
       }
 
       // Handle successful response
       const responseData = responseText ? JSON.parse(responseText) : {};
       console.log('Registration successful:', responseData);
+
+      showToast({
+        type: 'success',
+        title: 'Registration Successful',
+        message: 'Welcome to J4All! Your account has been created successfully.',
+        autoHide: true,
+        autoHideDelay: 3000
+      });
 
       sessionStorage.setItem('registrationSuccess', 'true');
       navigate('/', {
@@ -231,14 +244,8 @@ const SignUpPage: React.FC = () => {
     } catch (err) {
       console.error('Registration error:', err);
       
-      let errorMessage = 'An unexpected error occurred';
-      if (err instanceof TypeError && err.message === 'Failed to fetch') {
-        errorMessage = 'Unable to connect to the server. Please check your internet connection and try again.';
-      } else if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-      
-      setError(errorMessage);
+      const errorInfo = handleRegistrationError(err);
+      showToast(errorInfo);
     } finally {
       setIsSubmitting(false);
     }

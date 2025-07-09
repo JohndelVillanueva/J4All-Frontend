@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { FaTimes, FaRegStar, FaStar, FaComments } from "react-icons/fa";
 import { JobListing } from "../types/types";
 import MessageModal from "./MessageModal";
+import { useToast } from "../ToastContainer";
+import { handleApiError } from "../../src/utils/errorHandler";
 
 interface JobDescriptionModalProps {
   job: JobListing;
@@ -20,6 +22,7 @@ const JobDescriptionModal: React.FC<JobDescriptionModalProps> = ({
   const [isSaved, setIsSaved] = useState(job.status === "saved");
   const [isSaving, setIsSaving] = useState(false);
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+  const { showToast } = useToast();
 
   const handleSaveToggle = async () => {
     setIsSaving(true);
@@ -42,10 +45,28 @@ const JobDescriptionModal: React.FC<JobDescriptionModalProps> = ({
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to unsave job");
+          
+          // Create a mock error object for the error handler
+          const mockError = {
+            response: {
+              status: response.status,
+              data: errorData
+            }
+          };
+          
+          const errorInfo = handleApiError(mockError);
+          showToast(errorInfo);
+          return;
         }
 
         await onUnsaveJob(Number(job.id));
+        showToast({
+          type: 'success',
+          title: 'Job Removed',
+          message: 'Job has been removed from your saved jobs.',
+          autoHide: true,
+          autoHideDelay: 3000
+        });
       } else {
         // Save job
         const response = await fetch("/api/save-job", {
@@ -59,17 +80,35 @@ const JobDescriptionModal: React.FC<JobDescriptionModalProps> = ({
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to save job");
+          
+          // Create a mock error object for the error handler
+          const mockError = {
+            response: {
+              status: response.status,
+              data: errorData
+            }
+          };
+          
+          const errorInfo = handleApiError(mockError);
+          showToast(errorInfo);
+          return;
         }
 
         await onSaveJob(Number(job.id));
+        showToast({
+          type: 'success',
+          title: 'Job Saved',
+          message: 'Job has been added to your saved jobs.',
+          autoHide: true,
+          autoHideDelay: 3000
+        });
       }
       
       setIsSaved(!isSaved);
     } catch (error) {
       console.error("Error saving job:", error);
-      // You might want to show a toast notification here
-      alert(error instanceof Error ? error.message : "An error occurred");
+      const errorInfo = handleApiError(error);
+      showToast(errorInfo);
     } finally {
       setIsSaving(false);
     }

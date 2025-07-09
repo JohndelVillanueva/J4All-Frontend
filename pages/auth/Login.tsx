@@ -13,6 +13,8 @@ import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../../components/ToastContainer";
+import { handleLoginError } from "../../src/utils/errorHandler";
 
 
 // Type definitions
@@ -41,6 +43,7 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
+  const { showToast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showHelpTooltip, setShowHelpTooltip] = useState(false);
@@ -136,17 +139,15 @@ const LoginPage: React.FC = () => {
           navigate(redirectPath);
         }, 100); // 100ms delay to ensure context updates
       } else {
-        setLoginError(response.data.error || "Login failed. Please try again.");
+        const errorInfo = handleLoginError({ response: { data: response.data } });
+        showToast(errorInfo);
+        return;
       }
     } catch (error: any) {
       console.error("Login error:", error);
       
-      // Enhanced error handling
-      const errorMessage = error.response?.data?.error || 
-                          error.response?.data?.message || 
-                          "An unexpected error occurred. Please try again.";
-      
-      setLoginError(errorMessage);
+      const errorInfo = handleLoginError(error);
+      showToast(errorInfo);
       
       // Specific handling for 401 errors
       if (error.response?.status === 401) {

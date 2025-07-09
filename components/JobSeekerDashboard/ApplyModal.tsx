@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { FaTimes, FaPaperclip } from "react-icons/fa";
 import { JobListing } from "../types/types";
+import { useToast } from "../ToastContainer";
+import { handleJobApplicationError } from "../../src/utils/errorHandler";
 
 interface ApplyModalProps {
   job: JobListing;
@@ -22,6 +24,7 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
     const [resume, setResume] = useState<File | null>(null);
     const [coverLetter, setCoverLetter] = useState("");
     const [fileError, setFileError] = useState<string | null>(null);
+    const { showToast } = useToast();
     // console.log('ApplyModal job:', job);
 
     // Defensive: If employer_id is missing, show a warning and do not show the form
@@ -55,11 +58,27 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
         const allowedTypes = ['application/pdf', 'application/msword', 
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
         if (!allowedTypes.includes(file.type)) {
-          setFileError("Invalid file type. Only PDF and Word documents are allowed");
+          const errorMessage = "Invalid file type. Only PDF and Word documents are allowed";
+          setFileError(errorMessage);
+          showToast({
+            type: 'warning',
+            title: 'Invalid File Type',
+            message: errorMessage,
+            autoHide: true,
+            autoHideDelay: 4000
+          });
           return;
         }
         if (file.size > 5 * 1024 * 1024) {
-          setFileError("File too large (max 5MB)");
+          const errorMessage = "File too large (max 5MB)";
+          setFileError(errorMessage);
+          showToast({
+            type: 'warning',
+            title: 'File Too Large',
+            message: errorMessage,
+            autoHide: true,
+            autoHideDelay: 4000
+          });
           return;
         }
       }
@@ -71,7 +90,15 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (coverLetter && coverLetter.length < 20) {
-          setFileError("Cover letter too short (min 20 characters)");
+          const errorMessage = "Cover letter too short (min 20 characters)";
+          setFileError(errorMessage);
+          showToast({
+            type: 'warning',
+            title: 'Cover Letter Too Short',
+            message: errorMessage,
+            autoHide: true,
+            autoHideDelay: 4000
+          });
           return;
         }
         await onApply(resume, coverLetter);

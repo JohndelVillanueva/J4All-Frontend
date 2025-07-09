@@ -24,6 +24,7 @@ import {
 import CreatePositionModal from "../../components/EmployerDashboard/CreatePositionModal";
 import EmployerMessageModal from "../../components/EmployerDashboard/EmployerMessageModal";
 import { useAuth } from "../../contexts/AuthContext";
+import UserAvatar from '../../components/UserAvatar';
 
 interface JobPosting {
   id: number;
@@ -712,10 +713,14 @@ console.log('EmployerDashboard mounted');
                         <div className="px-4 py-4 sm:px-6">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center">
-                              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                <span className="text-gray-600 text-lg font-medium">
-                                  {applicant.name.charAt(0)}
-                                </span>
+                              <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center">
+                                <UserAvatar
+                                  photoUrl={applicant.photo ? `http://localhost:3111${applicant.photo}` : undefined}
+                                  firstName={applicant.name}
+                                  lastName={''}
+                                  size="sm"
+                                  className="flex-shrink-0"
+                                />
                               </div>
                               <div className="ml-4">
                                 <p className="text-sm font-medium text-blue-600">

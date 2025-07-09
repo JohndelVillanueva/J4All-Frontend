@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { FaTimes, FaPaperPlane } from "react-icons/fa";
 import { JobListing } from "../types/types";
 import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../ToastContainer";
+import { handleApiError } from "../../src/utils/errorHandler";
 
 interface MessageModalProps {
   job: JobListing;
@@ -19,11 +21,20 @@ const MessageModal: React.FC<MessageModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const { user } = useAuth();
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) {
-      setError("Please enter a message");
+      const errorMessage = "Please enter a message";
+      setError(errorMessage);
+      showToast({
+        type: 'warning',
+        title: 'Message Required',
+        message: errorMessage,
+        autoHide: true,
+        autoHideDelay: 3000
+      });
       return;
     }
 
@@ -53,7 +64,19 @@ const MessageModal: React.FC<MessageModalProps> = ({
       if (!conversationResponse.ok) {
         const errorData = await conversationResponse.json();
         console.error('Conversation creation failed:', errorData);
-        throw new Error(errorData.message || "Failed to create conversation");
+        
+        // Create a mock error object for the error handler
+        const mockError = {
+          response: {
+            status: conversationResponse.status,
+            data: errorData
+          }
+        };
+        
+        const errorInfo = handleApiError(mockError);
+        showToast(errorInfo);
+        setError(errorInfo.message);
+        return;
       }
 
       const conversationData = await conversationResponse.json();
@@ -75,11 +98,31 @@ const MessageModal: React.FC<MessageModalProps> = ({
 
       if (!messageResponse.ok) {
         const errorData = await messageResponse.json();
-        throw new Error(errorData.error || "Failed to send message");
+        
+        // Create a mock error object for the error handler
+        const mockError = {
+          response: {
+            status: messageResponse.status,
+            data: errorData
+          }
+        };
+        
+        const errorInfo = handleApiError(mockError);
+        showToast(errorInfo);
+        setError(errorInfo.message);
+        return;
       }
 
       setSuccess(true);
       setMessage("");
+      
+      showToast({
+        type: 'success',
+        title: 'Message Sent',
+        message: 'Your message has been sent successfully!',
+        autoHide: true,
+        autoHideDelay: 3000
+      });
       
       if (onSendMessage) {
         onSendMessage();
@@ -91,8 +134,9 @@ const MessageModal: React.FC<MessageModalProps> = ({
       }, 2000);
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to send message";
-      setError(errorMessage);
+      const errorInfo = handleApiError(err);
+      showToast(errorInfo);
+      setError(errorInfo.message);
     } finally {
       setIsSubmitting(false);
     }

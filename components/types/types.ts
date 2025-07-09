@@ -66,7 +66,7 @@ export type JobListing = {
   salary: string;
   type: string;
   posted: string;
-   skills: {
+  skills: {
     id: number;
     name: string;
     category?: string;
@@ -80,6 +80,8 @@ export type JobListing = {
   job_requirements: string;
   employer_id: number;
   employer_user_id: number;
+  hrName?: string;
+  hrPhoto?: string | null;
 };
 
 export type Skills = {
@@ -105,6 +107,8 @@ export type Application = {
     posted: string;
     workMode?: string;
     logo?: string;
+    hrName?: string;
+    hrPhoto?: string | null;
   };
   updates: {
     date: string;
@@ -118,6 +122,7 @@ export type Applicant = {
   name: string;
   email: string;
   phone: string;
+  photo?: string | null; // Add photo field
   position: string;
   status: string;
   experience: string;

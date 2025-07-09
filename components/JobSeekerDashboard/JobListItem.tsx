@@ -6,6 +6,8 @@ import JobDescriptionModal from "./JobDescriptionModal";
 import ApplyModal from "./ApplyModal";
 import MessageModal from "./MessageModal";
 import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../../components/ToastContainer";
+import { handleJobApplicationError } from "../../src/utils/errorHandler";
 import UserAvatar from '../UserAvatar';
 
 
@@ -61,6 +63,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
+  const { showToast } = useToast();
   // Use dynamic userId for avatar (default to employer_user_id)
   const avatarUserId = job.employer_user_id; // You can change this to any userId you want to display
   const { photoUrl, firstName, lastName } = useUserAvatarInfo(avatarUserId);
@@ -97,24 +100,40 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess }) => {
       // 4. Handle response
       if (!response.ok) {
         const errorData = await response.json();
-        let errorMessage = errorData.message || errorData.error || "Application failed";
-        // Show a user-friendly message for duplicate application
-        if (errorMessage.toLowerCase().includes("already applied")) {
-          errorMessage = "You already submitted your application.";
-        }
-        throw new Error(errorMessage);
+        
+        // Create a mock error object for the error handler
+        const mockError = {
+          response: {
+            status: response.status,
+            data: errorData
+          }
+        };
+        
+        const errorInfo = handleJobApplicationError(mockError);
+        showToast(errorInfo);
+        setError(errorInfo.message);
+        return;
       }
   
       // 5. Success handling
+      showToast({
+        type: 'success',
+        title: 'Application Submitted',
+        message: `Your application for "${job.title}" has been submitted successfully!`,
+        autoHide: true,
+        autoHideDelay: 4000
+      });
+      
       setIsApplyModalOpen(false);
       if (onApplySuccess) onApplySuccess();
     } catch (err) {
       // 6. Error handling
-      const errorMessage = err instanceof Error ? err.message : "Application failed";
-      setError(errorMessage);
+      const errorInfo = handleJobApplicationError(err);
+      showToast(errorInfo);
+      setError(errorInfo.message);
       
       // 7. Special case for auth errors
-      if (errorMessage.toLowerCase().includes("token")) {
+      if (errorInfo.message.toLowerCase().includes("log in")) {
         // Optionally clear invalid token
         localStorage.removeItem("token");
         // Consider redirecting to login
