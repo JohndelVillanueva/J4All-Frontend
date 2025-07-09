@@ -118,9 +118,9 @@ const CreatePositionModal = ({
   };
 
   const workModeOptions = [
+    { value: "Onsite", label: "Onsite" },
     { value: "Remote", label: "Remote" },
     { value: "Hybrid", label: "Hybrid" },
-    { value: "On-site", label: "On-site" },
     { value: "Unknown", label: "Not Specified" },
   ];
 
