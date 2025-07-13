@@ -8,13 +8,15 @@ interface JobsTabProps {
   onSearchChange: (term: string) => void;
   jobListings: JobListing[];
   refreshJobs?: () => void; // Add this prop
+  onJobStatusUpdate?: (jobId: string, newStatus: "new" | "applied" | "saved") => void;
 }
 
 const JobsTab: React.FC<JobsTabProps> = ({ 
   searchTerm, 
   onSearchChange, 
   jobListings,
-  refreshJobs 
+  refreshJobs,
+  onJobStatusUpdate
 }) => {
   // Add null checks and safe access to properties
   const handleApplySuccess = () => {
@@ -28,7 +30,7 @@ const JobsTab: React.FC<JobsTabProps> = ({
     if (!job) return false;
     
     const safeTitle = job.title?.toLowerCase() || "";
-    const safeCompany = job.company?.toLowerCase() || "";
+    const safeCompany = typeof job.company === 'string' ? job.company.toLowerCase() : job.company?.name?.toLowerCase() || "";
     const safeSkills = job.skills?.map(skillObj => skillObj?.name?.toLowerCase() || "") || [];
     
     return (
@@ -76,6 +78,7 @@ const JobsTab: React.FC<JobsTabProps> = ({
               key={job.id} 
               job={job} 
               onApplySuccess={handleApplySuccess}
+              onJobStatusUpdate={onJobStatusUpdate}
             />
           ))}
         </ul>

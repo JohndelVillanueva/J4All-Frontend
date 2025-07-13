@@ -194,10 +194,7 @@ const Header = () => {
     navigate(path);
   }, [navigate, user?.user_type]);
 
-  const handleLogout = useCallback(() => {
-    logout();
-    navigate("/");
-  }, [logout, navigate]);
+
 
   const toggleInfoSidebar = useCallback(() => {
     setIsInfoSidebarOpen((prev) => !prev);
@@ -258,6 +255,21 @@ const Header = () => {
     setIsMessageSidebarOpen(false);
     setSelectedConversationId(null);
   }, []);
+
+  const handleLogout = useCallback(() => {
+    console.log('Header handleLogout called');
+    // Clear all dropdowns first
+    closeAllDropdowns();
+    
+    // Perform logout
+    logout();
+    
+    // Force navigation to login page
+    setTimeout(() => {
+      console.log('Navigating to login page');
+      navigate("/", { replace: true });
+    }, 50);
+  }, [logout, navigate, closeAllDropdowns]);
 
   // Close dropdowns when clicking outside or pressing Escape
   useEffect(() => {
@@ -573,6 +585,11 @@ const Header = () => {
       toggleNotification();
     }
   };
+
+  // Don't render header if user is not authenticated
+  if (!user) {
+    return null;
+  }
 
   return (
     <>

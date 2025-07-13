@@ -11,12 +11,14 @@ interface DashboardTabProps {
   stats: StatItem[];
   jobListings: JobListing[];
   applications: Application[];
+  onJobStatusUpdate?: (jobId: string, newStatus: "new" | "applied" | "saved") => void;
 }
 
 const DashboardTab: React.FC<DashboardTabProps> = ({
   stats,
   jobListings,
   applications,
+  onJobStatusUpdate,
 }) => {
   return (
     <div>
@@ -36,6 +38,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
         title="Recommended Jobs For You"
         jobs={jobListings.slice(0, 3)}
         className="mb-8"
+        onJobStatusUpdate={onJobStatusUpdate}
       />
 
       {/* Recent Activity */}
@@ -81,7 +84,8 @@ const JobListingsSection: React.FC<{
   title: string;
   jobs: JobListing[];
   className?: string;
-}> = ({ title, jobs, className }) => (
+  onJobStatusUpdate?: (jobId: string, newStatus: "new" | "applied" | "saved") => void;
+}> = ({ title, jobs, className, onJobStatusUpdate }) => (
   <div className={`bg-white shadow overflow-hidden sm:rounded-lg ${className}`}>
     <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
       <h3 className="text-lg leading-6 font-medium text-gray-900">{title}</h3>
@@ -96,23 +100,26 @@ const JobListingsSection: React.FC<{
   </div>
 );
 
-const JobListItem: React.FC<{ job: JobListing }> = ({ job }) => (
-  <li>
-    <div className="px-4 py-4 sm:px-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
-            <span className="text-gray-600 text-lg font-medium">
-              {job.company.charAt(0)}
-            </span>
+const JobListItem: React.FC<{ job: JobListing }> = ({ job }) => {
+  const companyName = typeof job.company === 'string' ? job.company : job.company?.name || 'Unknown Company';
+  
+  return (
+    <li>
+      <div className="px-4 py-4 sm:px-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
+              <span className="text-gray-600 text-lg font-medium">
+                {companyName.charAt(0)}
+              </span>
+            </div>
+            <div className="ml-4">
+              <p className="text-lg font-medium text-blue-600">{job.title}</p>
+              <p className="text-sm text-gray-500">
+                {companyName} • {job.location}
+              </p>
+            </div>
           </div>
-          <div className="ml-4">
-            <p className="text-lg font-medium text-blue-600">{job.title}</p>
-            <p className="text-sm text-gray-500">
-              {job.company} • {job.location}
-            </p>
-          </div>
-        </div>
         <div className="ml-2 flex-shrink-0 flex flex-col items-end">
           <div className="flex items-center">
             <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 mr-2">
@@ -166,7 +173,8 @@ const JobListItem: React.FC<{ job: JobListing }> = ({ job }) => (
       </div>
     </div>
   </li>
-);
+  );
+};
 
 const ApplicationsSection: React.FC<{
   title: string;
@@ -180,7 +188,7 @@ const ApplicationsSection: React.FC<{
     <div className="bg-white overflow-hidden">
       <ul className="divide-y divide-gray-200">
         {applications.map((app) => {
-          const job = jobListings.find((j) => Number(j.id) === app.jobId);
+          const job = jobListings.find((j) => String(j.id) === String(app.jobId));
           return (
             <ApplicationListItem
               key={app.id}
@@ -197,6 +205,7 @@ const ApplicationsSection: React.FC<{
 // Helper function to create a default job when not found
 const createDefaultJob = (jobId: number): JobListing => ({
   id: String(jobId),
+  employer_user_id: 0,
   title: "Position no longer available",
   company: "Unknown Company",
   location: "Unknown Location",
@@ -209,7 +218,7 @@ const createDefaultJob = (jobId: number): JobListing => ({
   work_mode: "Remote",
   job_description: "No description available.",
   job_requirements: "No requirements available.",
-  employer_id: "0",
+  employer_id: 0,
 });
 const ApplicationListItem: React.FC<{
   application: Application;
@@ -220,7 +229,7 @@ const ApplicationListItem: React.FC<{
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <p className="text-sm font-medium text-blue-600">
-            {job.title} at {job.company}
+            {job.title} at {typeof job.company === 'string' ? job.company : job.company?.name || 'Unknown Company'}
           </p>
           <p className="ml-2 flex-shrink-0 text-xs text-gray-500">
             Applied on {application.date}
@@ -259,7 +268,7 @@ const ApplicationListItem: React.FC<{
   </li>
 );
 
-const ProgressBar: React.FC<{ status: "under review" | "interview" }> = ({
+const ProgressBar: React.FC<{ status: string }> = ({
   status,
 }) => (
   <div className="flex items-center text-sm text-gray-500">

@@ -14,6 +14,7 @@ import UserAvatar from '../UserAvatar';
 interface JobListItemProps {
   job: JobListing;
   onApplySuccess?: () => void;
+  onJobStatusUpdate?: (jobId: string, newStatus: "new" | "applied" | "saved") => void;
 }
 
 interface PaginatedJobListProps {
@@ -31,15 +32,26 @@ function useUserAvatarInfo(userId?: number) {
     if (!userId) return;
     const fetchInfo = async () => {
       try {
+        // Get auth token
+        const token = localStorage.getItem('token');
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
         // Fetch user info
-        const userRes = await fetch(`/api/users/${userId}`);
+        const userRes = await fetch(`/api/users/${userId}`, {
+          headers
+        });
         if (userRes.ok) {
           const userData = await userRes.json();
           setFirstName(userData?.data?.first_name || '');
           setLastName(userData?.data?.last_name || '');
         }
         // Fetch user photo
-        const photoRes = await fetch(`/api/photos/${userId}`);
+        const photoRes = await fetch(`/api/photos/${userId}`, {
+          headers
+        });
         if (photoRes.ok) {
           const photoData = await photoRes.json();
           setPhotoUrl(photoData?.data?.photo_url || null);
@@ -56,7 +68,7 @@ function useUserAvatarInfo(userId?: number) {
   return { photoUrl, firstName, lastName };
 }
 
-const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess }) => {
+const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess, onJobStatusUpdate }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
@@ -125,6 +137,12 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess }) => {
       });
       
       setIsApplyModalOpen(false);
+      
+      // Update job status to "applied"
+      if (onJobStatusUpdate) {
+        onJobStatusUpdate(job.id, "applied");
+      }
+      
       if (onApplySuccess) onApplySuccess();
     } catch (err) {
       // 6. Error handling

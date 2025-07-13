@@ -106,10 +106,16 @@ const JobSeekerDashboard = () => {
   useEffect(() => {
     if (user && (user.user_type === "pwd" || user.user_type === "indigenous" || user.user_type === "general")) {
       fetchUserData();
-      fetchJobListings();
       fetchApplications();
     }
   }, [user]);
+
+  // Fetch job listings after applications are loaded
+  useEffect(() => {
+    if (user && (user.user_type === "pwd" || user.user_type === "indigenous" || user.user_type === "general")) {
+      fetchJobListings();
+    }
+  }, [applications]); // Re-fetch jobs when applications change
 
   // Fetch applications from backend
   const fetchApplications = async () => {
@@ -203,6 +209,9 @@ const JobSeekerDashboard = () => {
       }
       const data = await response.json();
       
+      // Get user's applications to check which jobs they've applied for
+      const userApplications = applications.map(app => app.jobId);
+      
       const transformedJobs = data.data.map((job: any) => ({
         id: job.id,
         title: job.job_title,
@@ -223,7 +232,7 @@ const JobSeekerDashboard = () => {
           is_required: skill.is_required,
           importance_level: skill.importance_level
         })) || [],
-        status: "new",
+        status: userApplications.includes(job.id) ? "applied" : "new",
         match: calculateMatchPercentage([]),
         work_mode: ["Onsite", "Remote", "Hybrid"].includes(job.work_mode)
           ? job.work_mode
@@ -263,6 +272,15 @@ const JobSeekerDashboard = () => {
   const calculateMatchPercentage = (skills: any[]) => {
     // In a real app, you'd compare with user's skills
     return Math.floor(Math.random() * 30) + 70; // Random between 70-100%
+  };
+
+  // Function to handle job status updates
+  const handleJobStatusUpdate = (jobId: string, newStatus: "new" | "applied" | "saved") => {
+    setJobListings(prevJobs => 
+      prevJobs.map(job => 
+        job.id === jobId ? { ...job, status: newStatus } : job
+      )
+    );
   };
 
   return (
@@ -342,6 +360,7 @@ const JobSeekerDashboard = () => {
                   stats={stats}
                   jobListings={jobListings}
                   applications={applications}
+                  onJobStatusUpdate={handleJobStatusUpdate}
                 />
               </ErrorBoundary>
             )}
@@ -378,6 +397,7 @@ const JobSeekerDashboard = () => {
                     searchTerm={searchTerm}
                     onSearchChange={setSearchTerm}
                     jobListings={jobListings}
+                    onJobStatusUpdate={handleJobStatusUpdate}
                   />
                 )}
               </ErrorBoundary>

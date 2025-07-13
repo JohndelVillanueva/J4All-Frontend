@@ -80,6 +80,9 @@ export default function App() {
                   }
                 />
                 {/* <Route path="/applications/:id" element={<ApplicationDetailsPage />} /> */}
+                
+                {/* Catch-all route - redirect to login */}
+                <Route path="*" element={<Login />} />
               </Routes>
             </Layout>
                   </Router>
