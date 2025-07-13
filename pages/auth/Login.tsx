@@ -146,6 +146,26 @@ const LoginPage: React.FC = () => {
     } catch (error: any) {
       console.error("Login error:", error);
       
+      // Check if account needs verification
+      if (error.response?.data?.code === 'ACCOUNT_NOT_VERIFIED') {
+        showToast({
+          type: 'warning',
+          title: 'Account Not Verified',
+          message: 'Please verify your email address before logging in.',
+          autoHide: true,
+          autoHideDelay: 5000
+        });
+        
+        // Navigate to verification page
+        navigate('/verify-email', {
+          state: { 
+            email: data.email,
+            message: 'Please verify your email to activate your account.' 
+          }
+        });
+        return;
+      }
+      
       const errorInfo = handleLoginError(error);
       showToast(errorInfo);
       
@@ -227,7 +247,7 @@ const LoginPage: React.FC = () => {
               <FaUser className="text-2xl" />
             </div>
             <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-              J4All
+              J4IPWDs
             </h1>
           </div>
 
@@ -291,7 +311,7 @@ const LoginPage: React.FC = () => {
                     <p className="text-sm text-gray-600">
                       Need help? Contact our support team at{" "}
                       <span className="text-indigo-600 font-medium">
-                        support@j4all.com
+                        support@j4ipwds.com
                       </span>
                     </p>
                   </motion.div>

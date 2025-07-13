@@ -47,7 +47,7 @@ const Header = () => {
   const notificationRef = useRef<HTMLDivElement>(null);
   const messageSidebarRef = useRef<HTMLDivElement>(null);
 
-  const HeaderStyle = "J4All";
+  const HeaderStyle = "J4IPWDs";
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -261,14 +261,13 @@ const Header = () => {
     // Clear all dropdowns first
     closeAllDropdowns();
     
-    // Perform logout
-    logout();
+    // Force navigation to login page first
+    navigate("/", { replace: true });
     
-    // Force navigation to login page
+    // Then perform logout
     setTimeout(() => {
-      console.log('Navigating to login page');
-      navigate("/", { replace: true });
-    }, 50);
+      logout();
+    }, 100);
   }, [logout, navigate, closeAllDropdowns]);
 
   // Close dropdowns when clicking outside or pressing Escape

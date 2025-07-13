@@ -224,19 +224,21 @@ const SignUpPage: React.FC = () => {
       const responseData = responseText ? JSON.parse(responseText) : {};
       console.log('Registration successful:', responseData);
 
+      // All user types now require email verification
       showToast({
         type: 'success',
-        title: 'Registration Successful',
-        message: 'Welcome to J4All! Your account has been created successfully.',
+        title: 'Account Created Successfully!',
+        message: 'Please check your email to verify your account before logging in.',
         autoHide: true,
-        autoHideDelay: 3000
+        autoHideDelay: 5000
       });
 
-      sessionStorage.setItem('registrationSuccess', 'true');
-      navigate('/', {
+      // Navigate to verification page for all user types
+      navigate('/verify-email', {
         state: { 
           fromRegistration: true,
-          message: 'Registration successful! Welcome to our platform.' 
+          email: data.email,
+          message: 'Please verify your email to activate your account.' 
         },
         replace: true
       });
@@ -321,7 +323,7 @@ const SignUpPage: React.FC = () => {
             </div>
             <h1 className="text-4xl font-bold text-gray-800 mb-4">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-                Join J4All
+                Join J4IPWDs
               </span>
             </h1>
             <p className="text-xl text-gray-600 mb-6">
@@ -390,7 +392,7 @@ const SignUpPage: React.FC = () => {
                   className="absolute right-0 mt-2 w-64 bg-white p-3 rounded-lg shadow-lg border border-gray-200 z-20"
                 >
                   <p className="text-sm text-gray-600">
-                    Need help signing up? Contact support at <span className="text-indigo-600">help@j4all.com</span> or call <span className="text-indigo-600">1-800-HELP-NOW</span>.
+                    Need help signing up? Contact support at <span className="text-indigo-600">help@j4ipwds.com</span> or call <span className="text-indigo-600">1-800-HELP-NOW</span>.
                   </p>
                 </motion.div>
               )}

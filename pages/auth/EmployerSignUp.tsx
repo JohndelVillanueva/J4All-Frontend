@@ -136,14 +136,22 @@ const onSubmit = async (data: FormData) => {
     if (response.status === 200 || response.status === 201) {
       showToast({
         type: 'success',
-        title: 'Registration Successful',
-        message: 'Welcome to J4All! Your employer account has been created successfully.',
+        title: 'Account Created Successfully!',
+        message: 'Please check your email to verify your account before logging in.',
         autoHide: true,
-        autoHideDelay: 3000
+        autoHideDelay: 5000
       });
-      
+
+      // Navigate to verification page for employers too
       setTimeout(() => {
-        navigate("/");
+        navigate('/verify-email', {
+          state: { 
+            fromRegistration: true,
+            email: data.email,
+            message: 'Please verify your email to activate your employer account.' 
+          },
+          replace: true
+        });
       }, 2000);
     }
   } catch (error: any) {
@@ -248,7 +256,7 @@ const onSubmit = async (data: FormData) => {
               <FaBuilding className="text-2xl" />
             </div>
             <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-              J4All Employers
+              J4IPWDs Employers
             </h1>
           </div>
 

@@ -4,6 +4,7 @@ import Layout from "../layouts/Layout";
 import Login from "../pages/auth/Login";
 import SignUpPage from "../pages/auth/SignUp";
 import EmployerSignUpForm from "../pages/auth/EmployerSignUp";
+import EmailVerification from "../pages/auth/EmailVerification";
 import { AuthProvider } from "../contexts/AuthContext";
 import { ToastProvider } from "../components/ToastContainer";
 import LoadingScreen from "../components/LoadingScreen"; // Create this component
@@ -29,6 +30,7 @@ export default function App() {
                 <Route path="/" element={<Login />} />
                 <Route path="/SignUpPage" element={<SignUpPage />} />
                 <Route path="/EmployerSignUpForm" element={<EmployerSignUpForm />} />
+                <Route path="/verify-email" element={<EmailVerification />} />
 
                 {/* Lazy-loaded routes with Suspense */}
                 <Route

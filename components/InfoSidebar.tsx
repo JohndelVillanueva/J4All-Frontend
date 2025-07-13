@@ -32,9 +32,9 @@ const InfoSideBar: React.FC<InfoSideBarProps> = ({
         
         <div className="flex-1 overflow-y-auto">
           <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-2">About J4All</h3>
+            <h3 className="text-lg font-semibold mb-2">About J4IPWDs</h3>
             <p className="text-gray-300 text-sm">
-              J4All is a comprehensive platform designed to provide seamless integration 
+              J4IPWDs is a comprehensive platform designed to provide seamless integration 
               of various services with a focus on user experience and accessibility.
             </p>
           </div>
@@ -65,17 +65,17 @@ const InfoSideBar: React.FC<InfoSideBarProps> = ({
               For any technical issues or questions, please contact our support team.
             </p>
             <a 
-              href="mailto:support@j4all.example.com" 
+              href="mailto:support@j4ipwds.example.com" 
               className="text-blue-400 hover:text-blue-300 text-sm"
             >
-              support@j4all.example.com
+              support@j4ipwds.example.com
             </a>
           </div>
         </div>
 
         <div className="border-t border-gray-700 pt-4 mt-4">
           <p className="text-gray-400 text-xs text-center">
-            © {new Date().getFullYear()} J4All. All rights reserved.
+            © {new Date().getFullYear()} J4IPWDs. All rights reserved.
           </p>
         </div>
       </div>

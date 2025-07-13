@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { useNavigate } from "react-router-dom";
 import { FaCheckCircle } from "react-icons/fa";
+import { useToast } from "../ToastContainer";
+import { handleApiError } from "../../src/utils/errorHandler";
 
 type RequiredSkill = {
   skill_name: string;
@@ -52,6 +54,7 @@ const CreatePositionModal = ({
   onSubmit,
 }: JobPostingModalProps) => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [formData, setFormData] = useState({
     job_title: "",
     job_description: "",
@@ -72,7 +75,6 @@ const CreatePositionModal = ({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [availableSkills, setAvailableSkills] = useState<
     Array<{
@@ -248,12 +250,18 @@ const CreatePositionModal = ({
     }
 
     setIsSubmitting(true);
-    setError("");
 
     try {
       // Validate form data
       if (!formData.job_title.trim() || !formData.job_description.trim()) {
-        throw new Error("Job title and description are required");
+        showToast({
+          type: 'warning',
+          title: 'Validation Error',
+          message: 'Job title and description are required',
+          autoHide: true,
+          autoHideDelay: 4000
+        });
+        return;
       }
 
       // Validate skills
@@ -266,7 +274,14 @@ const CreatePositionModal = ({
         .filter(Boolean);
 
       if (skillErrors.length > 0) {
-        throw new Error(skillErrors.join("\n"));
+        showToast({
+          type: 'warning',
+          title: 'Validation Error',
+          message: skillErrors.join("\n"),
+          autoHide: true,
+          autoHideDelay: 4000
+        });
+        return;
       }
 
       // Prepare payload with proper skill structure
@@ -306,6 +321,14 @@ const CreatePositionModal = ({
       setLastSubmissionData(null);
       setIsSuccess(true);
 
+      showToast({
+        type: 'success',
+        title: 'Job Posted Successfully',
+        message: 'Your job posting has been created and is now live!',
+        autoHide: true,
+        autoHideDelay: 3000
+      });
+
       setTimeout(() => {
         setFormData({
           job_title: "",
@@ -324,9 +347,10 @@ const CreatePositionModal = ({
       }, 2000);
     } catch (error) {
       console.error("Error creating job posting:", error);
-      setError(
-        error instanceof Error ? error.message : "An unknown error occurred"
-      );
+      
+      const errorInfo = handleApiError(error);
+      showToast(errorInfo);
+      
       // Don't reset the idempotency key on error to allow retries
     } finally {
       setIsSubmitting(false);
@@ -357,11 +381,6 @@ const CreatePositionModal = ({
           </div>
 
           <div className="p-6 space-y-6">
-            {error && (
-              <div className="p-4 bg-red-50 text-red-600 rounded-lg">
-                {error}
-              </div>
-            )}
             {isSuccess && (
               <div className="p-4 bg-green-50 text-green-600 rounded-lg flex items-center">
                 <FaCheckCircle className="h-5 w-5 mr-2" />

@@ -25,6 +25,8 @@ import CreatePositionModal from "../../components/EmployerDashboard/CreatePositi
 import EmployerMessageModal from "../../components/EmployerDashboard/EmployerMessageModal";
 import { useAuth } from "../../contexts/AuthContext";
 import UserAvatar from '../../components/UserAvatar';
+import { useToast } from "../../components/ToastContainer";
+import { handleApiError } from "../../src/utils/errorHandler";
 
 interface JobPosting {
   id: number;
@@ -50,6 +52,7 @@ interface JobPosting {
 const EmployerDashboardPage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
   const [currentUser, setCurrentUser] = useState<UserData | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,20 +61,25 @@ const EmployerDashboardPage = () => {
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [isLoadingJobs, setIsLoadingJobs] = useState(false);
   const [isLoadingApplicants, setIsLoadingApplicants] = useState(false);
-  const [jobError, setJobError] = useState<string | null>(null);
-  const [applicantsError, setApplicantsError] = useState<string | null>(null);
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
 
   // Guard: Show loading spinner while auth is loading
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   // Guard: If not authenticated, redirect to login
   useEffect(() => {
     if (!loading && !user) {
-      navigate("/login");
+      navigate("/", { replace: true });
     } else if (user) {
       if (user.user_type === "pwd" || user.user_type === "indigenous" || user.user_type === "general") {
         navigate("/ApplicantDashboard");
@@ -82,13 +90,21 @@ const EmployerDashboardPage = () => {
     // eslint-disable-next-line
   }, [user, loading, navigate]);
 
-  // If not authenticated, don't render dashboard
-  if (!user) return null;
+  // If not authenticated, show loading while redirecting
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Fetch applicants from backend
   const fetchApplicants = async () => {
     setIsLoadingApplicants(true);
-    setApplicantsError(null);
     try {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       if (!token) {
@@ -116,7 +132,8 @@ const EmployerDashboardPage = () => {
       }
     } catch (err) {
       console.error('Error fetching applicants:', err);
-      setApplicantsError(err instanceof Error ? err.message : 'An unknown error occurred');
+      const errorInfo = handleApiError(err);
+      showToast(errorInfo);
       setApplicants([]);
     } finally {
       setIsLoadingApplicants(false);
@@ -180,7 +197,6 @@ const EmployerDashboardPage = () => {
   // Fetch job postings from backend
   const fetchJobPostings = async () => {
     setIsLoadingJobs(true);
-    setJobError(null);
     try {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       if (!token) {
@@ -207,7 +223,8 @@ const EmployerDashboardPage = () => {
       }
     } catch (err) {
       console.error('Error fetching job postings:', err);
-      setJobError(err instanceof Error ? err.message : 'An unknown error occurred');
+      const errorInfo = handleApiError(err);
+      showToast(errorInfo);
     } finally {
       setIsLoadingJobs(false);
     }
@@ -353,7 +370,10 @@ const handleCreateJobPosting = async (data: {
 
   } catch (error) {
     console.error('Error creating job posting:', error);
-    setJobError(error instanceof Error ? error.message : 'An unknown error occurred');
+    
+    const errorInfo = handleApiError(error);
+    showToast(errorInfo);
+    
     throw error;
   }
 };
@@ -561,10 +581,6 @@ console.log('EmployerDashboard mounted');
                   <span className="inline-block animate-spin mr-2">↻</span>
                   Loading job postings...
                 </div>
-              ) : jobError ? (
-                <div className="p-4 bg-red-50 text-red-600 rounded-lg mb-6">
-                  {jobError}
-                </div>
               ) : jobPostings.length === 0 ? (
                 <div className="bg-white shadow overflow-hidden sm:rounded-lg p-6 text-center">
                   <FaBriefcase className="mx-auto h-12 w-12 text-gray-400" />
@@ -676,10 +692,6 @@ console.log('EmployerDashboard mounted');
                 <div className="flex justify-center items-center py-10">
                   <span className="inline-block animate-spin mr-2">↻</span>
                   Loading applicants...
-                </div>
-              ) : applicantsError ? (
-                <div className="p-4 bg-red-50 text-red-600 rounded-lg mb-6">
-                  {applicantsError}
                 </div>
               ) : applicants.length === 0 ? (
                 <div className="bg-white shadow overflow-hidden sm:rounded-lg p-6 text-center">

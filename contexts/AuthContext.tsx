@@ -59,12 +59,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     console.log('Logout called - clearing user state and localStorage');
-    setUser(null);
-    setLoading(false); // Ensure loading is false after logout
+    
+    // Clear localStorage first
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     localStorage.removeItem('rememberedEmail');
     localStorage.removeItem('rememberedPassword');
+    
+    // Then clear state
+    setUser(null);
+    setLoading(false); // Ensure loading is false after logout
+    
     console.log('Logout completed - localStorage cleared');
   };
 
