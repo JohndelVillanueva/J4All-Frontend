@@ -27,6 +27,7 @@ import React from "react";
 import UserAvatar from "./UserAvatar";
 import ApplicationDetailsModal from "../pages/applicant/ApplicationDetailsModal";
 import { getFullPhotoUrl } from './utils/photo';
+import { ChatContext } from "../contexts/ChatContext";
 
 const DEFAULT_PROFILE_IMAGE =
   "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJDNi40NzcgMiAyIDYuNDc3IDIgMTJzNC40NzcgMTAgMTAgMTAgMTAtNC40NzcgMTAtMTBTMTcuNTIzIDIgMTIgMnptMCAyYzQuNDE4IDAgOCAzLjU4MiA4IDhzLTMuNTgyIDgtOCA4LTgtMy41ODItOC04IDMuNTgyLTggOC04eiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==";
@@ -591,7 +592,7 @@ const Header = () => {
   }
 
   return (
-    <>
+    <ChatContext.Provider value={{ openConversation: handleConversationClick }}>
       <header className="fixed top-0 left-0 right-0 bg-gray-800 text-white p-4 flex justify-between items-center z-50 shadow-md">
         {/* Logo + Header - now with click handler */}
         <div 
@@ -707,109 +708,118 @@ const Header = () => {
         toggleInfoSidebar={toggleInfoSidebar}
       />
 
-      {/* Render all open MessageView modals */}
-      {openConversations.filter((c) => !c.minimized).map((c) => {
-        const conv = conversations.find((conv) => conv.id === c.id);
-        if (!conv) return null;
-        return (
-          <MessageView
-            key={c.id}
-            conversationId={c.id}
-            onClose={() => handleClose(c.id)}
-            onBack={() => handleClose(c.id)}
-            currentUserId={Number(user?.id) || 0}
-            onMessagesRead={() => {
-              fetchConversations();
-              fetchUnreadMessageCount();
-            }}
-            isMinimized={false}
-            onMinimize={() => handleMinimize(c.id)}
-          />
-        );
-      })}
-
-      {/* Minimized chat floating icons */}
+      {/* Render open (not minimized) MessageViews */}
       {(() => {
-        const minimizedConversations = openConversations.filter(c => c.minimized);
-        console.log('Rendering minimized floating icons:', minimizedConversations);
-        return minimizedConversations.map((c) => {
+        const openNotMinimized = openConversations.filter(c => !c.minimized);
+        const totalOpen = openNotMinimized.length;
+        return openNotMinimized.map((c, idx) => {
           const conv = conversations.find(conv => conv.id === c.id);
-          console.log('Rendering floating icon for conversation:', c.id, 'conv:', conv);
           if (!conv) return null;
+          // Stack to the right: right offset decreases as idx increases
           return (
-            <div
+            <MessageView
               key={c.id}
+              conversationId={c.id}
+              onClose={() => handleClose(c.id)}
+              onBack={() => handleClose(c.id)}
+              currentUserId={Number(user?.id) || 0}
+              onMessagesRead={() => {
+                fetchConversations();
+                fetchUnreadMessageCount();
+              }}
+              isMinimized={false}
+              onMinimize={() => handleMinimize(c.id)}
               style={{
                 position: 'fixed',
-                bottom: 24 + (openConversations.filter(oc => oc.minimized).indexOf(c) * 80),
-                right: 24,
-                zIndex: 1000
+                bottom: 8,
+                right: 100 + (totalOpen - idx - 1) * 370,
+                zIndex: 1000 + idx,
+                width: 350,
+                maxWidth: '100%',
+                height: 540,
               }}
-            >
-              {/* Close button */}
-              <button
-                style={{
-                  position: 'absolute',
-                  top: -8,
-                  right: -8,
-                  width: 24,
-                  height: 24,
-                  background: '#dc3545',
-                  color: 'white',
-                  borderRadius: '50%',
-                  fontSize: 12,
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                  zIndex: 1001
-                }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleClose(c.id);
-                }}
-                title="Close chat"
-              >
-                ×
-              </button>
-              {/* Main chat button */}
-              <button
-                style={{
-                  width: 64,
-                  height: 64,
-                  background: 'transparent',
-                  color: 'inherit',
-                  borderRadius: '50%',
-                  fontSize: 24,
-                  border: 'none',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: 0
-                }}
-                onClick={() => handleRestore(c.id)}
-                title={`Restore chat with ${conv.participant}`}
-              >
-                <img
-                  src={getFullPhotoUrl(conv.photo ?? undefined)}
-                  alt={conv.participant}
-                  style={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-                  }}
-                />
-              </button>
-            </div>
+            />
           );
         });
       })()}
+
+      {/* Render minimized floating icons only for minimized conversations */}
+      {openConversations.filter(c => c.minimized).map((c, idx) => {
+        const conv = conversations.find(conv => conv.id === c.id);
+        if (!conv) return null;
+        return (
+          <div
+            key={c.id}
+            style={{
+              position: 'fixed',
+              bottom: 24 + (idx * 80),
+              right: 24,
+              zIndex: 1000 + idx,
+            }}
+          >
+            {/* Close button */}
+            <button
+              style={{
+                position: 'absolute',
+                top: -8,
+                right: -8,
+                width: 24,
+                height: 24,
+                background: '#dc3545',
+                color: 'white',
+                borderRadius: '50%',
+                fontSize: 12,
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                zIndex: 1001,
+              }}
+              onClick={e => {
+                e.stopPropagation();
+                handleClose(c.id);
+              }}
+              title="Close chat"
+            >
+              ×
+            </button>
+            {/* Main chat button */}
+            <button
+              style={{
+                width: 64,
+                height: 64,
+                background: 'transparent',
+                color: 'inherit',
+                borderRadius: '50%',
+                fontSize: 24,
+                border: 'none',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0,
+              }}
+              onClick={() => handleRestore(c.id)}
+              title={`Restore chat with ${conv.participant}`}
+            >
+              <img
+                src={getFullPhotoUrl(conv.photo ?? undefined)}
+                alt={conv.participant}
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                }}
+              />
+            </button>
+          </div>
+        );
+      })}
 
       <ApplicationDetailsModal
         applicationId={selectedApplicationId}
@@ -821,7 +831,7 @@ const Header = () => {
           fetchUnreadNotificationCount();
         }}
       />
-    </>
+    </ChatContext.Provider>
   );
 };
 

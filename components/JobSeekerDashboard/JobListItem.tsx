@@ -9,6 +9,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../components/ToastContainer";
 import { handleJobApplicationError } from "../../src/utils/errorHandler";
 import UserAvatar from '../UserAvatar';
+import { useChat } from "../../contexts/ChatContext";
 
 
 interface JobListItemProps {
@@ -71,14 +72,15 @@ function useUserAvatarInfo(userId?: number) {
 const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess, onJobStatusUpdate }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
-  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { openConversation } = useChat();
   // Use dynamic userId for avatar (default to employer_user_id)
   const avatarUserId = job.employer_user_id; // You can change this to any userId you want to display
   const { photoUrl, firstName, lastName } = useUserAvatarInfo(avatarUserId);
+  const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
 
   const handleApply = async (resume: File | null, coverLetter: string) => {
     setIsSubmitting(true);
@@ -159,6 +161,32 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess, onJobSta
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleMessageClick = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.log("No token, not logged in");
+      return;
+    }
+    const response = await fetch("/api/messages/conversations", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        participant2_id: job.employer_user_id
+      })
+    });
+    if (!response.ok) {
+      console.log("Failed to create/get conversation");
+      return;
+    }
+    const data = await response.json();
+    const conversationId = data.data.id;
+    console.log("Opening conversation:", conversationId);
+    openConversation(conversationId);
   };
 
   return (
@@ -289,7 +317,6 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess, onJobSta
           error={error}
         />
       )}
-
       {isMessageModalOpen && (
         <MessageModal
           job={job}
