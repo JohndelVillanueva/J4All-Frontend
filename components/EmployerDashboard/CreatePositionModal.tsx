@@ -120,10 +120,11 @@ const CreatePositionModal = ({
   };
 
   const workModeOptions = [
-    { value: "Onsite", label: "Onsite" },
-    { value: "Remote", label: "Remote" },
-    { value: "Hybrid", label: "Hybrid" },
-    { value: "Unknown", label: "Not Specified" },
+    { value: '', label: 'Select work mode' },
+    { value: 'Onsite', label: 'Onsite' },
+    { value: 'Remote', label: 'Remote' },
+    { value: 'Hybrid', label: 'Hybrid' },
+    { value: 'Unknown', label: 'Not Specified' },
   ];
 
   const formatDateForAPI = (dateString: string) => {
@@ -506,7 +507,7 @@ const CreatePositionModal = ({
                     required
                   >
                     {workModeOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
+                      <option key={option.value} value={option.value} disabled={option.value === ''} hidden={option.value === ''}>
                         {option.label}
                       </option>
                     ))}
