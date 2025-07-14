@@ -4,6 +4,7 @@ import { JobListing } from "../types/types";
 import MessageModal from "./MessageModal";
 import { useToast } from "../ToastContainer";
 import { handleApiError } from "../../src/utils/errorHandler";
+import { getFullPhotoUrl } from "../../components/utils/photo";
 
 interface JobDescriptionModalProps {
   job: JobListing;
@@ -230,11 +231,19 @@ const JobDescriptionModal: React.FC<JobDescriptionModalProps> = ({
 
             <div className="border-t border-gray-200 pt-4">
               <div className="flex items-center">
-                <div className="w-12 h-12 rounded-full bg-gray-300 mr-3 flex items-center justify-center">
-                  <span className="text-gray-600">
-                    {(typeof job.company === 'string' ? job.company : job.company?.name || '?').charAt(0).toUpperCase()}
-                  </span>
-                </div>
+                {jobWithHR.hrPhoto ? (
+                  <img
+                    src={getFullPhotoUrl(jobWithHR.hrPhoto)}
+                    alt="HR"
+                    className="w-12 h-12 rounded-full object-cover mr-3"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-gray-300 mr-3 flex items-center justify-center">
+                    <span className="text-gray-600">
+                      {(typeof job.company === 'string' ? job.company : job.company?.name || '?').charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                )}
                 <div>
                   <p className="font-medium">
                     {jobWithHR.hrFirstName || jobWithHR.hrLastName ? `${jobWithHR.hrFirstName ?? ''} ${jobWithHR.hrLastName ?? ''}`.trim() : 'HR Representative'}
