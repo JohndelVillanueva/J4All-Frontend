@@ -744,82 +744,86 @@ const Header = () => {
       })()}
 
       {/* Render minimized floating icons only for minimized conversations */}
-      {openConversations.filter(c => c.minimized).map((c, idx) => {
-        const conv = conversations.find(conv => conv.id === c.id);
-        if (!conv) return null;
-        return (
-          <div
-            key={c.id}
-            style={{
-              position: 'fixed',
-              bottom: 24 + (idx * 80),
-              right: 24,
-              zIndex: 1000 + idx,
-            }}
-          >
-            {/* Close button */}
-            <button
+      {(() => {
+        const minimized = openConversations.filter(c => c.minimized);
+        const total = minimized.length;
+        return minimized.map((c, idx) => {
+          const conv = conversations.find(conv => conv.id === c.id);
+          if (!conv) return null;
+          return (
+            <div
+              key={c.id}
               style={{
-                position: 'absolute',
-                top: -8,
-                right: -8,
-                width: 24,
-                height: 24,
-                background: '#dc3545',
-                color: 'white',
-                borderRadius: '50%',
-                fontSize: 12,
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                zIndex: 1001,
+                position: 'fixed',
+                bottom: 24 + ((total - idx - 1) * 80),
+                right: 24,
+                zIndex: 1000 + idx,
               }}
-              onClick={e => {
-                e.stopPropagation();
-                handleClose(c.id);
-              }}
-              title="Close chat"
             >
-              ×
-            </button>
-            {/* Main chat button */}
-            <button
-              style={{
-                width: 64,
-                height: 64,
-                background: 'transparent',
-                color: 'inherit',
-                borderRadius: '50%',
-                fontSize: 24,
-                border: 'none',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: 0,
-              }}
-              onClick={() => handleRestore(c.id)}
-              title={`Restore chat with ${conv.participant}`}
-            >
-              <img
-                src={getFullPhotoUrl(conv.photo ?? undefined)}
-                alt={conv.participant}
+              {/* Close button */}
+              <button
                 style={{
-                  width: 56,
-                  height: 56,
+                  position: 'absolute',
+                  top: -8,
+                  right: -8,
+                  width: 24,
+                  height: 24,
+                  background: '#dc3545',
+                  color: 'white',
                   borderRadius: '50%',
-                  objectFit: 'cover',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                  fontSize: 12,
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                  zIndex: 1001,
                 }}
-              />
-            </button>
-          </div>
-        );
-      })}
+                onClick={e => {
+                  e.stopPropagation();
+                  handleClose(c.id);
+                }}
+                title="Close chat"
+              >
+                ×
+              </button>
+              {/* Main chat button */}
+              <button
+                style={{
+                  width: 64,
+                  height: 64,
+                  background: 'transparent',
+                  color: 'inherit',
+                  borderRadius: '50%',
+                  fontSize: 24,
+                  border: 'none',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: 0,
+                }}
+                onClick={() => handleRestore(c.id)}
+                title={`Restore chat with ${conv.participant}`}
+              >
+                <img
+                  src={getFullPhotoUrl(conv.photo ?? undefined)}
+                  alt={conv.participant}
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: '50%',
+                    objectFit: 'cover',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                  }}
+                />
+              </button>
+            </div>
+          );
+        });
+      })()}
 
       <ApplicationDetailsModal
         applicationId={selectedApplicationId}
