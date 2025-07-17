@@ -258,18 +258,11 @@ const Header = () => {
   }, []);
 
   const handleLogout = useCallback(() => {
-    console.log('Header handleLogout called');
-    // Clear all dropdowns first
-    closeAllDropdowns();
-    
-    // Force navigation to login page first
-    navigate("/", { replace: true });
-    
-    // Then perform logout
-    setTimeout(() => {
-      logout();
-    }, 100);
-  }, [logout, navigate, closeAllDropdowns]);
+    setOpenConversations([]);
+    localStorage.removeItem('openConversations');
+    logout();
+    navigate('/');
+  }, [logout, navigate]);
 
   // Close dropdowns when clicking outside or pressing Escape
   useEffect(() => {
@@ -768,8 +761,8 @@ const Header = () => {
                   right: -8,
                   width: 24,
                   height: 24,
-                  background: '#dc3545',
-                  color: 'white',
+                  background: 'white', // or 'transparent' for no background
+                  color: 'gray',
                   borderRadius: '50%',
                   fontSize: 12,
                   border: 'none',

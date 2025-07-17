@@ -193,19 +193,15 @@ const LoginPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 overflow-hidden relative">
-      {/* Background elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div
-          className="absolute inset-0 bg-gradient-to-br from-gray-50 to-indigo-50"
-          style={{
-            backgroundPosition: `${50 + mousePosition.x * 3}% ${
-              50 + mousePosition.y * 3
-            }%`,
-          }}
-        />
-        <div className="absolute top-1/4 -left-20 w-64 h-64 bg-indigo-100 rounded-full filter blur-3xl opacity-30" />
-        <div className="absolute bottom-1/3 -right-20 w-72 h-72 bg-purple-100 rounded-full filter blur-3xl opacity-30" />
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
+      {/* Rich background gradient and floating shapes */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-200" />
+        {/* Floating blurred circles */}
+        <div className="absolute top-[-80px] left-[-80px] w-96 h-96 bg-indigo-300 opacity-30 rounded-full blur-3xl animate-float-slow" />
+        <div className="absolute bottom-[-100px] right-[-100px] w-[32rem] h-[32rem] bg-purple-300 opacity-30 rounded-full blur-3xl animate-float-slower" />
+        <div className="absolute top-1/2 left-[-120px] w-80 h-80 bg-blue-200 opacity-20 rounded-full blur-2xl animate-float" />
+        <div className="absolute bottom-1/3 right-1/2 w-72 h-72 bg-pink-200 opacity-20 rounded-full blur-2xl animate-float" />
       </div>
 
       {/* Success notification */}
@@ -235,32 +231,31 @@ const LoginPage: React.FC = () => {
 
       {/* Main content */}
       <div className="container mx-auto px-4 py-12 flex flex-col md:flex-row items-center justify-center min-h-screen relative z-10">
-        {/* Left side - Branding */}
+        {/* Left side - Branding/Illustration */}
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
+          initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full md:w-1/2 lg:w-2/5 mb-12 md:mb-0 md:pr-12"
+          transition={{ duration: 0.7, delay: 0.1 }}
+          className="w-full md:w-1/2 lg:w-2/5 mb-12 md:mb-0 md:pr-12 flex flex-col items-center z-10"
         >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-indigo-500 rounded-xl text-white">
-              <FaUser className="text-2xl" />
-            </div>
-            <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-              J4IPWDs
-            </h1>
-          </div>
-
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+          <motion.img
+            src="/Images/logo1.jpg"
+            alt="J4IPWDs Logo"
+            className="w-28 h-28 rounded-full shadow-lg mb-6 border-4 border-white bg-white object-contain"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+          />
+          <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 mb-2 text-center">
+            J4IPWDs
+          </h1>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-4 text-center">
             Welcome to your inclusive community
           </h2>
-
-          <p className="text-gray-600 mb-8 leading-relaxed">
-            Connect with opportunities and resources tailored to your needs. Our
-            platform is designed to be accessible for everyone.
+          <p className="text-gray-600 mb-8 leading-relaxed text-center">
+            Connect with opportunities and resources tailored to your needs. Our platform is designed to be accessible for everyone.
           </p>
-
-          <div className="space-y-4">
+          <div className="space-y-4 w-full max-w-xs mx-auto">
             {[
               "Personalized experience based on your profile",
               "Secure and accessible platform",
@@ -273,7 +268,7 @@ const LoginPage: React.FC = () => {
                     <div className="w-2 h-2 rounded-full bg-indigo-600" />
                   </div>
                 </div>
-                <p className="text-gray-600">{feature}</p>
+                <p className="text-gray-600 text-sm">{feature}</p>
               </div>
             ))}
           </div>
@@ -281,14 +276,19 @@ const LoginPage: React.FC = () => {
 
         {/* Right side - Login Form */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="w-full md:w-1/2 lg:w-2/5 max-w-md"
+          transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
+          className="w-full md:w-1/2 lg:w-2/5 max-w-md z-10"
         >
-          <div className="bg-white rounded-2xl shadow-xl p-8 relative overflow-hidden">
+          <div className="rounded-2xl shadow-2xl border border-gray-100 p-8 relative overflow-hidden backdrop-blur-xl bg-white/70 dark:bg-gray-900/60" style={{ boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)' }}>
             {/* Decorative element */}
-            <div className="absolute -top-20 -right-20 w-40 h-40 bg-indigo-100 rounded-full filter blur-3xl opacity-20" />
+            <motion.div
+              className="absolute -top-20 -right-20 w-40 h-40 bg-indigo-100 rounded-full filter blur-3xl opacity-20"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 1, delay: 0.3 }}
+            />
 
             {/* Help button */}
             <div className="absolute top-5 right-5">
@@ -324,7 +324,7 @@ const LoginPage: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-800 mb-1">
                   Welcome back
                 </h2>
-                <p className="text-gray-500">Sign in to access your account</p>
+                <p className="text-white">Sign in to access your account</p>
               </div>
 
               {/* Error message */}
@@ -353,7 +353,7 @@ const LoginPage: React.FC = () => {
               <div className="space-y-2">
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-white"
                 >
                   Email address
                 </label>
@@ -367,7 +367,7 @@ const LoginPage: React.FC = () => {
                     autoComplete="username"
                     className={`block w-full pl-10 pr-3 py-3 border ${
                       errors.email ? "border-red-300" : "border-gray-200"
-                    } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`}
+                    } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-colors`}
                     placeholder="your@email.com"
                     aria-invalid={!!errors.email}
                     {...register("email")}
@@ -383,14 +383,14 @@ const LoginPage: React.FC = () => {
                 <div className="flex justify-between items-center">
                   <label
                     htmlFor="password"
-                    className="block text-sm font-medium text-gray-700"
+                    className="block text-sm font-medium text-white"
                   >
                     Password
                   </label>
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-xs text-indigo-600 hover:text-indigo-500"
+                    className="text-xs text-white hover:text-red-500"
                     aria-label={
                       showPassword ? "Hide password" : "Show password"
                     }
@@ -408,7 +408,7 @@ const LoginPage: React.FC = () => {
                     autoComplete={rememberMe ? "current-password" : "off"}
                     className={`block w-full pl-10 pr-10 py-3 border ${
                       errors.password ? "border-red-300" : "border-gray-200"
-                    } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`}
+                    } rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-colors`}
                     placeholder="••••••••"
                     aria-invalid={!!errors.password}
                     {...register("password")}
@@ -446,14 +446,14 @@ const LoginPage: React.FC = () => {
                   />
                   <label
                     htmlFor="remember-me"
-                    className="ml-2 block text-sm text-gray-600"
+                    className="ml-2 block text-sm text-white"
                   >
                     Remember me
                   </label>
                 </div>
                 <a
                   href="#"
-                  className="text-sm text-indigo-600 hover:text-indigo-500 font-medium"
+                  className="text-sm text-white hover:text-red-500 font-medium"
                 >
                   Forgot password?
                 </a>
@@ -466,10 +466,10 @@ const LoginPage: React.FC = () => {
                 className={`w-full flex justify-center items-center py-3.5 px-4 rounded-xl text-sm font-medium text-white ${
                   isSubmitting
                     ? "bg-indigo-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 shadow-md"
+                    : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 shadow-lg"
                 } focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-all`}
-                whileHover={!isSubmitting ? { scale: 1.01 } : {}}
-                whileTap={!isSubmitting ? { scale: 0.99 } : {}}
+                whileHover={!isSubmitting ? { scale: 1.03, boxShadow: '0 8px 24px rgba(99,102,241,0.15)' } : {}}
+                whileTap={!isSubmitting ? { scale: 0.98 } : {}}
               >
                 {isSubmitting ? (
                   <>

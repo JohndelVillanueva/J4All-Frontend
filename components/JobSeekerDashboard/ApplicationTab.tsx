@@ -3,6 +3,7 @@ import { FaEnvelope, FaExternalLinkAlt } from "react-icons/fa";
 import { Application, JobListing } from "../types/types";
 import ErrorBoundary from "./ErrorBoundary"; // Import the ErrorBoundary component
 import UserAvatar from '../UserAvatar';
+import JobDescriptionModal from "./JobDescriptionModal";
 
 // Dynamic hook to fetch user info and photo by userId (copied from JobListItem)
 function useUserAvatarInfo(userId?: number) {
@@ -52,20 +53,8 @@ const getFullImageUrl = (path: string | undefined | null) => {
   return path;
 };
 
-const ApplicationListItem: React.FC<{ app: Application; job?: JobListing }> = ({ app, job }) => {
-  // Use job data from application if available, otherwise fall back to jobListings
-  const safeJob = app.job || job || {
-    id: 0,
-    title: "Position no longer available",
-    company: "Unknown Company",
-    location: "",
-    salary: "",
-    type: "",
-    posted: "",
-    skills: [],
-    status: "new",
-    match: 0
-  };
+const ApplicationListItem: React.FC<{ app: Application; job: JobListing; onViewJob: (job: JobListing) => void }> = ({ app, job, onViewJob }) => {
+  const safeJob: JobListing = job;
 
   // Ensure updates exists before mapping
   const updates = app.updates || [];
@@ -108,6 +97,11 @@ const ApplicationListItem: React.FC<{ app: Application; job?: JobListing }> = ({
                 Interview Stage
               </span>
             )}
+            {app.status === "rejected" && (
+              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                REJECTED
+              </span>
+            )}
             {!app.status && (
               <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
                 Status Unknown
@@ -124,25 +118,43 @@ const ApplicationListItem: React.FC<{ app: Application; job?: JobListing }> = ({
                     className={`text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full ${
                       app.status === "interview"
                         ? "text-yellow-600 bg-yellow-200"
+                        : app.status === "hired"
+                        ? "text-green-600 bg-green-200"
+                        : app.status === "rejected"
+                        ? "text-red-600 bg-red-200"
                         : "text-blue-600 bg-blue-200"
                     }`}
                   >
-                    {app.status || "pending"}
+                    {app.status === "hired"
+                      ? "HIRED"
+                      : app.status === "rejected"
+                      ? "REJECTED"
+                      : app.status || "pending"}
                   </span>
                 </div>
                 <div className="text-right">
                   <span className="text-xs font-semibold inline-block">
-                    {app.status === "interview" ? "75%" : "40%"} complete
+                    {app.status === "hired" || app.status === "rejected"
+                      ? "100%"
+                      : app.status === "interview"
+                      ? "75%"
+                      : "40%"} complete
                   </span>
                 </div>
               </div>
               <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200">
                 <div
                   style={{
-                    width: `${app.status === "interview" ? "75%" : "40%"}`,
+                    width: `${app.status === "hired" || app.status === "rejected" ? "100%" : app.status === "interview" ? "75%" : "40%"}`,
                   }}
                   className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center ${
-                    app.status === "interview" ? "bg-yellow-500" : "bg-blue-500"
+                    app.status === "hired"
+                      ? "bg-green-500"
+                      : app.status === "rejected"
+                      ? "bg-red-500"
+                      : app.status === "interview"
+                      ? "bg-yellow-500"
+                      : "bg-blue-500"
                   }`}
                 ></div>
               </div>
@@ -171,7 +183,10 @@ const ApplicationListItem: React.FC<{ app: Application; job?: JobListing }> = ({
             <FaEnvelope className="mr-2" />
             Message Recruiter
           </button>
-          <button className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          <button
+            className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            onClick={() => onViewJob(safeJob)}
+          >
             View Job Posting
             <FaExternalLinkAlt className="ml-2" />
           </button>
@@ -184,6 +199,12 @@ const ApplicationListItem: React.FC<{ app: Application; job?: JobListing }> = ({
 const ApplicationsTab: React.FC<ApplicationsTabProps> = ({ applications, jobListings }) => {
   // Filter out null/undefined applications
   const validApplications = applications?.filter(app => app) || [];
+
+  const [selectedJob, setSelectedJob] = React.useState<JobListing | null>(null);
+
+  const handleViewJob = (job: JobListing) => {
+    setSelectedJob(job);
+  };
 
   return (
     <div>
@@ -202,8 +223,26 @@ const ApplicationsTab: React.FC<ApplicationsTabProps> = ({ applications, jobList
           ) : (
             <ul className="divide-y divide-gray-200">
               {validApplications.map((app) => {
-                // If application has job data, use it; otherwise find in jobListings
-                const job = app.job ? undefined : jobListings.find((j) => String(j.id) === String(app.jobId));
+                const job: JobListing = app.job || jobListings.find((j) => String(j.id) === String(app.jobId)) || {
+                  id: "0",
+                  title: "Position no longer available",
+                  company: "Unknown Company",
+                  location: "",
+                  salary: "",
+                  type: "",
+                  posted: "",
+                  skills: [],
+                  status: "new",
+                  match: 0,
+                  work_mode: "Remote",
+                  job_description: "",
+                  job_requirements: "",
+                  employer_id: 0,
+                  employer_user_id: 0,
+                  logo_path: "",
+                  hrName: "",
+                  hrPhoto: "",
+                } as JobListing;
                 return (
                   <ErrorBoundary 
                     key={app.id}
@@ -213,7 +252,7 @@ const ApplicationsTab: React.FC<ApplicationsTabProps> = ({ applications, jobList
                       </li>
                     }
                   >
-                    <ApplicationListItem app={app} job={job} />
+                    <ApplicationListItem app={app} job={job} onViewJob={handleViewJob} />
                   </ErrorBoundary>
                 );
               })}
@@ -221,6 +260,14 @@ const ApplicationsTab: React.FC<ApplicationsTabProps> = ({ applications, jobList
           )}
         </div>
       </div>
+      {selectedJob && (
+        <JobDescriptionModal
+          job={selectedJob}
+          onClose={() => setSelectedJob(null)}
+          onSaveJob={() => {}}
+          onUnsaveJob={() => {}}
+        />
+      )}
     </div>
   );
 };

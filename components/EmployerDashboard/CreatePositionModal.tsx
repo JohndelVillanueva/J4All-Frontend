@@ -28,6 +28,20 @@ type JobPostingModalProps = {
     required_skills: RequiredSkill[];
     idempotencyKey?: string;
   }) => Promise<void>;
+  editingJob?: {
+    id: number;
+    job_title: string;
+    job_description: string;
+    job_requirements: string;
+    job_location: string;
+    job_type: string;
+    work_mode: string;
+    salary_range_min: number | null;
+    salary_range_max: number | null;
+    expiration_date?: string;
+    required_skills: RequiredSkill[];
+  } | null;
+  isEditing?: boolean;
 };
 
 // Custom deep equality check function
@@ -52,6 +66,8 @@ const CreatePositionModal = ({
   isOpen,
   onClose,
   onSubmit,
+  editingJob,
+  isEditing = false,
 }: JobPostingModalProps) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -137,6 +153,38 @@ const CreatePositionModal = ({
     sessionStorage.removeItem("token");
     navigate("/");
   };
+
+  // Pre-fill form when editing
+  useEffect(() => {
+    if (isEditing && editingJob && isOpen) {
+      setFormData({
+        job_title: editingJob.job_title,
+        job_description: editingJob.job_description,
+        job_requirements: editingJob.job_requirements,
+        job_location: editingJob.job_location,
+        job_type: editingJob.job_type,
+        work_mode: editingJob.work_mode,
+        salary_range_min: editingJob.salary_range_min?.toString() || "",
+        salary_range_max: editingJob.salary_range_max?.toString() || "",
+        expiration_date: editingJob.expiration_date ? new Date(editingJob.expiration_date).toISOString().split('T')[0] : "",
+        required_skills: editingJob.required_skills || [],
+      });
+    } else if (!isEditing && isOpen) {
+      // Reset form for new job creation
+      setFormData({
+        job_title: "",
+        job_description: "",
+        job_requirements: "",
+        job_location: "",
+        job_type: "",
+        work_mode: "",
+        salary_range_min: "",
+        salary_range_max: "",
+        expiration_date: "",
+        required_skills: [],
+      });
+    }
+  }, [isEditing, editingJob, isOpen]);
 
   useEffect(() => {
     const fetchSkills = async () => {
@@ -322,13 +370,16 @@ const CreatePositionModal = ({
       setLastSubmissionData(null);
       setIsSuccess(true);
 
-      showToast({
-        type: 'success',
-        title: 'Job Posted Successfully',
-        message: 'Your job posting has been created and is now live!',
-        autoHide: true,
-        autoHideDelay: 3000
-      });
+      // Only show success toast when creating new jobs, not when editing
+      if (!isEditing) {
+        showToast({
+          type: 'success',
+          title: 'Job Posted Successfully',
+          message: 'Your job posting has been created and is now live!',
+          autoHide: true,
+          autoHideDelay: 3000
+        });
+      }
 
       setTimeout(() => {
         setFormData({
@@ -370,7 +421,9 @@ const CreatePositionModal = ({
       <div className="relative z-50 bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center z-10">
-            <h2 className="text-2xl font-bold text-gray-900">Post a New Job</h2>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {isEditing ? "Edit Job" : "Post a New Job"}
+            </h2>
             <button
               type="button"
               onClick={onClose}
@@ -382,10 +435,10 @@ const CreatePositionModal = ({
           </div>
 
           <div className="p-6 space-y-6">
-            {isSuccess && (
+            {isSuccess && !isEditing && (
               <div className="p-4 bg-green-50 text-green-600 rounded-lg flex items-center">
                 <FaCheckCircle className="h-5 w-5 mr-2" />
-                Job posting created successfully!
+                {isEditing ? "Job posting updated successfully!" : "Job posting created successfully!"}
               </div>
             )}
 

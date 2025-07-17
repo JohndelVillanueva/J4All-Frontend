@@ -286,7 +286,7 @@ const JobSeekerDashboard = () => {
   return (
     <ErrorBoundary
       fallback={
-        <div className="min-h-screen bg-gray-50 p-8">
+        <div className="min-h-screen bg-red-50 border-l-4 border-red-400">
           <h1 className="text-2xl font-bold text-red-600">Critical Error</h1>
           <p className="mt-4 text-gray-700">
             We're sorry, but something went wrong with the dashboard. Please try
@@ -301,155 +301,166 @@ const JobSeekerDashboard = () => {
         </div>
       }
     >
-      <div className="min-h-screen bg-gray-50">
-        {/* Header (keep exactly as is) */}
-        <DynamicHeader
-          title="DevCareer Dashboard"
-          user={{
-            firstName: currentUser?.first_name || "",
-            lastName: currentUser?.last_name || "",
-          }}
-          showSearch={true}
-          onSearchChange={setSearchTerm}
-          className="bg-white shadow-sm"
-        />
+      <div className="min-h-screen relative overflow-hidden flex flex-col">
+        {/* Rich background gradient and floating shapes */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-200" />
+          {/* Floating blurred circles */}
+          <div className="absolute top-10 left-10 w-72 h-72 bg-blue-300 opacity-30 rounded-full filter blur-3xl animate-pulse" />
+          <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-200 opacity-30 rounded-full filter blur-3xl animate-pulse" />
+          <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-indigo-200 opacity-20 rounded-full filter blur-2xl animate-pulse" style={{ transform: 'translate(-50%, -50%)' }} />
+        </div>
+        {/* Main dashboard content (z-10) */}
+        <div className="relative z-10">
+          {/* Header (keep exactly as is) */}
+          <DynamicHeader
+            title="DevCareer Dashboard"
+            user={{
+              firstName: currentUser?.first_name || "",
+              lastName: currentUser?.last_name || "",
+            }}
+            showSearch={true}
+            onSearchChange={setSearchTerm}
+            className="bg-white shadow-sm"
+          />
 
-        {/* Main Content (keep exactly as is) */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Tabs (keep exactly as is) */}
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
-              <TabButton
-                active={activeTab === "dashboard"}
-                onClick={() => setActiveTab("dashboard")}
-                icon={<FaChartLine />}
-                label="Dashboard"
-              />
-              <TabButton
-                active={activeTab === "jobs"}
-                onClick={() => setActiveTab("jobs")}
-                icon={<FaBriefcase />}
-                label="Job Search"
-              />
-              <TabButton
-                active={activeTab === "applications"}
-                onClick={() => setActiveTab("applications")}
-                icon={<FaCheckCircle />}
-                label="Applications"
-              />
-              <TabButton
-                active={activeTab === "saved"}
-                onClick={() => setActiveTab("saved")}
-                icon={<FaBookmark />}
-                label="Saved Jobs"
-              />
-              <TabButton
-                active={activeTab === "profile"}
-                onClick={() => setActiveTab("profile")}
-                icon={<FaUser />}
-                label="Profile"
-              />
-            </nav>
-          </div>
-
-          {/* Tab Content (keep exactly as is) */}
-          <div className="py-6">
-            {activeTab === "dashboard" && (
-              <ErrorBoundary>
-                <DashboardTab
-                  stats={stats}
-                  jobListings={jobListings}
-                  applications={applications}
-                  onJobStatusUpdate={handleJobStatusUpdate}
+          {/* Main Content (keep exactly as is) */}
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {/* Tabs (keep exactly as is) */}
+            <div className="border-b border-gray-200">
+              <nav className="-mb-px flex space-x-8">
+                <TabButton
+                  active={activeTab === "dashboard"}
+                  onClick={() => setActiveTab("dashboard")}
+                  icon={<FaChartLine />}
+                  label="Dashboard"
                 />
-              </ErrorBoundary>
-            )}
-            {activeTab === "jobs" && (
-              <ErrorBoundary>
-                {isLoadingJobs ? (
-                  <div className="flex justify-center items-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-                  </div>
-                ) : jobError ? (
-                  <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                    <div className="flex">
-                      <div className="flex-shrink-0">
-                        <svg
-                          className="h-5 w-5 text-red-400"
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                      <div className="ml-3">
-                        <p className="text-sm text-red-700">{jobError}</p>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <JobsTab
-                    searchTerm={searchTerm}
-                    onSearchChange={setSearchTerm}
+                <TabButton
+                  active={activeTab === "jobs"}
+                  onClick={() => setActiveTab("jobs")}
+                  icon={<FaBriefcase />}
+                  label="Job Search"
+                />
+                <TabButton
+                  active={activeTab === "applications"}
+                  onClick={() => setActiveTab("applications")}
+                  icon={<FaCheckCircle />}
+                  label="Applications"
+                />
+                <TabButton
+                  active={activeTab === "saved"}
+                  onClick={() => setActiveTab("saved")}
+                  icon={<FaBookmark />}
+                  label="Saved Jobs"
+                />
+                <TabButton
+                  active={activeTab === "profile"}
+                  onClick={() => setActiveTab("profile")}
+                  icon={<FaUser />}
+                  label="Profile"
+                />
+              </nav>
+            </div>
+
+            {/* Tab Content (keep exactly as is) */}
+            <div className="py-6">
+              {activeTab === "dashboard" && (
+                <ErrorBoundary>
+                  <DashboardTab
+                    stats={stats}
                     jobListings={jobListings}
+                    applications={applications}
                     onJobStatusUpdate={handleJobStatusUpdate}
                   />
-                )}
-              </ErrorBoundary>
-            )}
-            {activeTab === "applications" && (
-              <ErrorBoundary>
-                {isLoadingApplications ? (
-                  <div className="flex justify-center items-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-                  </div>
-                ) : applicationsError ? (
-                  <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                    <div className="flex">
-                      <div className="flex-shrink-0">
-                        <svg
-                          className="h-5 w-5 text-red-400"
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                      <div className="ml-3">
-                        <p className="text-sm text-red-700">{applicationsError}</p>
+                </ErrorBoundary>
+              )}
+              {activeTab === "jobs" && (
+                <ErrorBoundary>
+                  {isLoadingJobs ? (
+                    <div className="flex justify-center items-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                    </div>
+                  ) : jobError ? (
+                    <div className="bg-red-50 border-l-4 border-red-400 p-4">
+                      <div className="flex">
+                        <div className="flex-shrink-0">
+                          <svg
+                            className="h-5 w-5 text-red-400"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm text-red-700">{jobError}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <ApplicationsTab
-                    applications={applications}
-                    jobListings={jobListings}
-                  />
-                )}
-              </ErrorBoundary>
-            )}
-            {activeTab === "saved" && (
-              <ErrorBoundary>
-                <SavedJobsTab jobListings={jobListings} />
-              </ErrorBoundary>
-            )}
-            {activeTab === "profile" && (
-              <ErrorBoundary>
-                <ProfileTab />
-              </ErrorBoundary>
-            )}
-          </div>
-        </main>
+                  ) : (
+                    <JobsTab
+                      searchTerm={searchTerm}
+                      onSearchChange={setSearchTerm}
+                      jobListings={jobListings}
+                      onJobStatusUpdate={handleJobStatusUpdate}
+                    />
+                  )}
+                </ErrorBoundary>
+              )}
+              {activeTab === "applications" && (
+                <ErrorBoundary>
+                  {isLoadingApplications ? (
+                    <div className="flex justify-center items-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                    </div>
+                  ) : applicationsError ? (
+                    <div className="bg-red-50 border-l-4 border-red-400 p-4">
+                      <div className="flex">
+                        <div className="flex-shrink-0">
+                          <svg
+                            className="h-5 w-5 text-red-400"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </div>
+                        <div className="ml-3">
+                          <p className="text-sm text-red-700">{applicationsError}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <ApplicationsTab
+                      applications={applications}
+                      jobListings={jobListings}
+                    />
+                  )}
+                </ErrorBoundary>
+              )}
+              {activeTab === "saved" && (
+                <ErrorBoundary>
+                  <SavedJobsTab jobListings={jobListings} />
+                </ErrorBoundary>
+              )}
+              {activeTab === "profile" && (
+                <ErrorBoundary>
+                  <ProfileTab />
+                </ErrorBoundary>
+              )}
+            </div>
+          </main>
+        </div>
       </div>
     </ErrorBoundary>
   );

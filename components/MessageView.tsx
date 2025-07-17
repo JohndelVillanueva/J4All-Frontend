@@ -242,11 +242,6 @@ const MessageView: React.FC<MessageViewProps> = ({
                 }`}
               >
                 {/* Only show sender name for other users */}
-                {message.sender_id !== currentUserId && (
-                  <div className="text-sm font-medium mb-1">
-                    {getSenderName(message)}
-                  </div>
-                )}
                 <div className="text-sm">{message.content}</div>
                 <div className={`text-xs mt-1 ${
                   message.sender_id === currentUserId ? 'text-blue-100' : 'text-gray-500'
