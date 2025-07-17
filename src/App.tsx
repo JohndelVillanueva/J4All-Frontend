@@ -8,6 +8,7 @@ import EmailVerification from "../pages/auth/EmailVerification";
 import { AuthProvider } from "../contexts/AuthContext";
 import { ToastProvider } from "../components/ToastContainer";
 import LoadingScreen from "../components/LoadingScreen"; // Create this component
+import EditAccount from "../pages/profile/EditAccount";
 // import ApplicationDetailsPage from '../pages/applicant/ApplicationDetails';
 
 // Lazy-loaded components
@@ -82,6 +83,9 @@ export default function App() {
                   }
                 />
                 {/* <Route path="/applications/:id" element={<ApplicationDetailsPage />} /> */}
+
+                {/* Add EditAccount route here */}
+                <Route path="/profile/edit" element={<EditAccount />} />
                 
                 {/* Catch-all route - redirect to login */}
                 <Route path="*" element={<Login />} />

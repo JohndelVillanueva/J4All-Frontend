@@ -28,6 +28,7 @@ import UserAvatar from "./UserAvatar";
 import ApplicationDetailsModal from "../pages/applicant/ApplicationDetailsModal";
 import { getFullPhotoUrl } from './utils/photo';
 import { ChatContext } from "../contexts/ChatContext";
+import EditAccountModal from '../pages/profile/EditAccountModal';
 
 const DEFAULT_PROFILE_IMAGE =
   "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJDNi40NzcgMiAyIDYuNDc3IDIgMTJzNC40NzcgMTAgMTAgMTAgMTAtNC40NzcgMTAtMTBTMTcuNTIzIDIgMTIgMnptMCAyYzQuNDE4IDAgOCAzLjU4MiA4IDhzLTMuNTgyIDgtOCA4LTgtMy41ODItOC04IDMuNTgyLTggOC04eiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==";
@@ -41,6 +42,7 @@ const Header = () => {
   const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
   const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(null);
+  const [editAccountOpen, setEditAccountOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
@@ -334,7 +336,7 @@ const Header = () => {
   const profileMenuItems = useMemo<MenuItem[]>(
     () => [
       { icon: <FaUserCircle />, label: "Profile", path: "/profile" },
-      { icon: <FaUserEdit />, label: "Edit Account", path: "/profile/edit" },
+      { icon: <FaUserEdit />, label: "Edit Account", path: "#", onClick: () => setEditAccountOpen(true) },
       { icon: <FaCog />, label: "Settings", path: "/settings" },
       {
         icon: <FaSignOutAlt />,
@@ -828,6 +830,7 @@ const Header = () => {
           fetchUnreadNotificationCount();
         }}
       />
+      <EditAccountModal isOpen={editAccountOpen} onClose={() => setEditAccountOpen(false)} />
     </ChatContext.Provider>
   );
 };
