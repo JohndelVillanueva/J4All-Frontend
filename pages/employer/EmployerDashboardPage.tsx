@@ -29,6 +29,7 @@ import UserAvatar from '../../components/UserAvatar';
 import { useToast } from "../../components/ToastContainer";
 import { handleApiError } from "../../src/utils/errorHandler";
 import ScheduleInterviewModal from '../../components/EmployerDashboard/ScheduleInterviewModal';
+import ApplicantProfileModal from '../profile/ApplicantProfileModal';
 
 interface JobPosting {
   id: number;
@@ -40,7 +41,7 @@ interface JobPosting {
   work_mode: string;
   salary_range_min: number | null;
   salary_range_max: number | null;
-  expiration_date: string | null;
+  expiration_date?: string;
   posted_date: string;
   status: 'active' | 'closed';
   applicants: number;
@@ -70,10 +71,15 @@ const EmployerDashboardPage = () => {
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [scheduleApplicant, setScheduleApplicant] = useState<Applicant | null>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [selectedApplicantForProfile, setSelectedApplicantForProfile] = useState<Applicant | null>(null);
   const [employerId, setEmployerId] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<string>('date'); // default sort by applied date
   const [statusFilter, setStatusFilter] = useState<string>('All Statuses');
   const [positionFilter, setPositionFilter] = useState<string>('All Positions');
+  const [isApplicantsModalOpen, setIsApplicantsModalOpen] = useState(false);
+  const [selectedJobApplicants, setSelectedJobApplicants] = useState<Applicant[]>([]);
+  const [selectedJobTitle, setSelectedJobTitle] = useState<string>("");
 
   // Guard: Show loading spinner while auth is loading
   if (loading) {
@@ -863,7 +869,15 @@ console.log('EmployerDashboard mounted');
                                 </p>
                               </div>
                               <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                                <button className="mr-3 text-blue-600 hover:text-blue-800">
+                                <button
+                                  className="mr-3 text-blue-600 hover:text-blue-800"
+                                  onClick={() => {
+                                    const applicantsForJob = applicants.filter(a => a.job?.id === job.id);
+                                    setSelectedJobApplicants(applicantsForJob);
+                                    setSelectedJobTitle(job.job_title);
+                                    setIsApplicantsModalOpen(true);
+                                  }}
+                                >
                                   View Applicants
                                 </button>
                                 <button 
@@ -1048,7 +1062,13 @@ console.log('EmployerDashboard mounted');
                               </div>
                             </div>
                             <div className="mt-3 flex space-x-3">
-                              <button className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                              <button 
+                                onClick={() => {
+                                  setSelectedApplicantForProfile(applicant);
+                                  setIsProfileModalOpen(true);
+                                }}
+                                className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                              >
                                 View Profile
                               </button>
                               <button 
@@ -1163,6 +1183,51 @@ console.log('EmployerDashboard mounted');
           onSubmit={handleSubmitInterview}
           applicantName={scheduleApplicant ? scheduleApplicant.name : ''}
         />
+        {isProfileModalOpen && selectedApplicantForProfile && (
+          <ApplicantProfileModal
+            isOpen={isProfileModalOpen}
+            onClose={() => {
+              setIsProfileModalOpen(false);
+              setSelectedApplicantForProfile(null);
+            }}
+            applicantUserId={selectedApplicantForProfile.user_id}
+          />
+        )}
+        {isApplicantsModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md">
+            <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto p-6 relative">
+              <button
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl font-bold"
+                onClick={() => setIsApplicantsModalOpen(false)}
+                aria-label="Close"
+              >
+                &times;
+              </button>
+              <h2 className="text-xl font-bold mb-4">Applicants for {selectedJobTitle}</h2>
+              {selectedJobApplicants.length === 0 ? (
+                <p className="text-gray-500">No applicants for this job.</p>
+              ) : (
+                <ul>
+                  {selectedJobApplicants.map(applicant => (
+                    <li key={applicant.id} className="flex items-center justify-between py-2 border-b">
+                      <span>{applicant.name}</span>
+                      <button
+                        className="text-blue-600 hover:underline"
+                        onClick={() => {
+                          setSelectedApplicantForProfile(applicant);
+                          setIsProfileModalOpen(true);
+                          setIsApplicantsModalOpen(false);
+                        }}
+                      >
+                        View Profile
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

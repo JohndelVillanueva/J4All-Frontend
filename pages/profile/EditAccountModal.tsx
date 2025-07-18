@@ -245,48 +245,50 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose }) 
           </div>
           {/* Divider */}
           {jobSeekerData && <div className="flex items-center justify-center my-2"><div className="h-1 w-16 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 rounded-full opacity-40"></div></div>}
-          {/* Job Seeker Details Card */}
+          {/* Job Seeker Details */}
           {jobSeekerData && (
-            <div className="rounded-2xl border border-purple-100 bg-white/80 p-8 shadow-md transition-all">
+            <div className="rounded-2xl border border-blue-100 bg-white/80 p-6 shadow-md transition-all">
               <div className="flex items-center gap-3 mb-6">
-                <FaUserGraduate className="text-purple-600 text-2xl" />
-                <span className="text-xl font-bold text-purple-700 tracking-wide">Job Seeker Details</span>
+                <FaUserGraduate className="text-blue-600 text-2xl" />
+                <span className="text-xl font-bold text-blue-700 tracking-wide">Job Seeker Details</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[{ label: 'Resume Text', name: 'resume_text', type: 'textarea' },
-                  { label: 'Education', name: 'education', type: 'text' },
-                  { label: 'Experience Years', name: 'experience_years', type: 'number' },
-                  { label: 'Current Job Title', name: 'current_job_title', type: 'text' },
-                  { label: 'Desired Job Title', name: 'desired_job_title', type: 'text' },
-                  { label: 'Desired Salary', name: 'desired_salary', type: 'number' },
-                  { label: 'Location Preference', name: 'location_preference', type: 'text' },
-                ].map((field) => (
-                  <div key={field.name} className="relative">
-                    {field.type === 'textarea' ? (
-                      <textarea
-                        name={field.name}
-                        value={jobSeekerData[field.name] || ''}
-                        onChange={handleJobSeekerChange}
-                        className="peer w-full px-4 py-3 bg-white/60 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all min-h-[60px]"
-                        placeholder=" "
-                      />
-                    ) : (
-                      <input
-                        name={field.name}
-                        type={field.type}
-                        value={jobSeekerData[field.name] || ''}
-                        onChange={handleJobSeekerChange}
-                        className="peer w-full px-4 py-3 bg-white/60 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-purple-400 transition-all"
-                        placeholder=" "
-                      />
-                    )}
-                    <label
-                      className="absolute left-4 top-3 text-gray-500 text-sm pointer-events-none transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-purple-600 bg-white/80 px-1 rounded"
-                    >
-                      {field.label}
-                    </label>
-                  </div>
-                ))}
+                <div>
+                  <label className="block text-gray-600 text-sm mb-1">Resume Text</label>
+                  <textarea name="resume_text" value={jobSeekerData.resume_text || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200 min-h-[40px]" />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-sm mb-1">Resume File Path</label>
+                  <input name="resume_file_path" type="text" value={jobSeekerData.resume_file_path || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-sm mb-1">Education</label>
+                  <input name="education" type="text" value={jobSeekerData.education || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-sm mb-1">Experience Years</label>
+                  <input name="experience_years" type="number" value={jobSeekerData.experience_years ?? ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-sm mb-1">Current Job Title</label>
+                  <input name="current_job_title" type="text" value={jobSeekerData.current_job_title || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-sm mb-1">Desired Job Title</label>
+                  <input name="desired_job_title" type="text" value={jobSeekerData.desired_job_title || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-sm mb-1">Desired Salary</label>
+                  <input name="desired_salary" type="number" value={jobSeekerData.desired_salary ?? ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-sm mb-1">Location Preference</label>
+                  <input name="location_preference" type="text" value={jobSeekerData.location_preference || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-gray-600 text-sm mb-1">Disability</label>
+                  <input name="disability" type="text" value={jobSeekerData.disability || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+                </div>
               </div>
             </div>
           )}

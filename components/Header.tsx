@@ -1,3 +1,4 @@
+import React from "react";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   FaHome,
@@ -23,12 +24,14 @@ import { useNavigate } from "react-router-dom";
 import { UserType, MenuItem } from "../components/types/types";
 import { notificationService } from "../src/services/notificationService";
 import { messageService } from "../src/services/messageService";
-import React from "react";
 import UserAvatar from "./UserAvatar";
 import ApplicationDetailsModal from "../pages/applicant/ApplicationDetailsModal";
 import { getFullPhotoUrl } from './utils/photo';
 import { ChatContext } from "../contexts/ChatContext";
 import EditAccountModal from '../pages/profile/EditAccountModal';
+import { Link } from 'react-router-dom';
+import { FaUser, FaIdBadge, FaUserGraduate, FaBuilding } from 'react-icons/fa';
+import ProfileModal from '../pages/profile/ProfileModal';
 
 const DEFAULT_PROFILE_IMAGE =
   "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJDNi40NzcgMiAyIDYuNDc3IDIgMTJzNC40NzcgMTAgMTAgMTAgMTAtNC40NzcgMTAtMTBTMTcuNTIzIDIgMTIgMnptMCAyYzQuNDE4IDAgOCAzLjU4MiA4IDhzLTMuNTgyIDgtOCA4LTgtMy41ODItOC04IDMuNTgyLTggOC04eiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==";
@@ -43,6 +46,7 @@ const Header = () => {
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
   const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(null);
   const [editAccountOpen, setEditAccountOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
@@ -335,7 +339,7 @@ const Header = () => {
 
   const profileMenuItems = useMemo<MenuItem[]>(
     () => [
-      { icon: <FaUserCircle />, label: "Profile", path: "/profile" },
+      { icon: <FaUserCircle />, label: "Profile", path: "#", onClick: () => setProfileModalOpen(true) },
       { icon: <FaUserEdit />, label: "Edit Account", path: "#", onClick: () => setEditAccountOpen(true) },
       { icon: <FaCog />, label: "Settings", path: "/settings" },
       {
@@ -831,6 +835,17 @@ const Header = () => {
         }}
       />
       <EditAccountModal isOpen={editAccountOpen} onClose={() => setEditAccountOpen(false)} />
+      {/* Profile Modal */}
+      {profileModalOpen && (
+        <ProfileModal
+          isOpen={profileModalOpen}
+          onClose={() => setProfileModalOpen(false)}
+          onEditProfile={() => {
+            setProfileModalOpen(false);
+            setEditAccountOpen(true);
+          }}
+        />
+      )}
     </ChatContext.Provider>
   );
 };

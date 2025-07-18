@@ -155,22 +155,19 @@ const EmployerMessageModal: React.FC<EmployerMessageModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div 
-        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
-        onClick={onClose}
-      ></div>
-      
-      <div className="relative bg-white rounded-lg p-6 w-full max-w-md mx-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md">
+      <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 relative">
+        {/* Close button */}
+        <button
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl font-bold"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          &times;
+        </button>
+        {/* Modal content here (existing content) */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Message {applicant.name}</h2>
-          <button 
-            onClick={onClose} 
-            className="text-gray-500 hover:text-gray-700"
-            disabled={isSubmitting}
-          >
-            <FaTimes />
-          </button>
         </div>
 
         {error && (
