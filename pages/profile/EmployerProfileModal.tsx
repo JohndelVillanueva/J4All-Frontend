@@ -1,20 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
 import UserAvatar from "../../components/UserAvatar";
 import { getFullPhotoUrl } from "../../components/utils/photo";
 import { useAuth } from "../../contexts/AuthContext";
-import { FaUser, FaIdBadge, FaUserGraduate, FaBuilding } from "react-icons/fa";
+import { FaUser, FaIdBadge, FaBuilding } from "react-icons/fa";
 
-interface ProfileModalProps {
+interface EmployerProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   onEditProfile: () => void;
 }
 
-const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onEditProfile }) => {
+const EmployerProfileModal: React.FC<EmployerProfileModalProps> = ({ isOpen, onClose, onEditProfile }) => {
   const { user, loading } = useAuth();
   const [userData, setUserData] = useState<any>(null);
-  const [jobSeekerData, setJobSeekerData] = useState<any>(null);
   const [employerData, setEmployerData] = useState<any>(null);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,16 +46,9 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onEditProf
         } else {
           setUserPhotoUrl(null);
         }
-        if (["pwd", "indigenous", "general"].includes(user.user_type)) {
-          const seekerRes = await fetch(`/api/jobseeker-by-user/${user.id}`);
-          const seekerData = await seekerRes.json();
-          if (seekerData.success) setJobSeekerData(seekerData.jobSeeker);
-        }
-        if (user.user_type === "employer") {
-          const employerRes = await fetch(`/api/employer-by-user/${user.id}`);
-          const employerData = await employerRes.json();
-          if (employerData.success) setEmployerData(employerData.employer);
-        }
+        const employerRes = await fetch(`/api/employer/${user.id}`);
+        const employerData = await employerRes.json();
+        if (employerData.success) setEmployerData(employerData.employer);
       } catch (err: any) {
         setError(err.message || "Error fetching data");
       } finally {
@@ -85,7 +76,7 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onEditProf
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md">
-      <div className="w-full max-w-3xl bg-white/80 rounded-2xl shadow-xl flex flex-col md:flex-row overflow-hidden relative">
+      <div className="w-full max-w-3xl bg-white/80 rounded-2xl shadow-xl flex flex-col md:flex-row overflow-hidden relative max-h-[90vh]">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold"
@@ -103,22 +94,26 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onEditProf
               className="border-2 border-blue-200"
             />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mt-4 mb-2 tracking-tight drop-shadow-sm">
-            {userData.first_name} {userData.last_name}
-          </h2>
+          <div className="flex flex-col items-center mt-4 mb-2">
+            <span className="text-xl font-semibold text-gray-600 tracking-tight">
+              {userData.first_name}
+            </span>
+            <span className="text-xl font-semibold text-gray-600 tracking-tight">
+              {userData.last_name}
+            </span>
+          </div>
           <span className="text-blue-700 font-semibold text-sm mb-2 capitalize">
             {userData.user_type}
           </span>
-          <Link
-            to="#"
+          <button
             className="mt-4 inline-flex items-center px-5 py-2.5 border border-blue-600 text-blue-700 font-semibold rounded-lg shadow-sm bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             onClick={onEditProfile}
           >
             <FaUser className="mr-2" /> Edit Profile
-          </Link>
+          </button>
         </div>
         {/* Info Section */}
-        <div className="flex-1 p-8 flex flex-col gap-8">
+        <div className="flex-1 p-8 flex flex-col gap-8 overflow-y-auto">
           {/* Account Details Card */}
           <div className="rounded-2xl border border-blue-100 bg-white/80 p-6 shadow-md transition-all">
             <div className="flex items-center gap-3 mb-6">
@@ -144,23 +139,25 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onEditProf
                   className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200"
                 />
               </div>
-              <div>
-                <label className="block text-gray-600 text-sm mb-1">First Name</label>
-                <input
-                  type="text"
-                  value={userData.first_name || ""}
-                  readOnly
-                  className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-600 text-sm mb-1">Last Name</label>
-                <input
-                  type="text"
-                  value={userData.last_name || ""}
-                  readOnly
-                  className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200"
-                />
+              <div className="md:col-span-2 flex gap-6">
+                <div className="flex-1">
+                  <label className="block text-gray-600 text-sm mb-1">First Name</label>
+                  <input
+                    type="text"
+                    value={userData.first_name || ""}
+                    readOnly
+                    className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-gray-600 text-sm mb-1">Last Name</label>
+                  <input
+                    type="text"
+                    value={userData.last_name || ""}
+                    readOnly
+                    className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-gray-600 text-sm mb-1">Phone Number</label>
@@ -182,55 +179,6 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onEditProf
               </div>
             </div>
           </div>
-
-          {/* Job Seeker Details */}
-          {jobSeekerData && (
-            <div className="rounded-2xl border border-blue-100 bg-white/80 p-6 shadow-md transition-all">
-              <div className="flex items-center gap-3 mb-6">
-                <FaUserGraduate className="text-blue-600 text-2xl" />
-                <span className="text-xl font-bold text-blue-700 tracking-wide">Job Seeker Details</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-gray-600 text-sm mb-1">Resume Text</label>
-                  <textarea value={jobSeekerData.resume_text || ''} readOnly className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200 min-h-[40px]" />
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-sm mb-1">Resume File Path</label>
-                  <input type="text" value={jobSeekerData.resume_file_path || ''} readOnly className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200" />
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-sm mb-1">Education</label>
-                  <input type="text" value={jobSeekerData.education || ''} readOnly className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200" />
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-sm mb-1">Experience Years</label>
-                  <input type="text" value={jobSeekerData.experience_years ?? ''} readOnly className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200" />
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-sm mb-1">Current Job Title</label>
-                  <input type="text" value={jobSeekerData.current_job_title || ''} readOnly className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200" />
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-sm mb-1">Desired Job Title</label>
-                  <input type="text" value={jobSeekerData.desired_job_title || ''} readOnly className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200" />
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-sm mb-1">Desired Salary</label>
-                  <input type="text" value={jobSeekerData.desired_salary ?? ''} readOnly className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200" />
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-sm mb-1">Location Preference</label>
-                  <input type="text" value={jobSeekerData.location_preference || ''} readOnly className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200" />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-gray-600 text-sm mb-1">Disability</label>
-                  <input type="text" value={jobSeekerData.disability || ''} readOnly className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200" />
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Employer Details */}
           {employerData && (
             <div className="rounded-2xl border border-blue-100 bg-white/80 p-6 shadow-md transition-all">
@@ -249,10 +197,37 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onEditProf
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-600 text-sm mb-1">Company Address</label>
+                  <label className="block text-gray-600 text-sm mb-1">Industry</label>
                   <input
                     type="text"
-                    value={employerData.company_address || ""}
+                    value={employerData.industry || ""}
+                    readOnly
+                    className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-sm mb-1">Company Size</label>
+                  <input
+                    type="text"
+                    value={employerData.company_size || ""}
+                    readOnly
+                    className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-sm mb-1">Website URL</label>
+                  <input
+                    type="text"
+                    value={employerData.website_url || ""}
+                    readOnly
+                    className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-sm mb-1">Founded Year</label>
+                  <input
+                    type="text"
+                    value={employerData.founded_year || ""}
                     readOnly
                     className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200"
                   />
@@ -267,22 +242,35 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onEditProf
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-600 text-sm mb-1">Contact Email</label>
+                  <label className="block text-gray-600 text-sm mb-1">Address</label>
                   <input
                     type="text"
-                    value={employerData.contact_email || ""}
+                    value={employerData.address || ""}
                     readOnly
                     className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-600 text-sm mb-1">Contact Number</label>
-                  <input
-                    type="text"
-                    value={employerData.contact_number || ""}
+                  <label className="block text-gray-600 text-sm mb-1">Company Description</label>
+                  <textarea
+                    value={employerData.company_description || ""}
                     readOnly
-                    className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200"
+                    className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200 min-h-[40px]"
                   />
+                </div>
+                {/* Logo Image */}
+                <div className="md:col-span-2">
+                  <label className="block text-gray-600 text-sm mb-1">Company Logo</label>
+                  {employerData.logo_path ? (
+                    <img
+                      src={`http://localhost:3111${employerData.logo_path}`}
+                      alt="Company Logo"
+                      className="h-24 w-auto rounded shadow border border-gray-200 bg-white p-2"
+                      style={{ maxWidth: '200px', objectFit: 'contain' }}
+                    />
+                  ) : (
+                    <span className="text-gray-400">No logo uploaded</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -293,4 +281,4 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose, onEditProf
   );
 };
 
-export default ProfileModal; 
+export default EmployerProfileModal; 

@@ -28,15 +28,22 @@ import UserAvatar from "./UserAvatar";
 import ApplicationDetailsModal from "../pages/applicant/ApplicationDetailsModal";
 import { getFullPhotoUrl } from './utils/photo';
 import { ChatContext } from "../contexts/ChatContext";
-import EditAccountModal from '../pages/profile/EditAccountModal';
+import EditJobSeekerAccountModal from '../pages/profile/EditJobSeekerAccountModal';
 import { Link } from 'react-router-dom';
 import { FaUser, FaIdBadge, FaUserGraduate, FaBuilding } from 'react-icons/fa';
-import ProfileModal from '../pages/profile/ProfileModal';
+import JobSeekerProfileModal from '../pages/profile/JobSeekerProfileModal';
+import EmployerProfileModal from '../pages/profile/EmployerProfileModal';
+import EditEmployerAccountModal from '../pages/profile/EditEmployerAccountModal';
 
 const DEFAULT_PROFILE_IMAGE =
   "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJDNi40NzcgMiAyIDYuNDc3IDIgMTJzNC40NzcgMTAgMTAgMTAgMTAtNC40NzcgMTAtMTBTMTcuNTIzIDIgMTIgMnptMCAyYzQuNDE4IDAgOCAzLjU4MiA4IDhzLTMuNTgyIDgtOCA4LTgtMy41ODItOC04IDMuNTgyLTggOC04eiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==";
 
-const Header = () => {
+// Add prop type
+interface HeaderProps {
+  onEmployerEditAccount?: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isInfoSidebarOpen, setIsInfoSidebarOpen] = useState(false);
@@ -47,6 +54,7 @@ const Header = () => {
   const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(null);
   const [editAccountOpen, setEditAccountOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [editEmployerAccountOpen, setEditEmployerAccountOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
@@ -340,7 +348,13 @@ const Header = () => {
   const profileMenuItems = useMemo<MenuItem[]>(
     () => [
       { icon: <FaUserCircle />, label: "Profile", path: "#", onClick: () => setProfileModalOpen(true) },
-      { icon: <FaUserEdit />, label: "Edit Account", path: "#", onClick: () => setEditAccountOpen(true) },
+      { icon: <FaUserEdit />, label: "Edit Account", path: "#", onClick: () => {
+    if (user && user.user_type === "employer" && onEmployerEditAccount) {
+      onEmployerEditAccount();
+    } else {
+      setEditAccountOpen(true);
+    }
+  } },
       { icon: <FaCog />, label: "Settings", path: "/settings" },
       {
         icon: <FaSignOutAlt />,
@@ -350,7 +364,7 @@ const Header = () => {
         onClick: handleLogout,
       },
     ],
-    [handleLogout]
+    [handleLogout, user?.user_type, onEmployerEditAccount]
   );
 
   const navIcons = useMemo(
@@ -834,15 +848,30 @@ const Header = () => {
           fetchUnreadNotificationCount();
         }}
       />
-      <EditAccountModal isOpen={editAccountOpen} onClose={() => setEditAccountOpen(false)} />
+      {user && ["pwd", "indigenous", "general"].includes(user.user_type) && (
+        <EditJobSeekerAccountModal isOpen={editAccountOpen} onClose={() => setEditAccountOpen(false)} />
+      )}
+      {user && user.user_type === "employer" && (
+        <EditEmployerAccountModal isOpen={editEmployerAccountOpen} onClose={() => setEditEmployerAccountOpen(false)} />
+      )}
       {/* Profile Modal */}
-      {profileModalOpen && (
-        <ProfileModal
+      {profileModalOpen && user && ["pwd", "indigenous", "general"].includes(user.user_type) && (
+        <JobSeekerProfileModal
           isOpen={profileModalOpen}
           onClose={() => setProfileModalOpen(false)}
           onEditProfile={() => {
             setProfileModalOpen(false);
-            setEditAccountOpen(true);
+            setTimeout(() => setEditAccountOpen(true), 200);
+          }}
+        />
+      )}
+      {profileModalOpen && user && user.user_type === "employer" && (
+        <EmployerProfileModal
+          isOpen={profileModalOpen}
+          onClose={() => setProfileModalOpen(false)}
+          onEditProfile={() => {
+            setProfileModalOpen(false);
+            setTimeout(() => setEditEmployerAccountOpen(true), 200);
           }}
         />
       )}

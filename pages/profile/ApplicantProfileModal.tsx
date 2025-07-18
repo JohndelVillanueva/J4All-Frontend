@@ -222,12 +222,10 @@ const ApplicantProfileModal: React.FC<ApplicantProfileModalProps> = ({
                           <span className="font-medium">{formatDate(profileData.user.last_login)}</span>
                         </div>
                       )}
-                      {profileData.jobSeeker.disability && (
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Disability:</span>
-                          <span className="font-medium">{profileData.jobSeeker.disability}</span>
-                        </div>
-                      )}
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Disability:</span>
+                        <span className="font-medium">{profileData.jobSeeker.disability || 'None'}</span>
+                      </div>
                     </div>
                   </div>
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   FaChartLine,
   FaBriefcase,
@@ -6,6 +6,9 @@ import {
   FaExternalLinkAlt,
 } from "react-icons/fa";
 import { Application, JobListing, StatItem } from "../types/types";
+import JobDescriptionModal from "./JobDescriptionModal";
+import ApplyModal from "./ApplyModal";
+import UserAvatar from '../UserAvatar';
 
 interface DashboardTabProps {
   stats: StatItem[];
@@ -20,6 +23,8 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
   applications,
   onJobStatusUpdate,
 }) => {
+  const [selectedJob, setSelectedJob] = useState<JobListing | null>(null);
+  const [applyJob, setApplyJob] = useState<JobListing | null>(null);
   return (
     <div>
       <h2 className="text-xl font-semibold text-gray-900 mb-6">
@@ -39,6 +44,8 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
         jobs={jobListings.slice(0, 3)}
         className="mb-8"
         onJobStatusUpdate={onJobStatusUpdate}
+        onViewDetails={setSelectedJob}
+        onApply={setApplyJob}
       />
 
       {/* Recent Activity */}
@@ -47,6 +54,22 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
         applications={applications}
         jobListings={jobListings}
       />
+
+      {selectedJob && (
+        <JobDescriptionModal
+          job={selectedJob}
+          onClose={() => setSelectedJob(null)}
+          onSaveJob={() => {}}
+          onUnsaveJob={() => {}}
+        />
+      )}
+      {applyJob && (
+        <ApplyModal
+          job={applyJob}
+          onClose={() => setApplyJob(null)}
+          onApply={async () => setApplyJob(null)}
+        />
+      )}
     </div>
   );
 };
@@ -85,7 +108,9 @@ const JobListingsSection: React.FC<{
   jobs: JobListing[];
   className?: string;
   onJobStatusUpdate?: (jobId: string, newStatus: "new" | "applied" | "saved") => void;
-}> = ({ title, jobs, className, onJobStatusUpdate }) => (
+  onViewDetails?: (job: JobListing) => void;
+  onApply?: (job: JobListing) => void;
+}> = ({ title, jobs, className, onJobStatusUpdate, onViewDetails, onApply }) => (
   <div className={`bg-white shadow overflow-hidden sm:rounded-lg ${className}`}>
     <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
       <h3 className="text-lg leading-6 font-medium text-gray-900">{title}</h3>
@@ -93,26 +118,53 @@ const JobListingsSection: React.FC<{
     <div className="bg-white overflow-hidden">
       <ul className="divide-y divide-gray-200">
         {jobs.map((job) => (
-          <JobListItem key={job.id} job={job} />
+          <JobListItem key={job.id} job={job} onViewDetails={onViewDetails} onApply={onApply} />
         ))}
       </ul>
     </div>
   </div>
 );
 
-const JobListItem: React.FC<{ job: JobListing }> = ({ job }) => {
+const JobListItem: React.FC<{ job: JobListing; onViewDetails?: (job: JobListing) => void; onApply?: (job: JobListing) => void }> = ({ job, onViewDetails, onApply }) => {
   const companyName = typeof job.company === 'string' ? job.company : job.company?.name || 'Unknown Company';
-  
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [firstName, setFirstName] = useState<string>('');
+  const [lastName, setLastName] = useState<string>('');
+
+  useEffect(() => {
+    if (!job.employer_user_id) return;
+    const fetchInfo = async () => {
+      try {
+        const userRes = await fetch(`/api/users/${job.employer_user_id}`);
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          setFirstName(userData?.data?.first_name || '');
+          setLastName(userData?.data?.last_name || '');
+        }
+        const photoRes = await fetch(`/api/photos/${job.employer_user_id}`);
+        if (photoRes.ok) {
+          const photoData = await photoRes.json();
+          setPhotoUrl(photoData?.data?.photo_url || null);
+        }
+      } catch (e) {
+        setPhotoUrl(null);
+      }
+    };
+    fetchInfo();
+  }, [job.employer_user_id]);
+
   return (
     <li>
       <div className="px-4 py-4 sm:px-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-600 text-lg font-medium">
-                {companyName.charAt(0)}
-              </span>
-            </div>
+            <UserAvatar
+              photoUrl={photoUrl ? `http://localhost:3111${photoUrl}` : undefined}
+              firstName={firstName}
+              lastName={lastName}
+              size="md"
+              className="flex-shrink-0"
+            />
             <div className="ml-4">
               <p className="text-lg font-medium text-blue-600">{job.title}</p>
               <p className="text-sm text-gray-500">
@@ -155,7 +207,10 @@ const JobListItem: React.FC<{ job: JobListing }> = ({ job }) => {
       </div>
       <div className="mt-3 flex space-x-3">
         {job.status === "new" ? (
-          <button className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          <button
+            className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            onClick={() => onApply && onApply(job)}
+          >
             Apply Now
           </button>
         ) : job.status === "applied" ? (
@@ -167,7 +222,10 @@ const JobListItem: React.FC<{ job: JobListing }> = ({ job }) => {
             Save Job
           </button>
         )}
-        <button className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+        <button
+          className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          onClick={() => onViewDetails && onViewDetails(job)}
+        >
           View Details
         </button>
       </div>
@@ -277,7 +335,9 @@ const ProgressBar: React.FC<{ status: string }> = ({
         <div>
           <span
             className={`text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full ${
-              status === "interview"
+              status === "hired"
+                ? "text-green-600 bg-green-200"
+                : status === "interview"
                 ? "text-yellow-600 bg-yellow-200"
                 : "text-blue-600 bg-blue-200"
             }`}
@@ -287,15 +347,23 @@ const ProgressBar: React.FC<{ status: string }> = ({
         </div>
         <div className="text-right">
           <span className="text-xs font-semibold inline-block">
-            {status === "interview" ? "75%" : "40%"} complete
+            {status === "hired"
+              ? "100%"
+              : status === "interview"
+              ? "75%"
+              : "40%"} complete
           </span>
         </div>
       </div>
       <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200">
         <div
-          style={{ width: `${status === "interview" ? "75%" : "40%"}` }}
+          style={{ width: `${status === "hired" ? "100%" : status === "interview" ? "75%" : "40%"}` }}
           className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center ${
-            status === "interview" ? "bg-yellow-500" : "bg-blue-500"
+            status === "hired"
+              ? "bg-green-500"
+              : status === "interview"
+              ? "bg-yellow-500"
+              : "bg-blue-500"
           }`}
         ></div>
       </div>

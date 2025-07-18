@@ -30,6 +30,8 @@ import { useToast } from "../../components/ToastContainer";
 import { handleApiError } from "../../src/utils/errorHandler";
 import ScheduleInterviewModal from '../../components/EmployerDashboard/ScheduleInterviewModal';
 import ApplicantProfileModal from '../profile/ApplicantProfileModal';
+import EditEmployerAccountModal from '../profile/EditEmployerAccountModal';
+import Header from '../../components/Header';
 
 interface JobPosting {
   id: number;
@@ -80,6 +82,7 @@ const EmployerDashboardPage = () => {
   const [isApplicantsModalOpen, setIsApplicantsModalOpen] = useState(false);
   const [selectedJobApplicants, setSelectedJobApplicants] = useState<Applicant[]>([]);
   const [selectedJobTitle, setSelectedJobTitle] = useState<string>("");
+  const [editEmployerAccountOpen, setEditEmployerAccountOpen] = useState(false);
 
   // Guard: Show loading spinner while auth is loading
   if (loading) {
@@ -297,7 +300,7 @@ const EmployerDashboardPage = () => {
     const fetchEmployerId = async () => {
       if (!user?.id) return;
       try {
-        const res = await fetch(`/api/employer-by-user/${user.id}`);
+        const res = await fetch(`/api/employer/${user.id}`);
         const data = await res.json();
         if (data.success) {
           setEmployerId(data.employer.id);
@@ -452,7 +455,7 @@ console.log('EmployerDashboard mounted');
   };
 
   const fetchJobSeekerId = async (userId: number) => {
-    const res = await fetch(`/api/jobseeker-by-user/${userId}`);
+    const res = await fetch(`/api/jobseeker/${userId}`);
     const data = await res.json();
     if (data.success) return data.jobSeeker.id;
     throw new Error('JobSeeker not found');
@@ -615,16 +618,10 @@ console.log('EmployerDashboard mounted');
       </div>
       {/* Main dashboard content (z-10) */}
       <div className="relative z-10">
-        <DynamicHeader
-          title="DevCareer Dashboard"
-          user={{
-            firstName: currentUser?.first_name || "",
-            lastName: currentUser?.last_name || "",
-          }}
-          showSearch={true}
-          onSearchChange={setSearchTerm}
-          className="bg-white shadow-sm"
-        />
+        <Header onEmployerEditAccount={() => {
+          console.log('Header requested to open employer edit modal');
+          setEditEmployerAccountOpen(true);
+        }} />
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="border-b border-gray-200">
@@ -790,6 +787,30 @@ console.log('EmployerDashboard mounted');
                     </ul>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === "overview" && (
+              <div className="bg-white shadow rounded-lg p-6 mb-8 flex flex-col items-center">
+                <UserAvatar
+                  photoUrl={currentUser?.photo ? `http://localhost:3111${currentUser.photo}` : undefined}
+                  firstName={currentUser?.first_name}
+                  lastName={currentUser?.last_name}
+                  size="xl"
+                  className="mb-4"
+                />
+                <h2 className="text-2xl font-bold text-gray-800 mb-1">
+                  {currentUser?.first_name} {currentUser?.last_name}
+                </h2>
+                <span className="text-blue-700 font-semibold text-sm mb-2 capitalize">
+                  {currentUser?.user_type === 'employer' ? 'Employer' : ''}
+                </span>
+                <button
+                  onClick={() => setEditEmployerAccountOpen(true)}
+                  className="mt-2 inline-flex items-center px-5 py-2.5 border border-blue-600 text-blue-700 font-semibold rounded-lg shadow-sm bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                >
+                  Edit Account
+                </button>
               </div>
             )}
 
@@ -1228,6 +1249,10 @@ console.log('EmployerDashboard mounted');
             </div>
           </div>
         )}
+        <EditEmployerAccountModal
+          isOpen={editEmployerAccountOpen}
+          onClose={() => setEditEmployerAccountOpen(false)}
+        />
       </div>
     </div>
   );

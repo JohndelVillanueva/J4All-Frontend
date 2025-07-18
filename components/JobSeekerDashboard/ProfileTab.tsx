@@ -36,7 +36,7 @@ const ProfileTab: React.FC = () => {
           setPhotoUrl(null);
         }
         // Fetch job seeker info
-        const seekerRes = await fetch(`/api/jobseeker-by-user/${user.id}`);
+        const seekerRes = await fetch(`/api/jobseeker/${user.id}`);
         const seekerData = await seekerRes.json();
         if (seekerData.success) setJobSeekerData(seekerData.jobSeeker);
       } catch (err: any) {

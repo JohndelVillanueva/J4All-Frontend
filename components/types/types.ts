@@ -40,6 +40,8 @@ export type UserData = {
   first_name: string;
   last_name: string;
   email: string;
+  photo?: string | null;
+  user_type?: string;
 };
 
 export type EmployerInfo = {

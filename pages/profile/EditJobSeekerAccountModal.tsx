@@ -1,28 +1,28 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { FaUser, FaIdBadge, FaUserGraduate, FaSave, FaCamera, FaTimes, FaBriefcase } from 'react-icons/fa';
+import { FaUserGraduate, FaIdBadge, FaSave, FaCamera, FaTimes } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../components/ToastContainer';
 import UserAvatar from '../../components/UserAvatar';
 import { getFullPhotoUrl } from '../../components/utils/photo';
 import clsx from 'clsx';
 
-interface EditAccountModalProps {
+interface EditJobSeekerAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose }) => {
-  const { user, loading } = useAuth();
+const EditJobSeekerAccountModal: React.FC<EditJobSeekerAccountModalProps> = ({ isOpen, onClose }) => {
+  const { user, loading, login } = useAuth();
   const { showToast } = useToast();
   const [userData, setUserData] = useState<any>(null);
   const [jobSeekerData, setJobSeekerData] = useState<any>(null);
-  const [employerData, setEmployerData] = useState<any>(null);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [userPhotoUrl, setUserPhotoUrl] = useState<string | null>(null);
+  const [skillsInput, setSkillsInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -43,8 +43,9 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose }) 
         });
         if (!res.ok) throw new Error('Failed to fetch user data');
         const data = await res.json();
-        setUserData(data);
-        // Fetch user photo URL just like the header
+        setUserData(data.data || data);
+        console.log('userData:', data.data || data);
+        // Fetch user photo URL
         const photoRes = await fetch(`/api/photos/${user.id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -54,18 +55,13 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose }) 
         } else {
           setUserPhotoUrl(null);
         }
-        if (["pwd", "indigenous", "general"].includes(user.user_type)) {
-          const seekerRes = await fetch(`/api/jobseeker-by-user/${user.id}`);
-          const seekerData = await seekerRes.json();
-          if (seekerData.success) setJobSeekerData(seekerData.jobSeeker);
-        }
-        if (user.user_type === 'employer') {
-          const employerRes = await fetch(`/api/employer-by-user/${user.id}`);
-          const employerData = await employerRes.json();
-          if (employerData.success) setEmployerData(employerData.employer);
-        } else {
-          setEmployerData(null);
-        }
+        // Fetch job seeker data
+        const seekerRes = await fetch(`/api/jobseeker/${user.id}`);
+        const seekerData = await seekerRes.json();
+        setJobSeekerData(seekerData.jobSeeker || seekerData.data || seekerData);
+        console.log('jobSeekerData:', seekerData.jobSeeker || seekerData.data || seekerData);
+        const fetchedSkills = (seekerData.jobSeeker?.skills || seekerData.skills || []);
+        setSkillsInput(fetchedSkills.map((s: any) => s.name).join(', '));
       } catch (err: any) {
         setError(err.message || 'Error fetching data');
       } finally {
@@ -75,18 +71,13 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose }) 
     fetchUserData();
   }, [user, loading, isOpen, onClose]);
 
-  // Handle input changes
   const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserData({ ...userData, [e.target.name]: e.target.value });
   };
   const handleJobSeekerChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setJobSeekerData({ ...jobSeekerData, [e.target.name]: e.target.value });
   };
-  const handleEmployerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmployerData({ ...employerData, [e.target.name]: e.target.value });
-  };
 
-  // Avatar upload handlers
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
   };
@@ -102,7 +93,6 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose }) 
     }
   };
 
-  // Save handler
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -123,21 +113,39 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose }) 
         const uploadData = await uploadRes.json();
         photoUrl = uploadData.photoUrl || uploadData.url || uploadData.path;
       }
-      // Update user info
+      // Only send editable fields
+      const updatedUser = {
+        first_name: userData.first_name,
+        last_name: userData.last_name,
+        email: userData.email,
+        phone_number: userData.phone_number,
+        photo: photoUrl
+      };
       const userRes = await fetch(`/api/users/${user!.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ ...userData, photo: photoUrl })
+        body: JSON.stringify(updatedUser)
       });
       if (!userRes.ok) throw new Error('Failed to update user info');
-      // Update job seeker info if applicable
+      const updatedUserData = await userRes.json();
+      // Update job seeker info
+      const skills = skillsInput
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .map(name => ({ name }));
+      const jobSeekerPayload = { ...jobSeekerData, skills };
       if (jobSeekerData) {
-        const seekerRes = await fetch(`/api/jobseeker-by-user/${user!.id}`, {
+        const seekerRes = await fetch(`/api/jobseeker/${user!.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify(jobSeekerData)
+          body: JSON.stringify(jobSeekerPayload)
         });
         if (!seekerRes.ok) throw new Error('Failed to update job seeker info');
+      }
+      if (updatedUserData && updatedUserData.data) {
+        login(updatedUserData.data);
+        localStorage.setItem('user', JSON.stringify(updatedUserData.data));
       }
       showToast({ type: 'success', message: 'Profile updated successfully!', autoHide: true, autoHideDelay: 3000 });
       setAvatarFile(null);
@@ -246,86 +254,61 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose }) 
           {/* Divider */}
           {jobSeekerData && <div className="flex items-center justify-center my-2"><div className="h-1 w-16 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 rounded-full opacity-40"></div></div>}
           {/* Job Seeker Details */}
-          {jobSeekerData && (
-            <div className="rounded-2xl border border-blue-100 bg-white/80 p-6 shadow-md transition-all">
-              <div className="flex items-center gap-3 mb-6">
-                <FaUserGraduate className="text-blue-600 text-2xl" />
-                <span className="text-xl font-bold text-blue-700 tracking-wide">Job Seeker Details</span>
+          <div className="rounded-2xl border border-blue-100 bg-white/80 p-6 shadow-md transition-all">
+            <div className="flex items-center gap-3 mb-6">
+              <FaUserGraduate className="text-blue-600 text-2xl" />
+              <span className="text-xl font-bold text-blue-700 tracking-wide">Job Seeker Detailss</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-gray-600 text-sm mb-1">Resume Text</label>
+                <textarea name="resume_text" value={jobSeekerData?.resume_text || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200 min-h-[40px]" />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-gray-600 text-sm mb-1">Resume Text</label>
-                  <textarea name="resume_text" value={jobSeekerData.resume_text || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200 min-h-[40px]" />
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-sm mb-1">Resume File Path</label>
-                  <input name="resume_file_path" type="text" value={jobSeekerData.resume_file_path || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-sm mb-1">Education</label>
-                  <input name="education" type="text" value={jobSeekerData.education || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-sm mb-1">Experience Years</label>
-                  <input name="experience_years" type="number" value={jobSeekerData.experience_years ?? ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-sm mb-1">Current Job Title</label>
-                  <input name="current_job_title" type="text" value={jobSeekerData.current_job_title || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-sm mb-1">Desired Job Title</label>
-                  <input name="desired_job_title" type="text" value={jobSeekerData.desired_job_title || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-sm mb-1">Desired Salary</label>
-                  <input name="desired_salary" type="number" value={jobSeekerData.desired_salary ?? ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
-                </div>
-                <div>
-                  <label className="block text-gray-600 text-sm mb-1">Location Preference</label>
-                  <input name="location_preference" type="text" value={jobSeekerData.location_preference || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-gray-600 text-sm mb-1">Disability</label>
-                  <input name="disability" type="text" value={jobSeekerData.disability || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
-                </div>
+              <div>
+                <label className="block text-gray-600 text-sm mb-1">Resume File Path</label>
+                <input name="resume_file_path" type="text" value={jobSeekerData?.resume_file_path || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+              </div>
+              <div>
+                <label className="block text-gray-600 text-sm mb-1">Education</label>
+                <input name="education" type="text" value={jobSeekerData?.education || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+              </div>
+              <div>
+                <label className="block text-gray-600 text-sm mb-1">Experience Years</label>
+                <input name="experience_years" type="number" value={jobSeekerData?.experience_years ?? ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+              </div>
+              <div>
+                <label className="block text-gray-600 text-sm mb-1">Current Job Title</label>
+                <input name="current_job_title" type="text" value={jobSeekerData?.current_job_title || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+              </div>
+              <div>
+                <label className="block text-gray-600 text-sm mb-1">Desired Job Title</label>
+                <input name="desired_job_title" type="text" value={jobSeekerData?.desired_job_title || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+              </div>
+              <div>
+                <label className="block text-gray-600 text-sm mb-1">Desired Salary</label>
+                <input name="desired_salary" type="number" value={jobSeekerData?.desired_salary ?? ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+              </div>
+              <div>
+                <label className="block text-gray-600 text-sm mb-1">Location Preference</label>
+                <input name="location_preference" type="text" value={jobSeekerData?.location_preference || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-gray-600 text-sm mb-1">Disability</label>
+                <input name="disability" type="text" value={jobSeekerData?.disability || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
               </div>
             </div>
-          )}
-          {/* Employer Details Card */}
-          {userData?.user_type === 'employer' && employerData && (
-            <div className="rounded-2xl border border-green-100 bg-white/80 p-8 shadow-md transition-all mb-8">
-              <div className="flex items-center gap-3 mb-6">
-                <FaBriefcase className="text-green-600 text-2xl" />
-                <span className="text-xl font-bold text-green-700 tracking-wide">Employer Details</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {[
-                  { label: 'Company Name', name: 'company_name' },
-                  { label: 'Contact Person', name: 'contact_person' },
-                  { label: 'Industry', name: 'industry' },
-                  { label: 'Company Size', name: 'company_size' },
-                  { label: 'Website URL', name: 'website_url' },
-                  { label: 'Founded Year', name: 'founded_year' },
-                  { label: 'Address', name: 'address' },
-                  { label: 'Description', name: 'company_description' },
-                ].map((field) => (
-                  <div key={field.name} className="relative">
-                    <input
-                      name={field.name}
-                      className="peer w-full px-4 py-3 bg-white/60 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 transition-all"
-                      value={employerData[field.name] || ''}
-                      onChange={handleEmployerChange}
-                      placeholder=" "
-                    />
-                    <label className="absolute left-4 top-3 text-gray-500 text-sm pointer-events-none transition-all duration-200 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-focus:-top-3 peer-focus:text-xs peer-focus:text-green-600 bg-white/80 px-1 rounded">
-                      {field.label}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          </div>
+          {/* Skills Section - always visible */}
+          <div className="rounded-2xl border border-blue-100 bg-white/80 p-6 shadow-md transition-all mt-6">
+            <label className="block text-gray-600 text-sm mb-1 font-bold">Skills (comma separated)</label>
+            <input
+              type="text"
+              className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200"
+              placeholder="e.g. JavaScript, React, Node.js"
+              value={skillsInput}
+              onChange={e => setSkillsInput(e.target.value)}
+            />
+          </div>
           {/* Buttons */}
           <div className="flex justify-end mt-8 gap-4">
             <button
@@ -350,4 +333,4 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({ isOpen, onClose }) 
   );
 };
 
-export default EditAccountModal; 
+export default EditJobSeekerAccountModal; 
