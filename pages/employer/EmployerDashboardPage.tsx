@@ -820,12 +820,36 @@ console.log('EmployerDashboard mounted');
                   <h2 className="text-xl font-semibold text-gray-900">
                     Job Positions
                   </h2>
-                  <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  >
-                    Create New Position
-                  </button>
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setIsModalOpen(true)}
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      Create New Position
+                    </button>
+                    <button
+                      onClick={async () => {
+                        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                        const res = await fetch('/api/jobs/deactivate-expired', {
+                          method: 'POST',
+                          headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                          }
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                          showToast({ type: 'success', message: `Deactivated ${data.deactivated} expired jobs!`, autoHide: true, autoHideDelay: 3000 });
+                          fetchJobPostings();
+                        } else {
+                          showToast({ type: 'error', message: 'Failed to deactivate expired jobs.', autoHide: true, autoHideDelay: 3000 });
+                        }
+                      }}
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      Deactivate Expired Jobs
+                    </button>
+                  </div>
                 </div>
 
                 {isLoadingJobs ? (
