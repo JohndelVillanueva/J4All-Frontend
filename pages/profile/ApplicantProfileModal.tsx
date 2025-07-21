@@ -288,22 +288,7 @@ const ApplicantProfileModal: React.FC<ApplicantProfileModalProps> = ({
                       <div className="space-y-3">
                         {profileData.jobSeeker.skills.map((skill) => (
                           <div key={skill.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div>
-                              <span className="font-medium text-gray-900">{skill.name}</span>
-                              {skill.category && (
-                                <span className="text-sm text-gray-500 ml-2">({skill.category})</span>
-                              )}
-                            </div>
-                            <div className="text-right text-sm">
-                              <div className="text-gray-600">
-                                Level: {getSkillLevelText(skill.proficiency_level)}
-                              </div>
-                              {skill.years_of_experience && (
-                                <div className="text-gray-600">
-                                  {skill.years_of_experience} years
-                                </div>
-                              )}
-                            </div>
+                            <span className="font-medium text-gray-900">{skill.name}</span>
                           </div>
                         ))}
                       </div>
