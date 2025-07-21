@@ -31,6 +31,7 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
   autoHide = false,
   autoHideDelay = 5000
 }) => {
+  console.log('ErrorMessage props:', { autoHide, autoHideDelay });
   const [isVisible, setIsVisible] = React.useState(true);
 
   React.useEffect(() => {

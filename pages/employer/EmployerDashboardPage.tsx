@@ -12,6 +12,7 @@ import {
   FaClock,
   FaUserFriends,
   FaSort,
+  FaPowerOff,
 } from "react-icons/fa";
 import DynamicHeader from "../../components/JobSeekerDashboard/DynamicHeader";
 import { useNavigate } from "react-router-dom";
@@ -32,6 +33,7 @@ import ScheduleInterviewModal from '../../components/EmployerDashboard/ScheduleI
 import ApplicantProfileModal from '../profile/ApplicantProfileModal';
 import EditEmployerAccountModal from '../profile/EditEmployerAccountModal';
 import Header from '../../components/Header';
+import { MdAutoDelete } from "react-icons/md";
 
 interface JobPosting {
   id: number;
@@ -54,6 +56,16 @@ interface JobPosting {
     category?: string;
   }[];
 }
+
+// Add a simple Tooltip component if not present
+const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, children }) => (
+  <span className="relative group">
+    {children}
+    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded py-1 px-2 z-50 whitespace-nowrap shadow-lg">
+      {text}
+    </span>
+  </span>
+);
 
 const EmployerDashboardPage = () => {
   const { user, loading } = useAuth();
@@ -815,18 +827,10 @@ console.log('EmployerDashboard mounted');
             )}
 
             {activeTab === "positions" && (
-              <div>
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    Job Positions
-                  </h2>
-                  <div className="flex gap-4">
-                    <button
-                      onClick={() => setIsModalOpen(true)}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      Create New Position
-                    </button>
+              <>
+                {/* Floating Deactivate Expired Jobs Button */}
+                <div className="fixed bottom-8 left-8 z-50">
+                  <Tooltip text="Deactivate Expired Jobs">
                     <button
                       onClick={async () => {
                         const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -839,107 +843,123 @@ console.log('EmployerDashboard mounted');
                         });
                         const data = await res.json();
                         if (data.success) {
-                          showToast({ type: 'success', message: `Deactivated ${data.deactivated} expired jobs!`, autoHide: true, autoHideDelay: 3000 });
+                          showToast({ type: 'success', message: `Deactivated ${data.deactivated} expired jobs!` });
                           fetchJobPostings();
                         } else {
-                          showToast({ type: 'error', message: 'Failed to deactivate expired jobs.', autoHide: true, autoHideDelay: 3000 });
+                          showToast({ type: 'error', message: 'Failed to deactivate expired jobs.' });
                         }
                       }}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="inline-flex items-center justify-center p-3 border border-transparent rounded-full shadow-lg text-blue-600 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 bg-transparent"
+                      type="button"
                     >
-                      Deactivate Expired Jobs
+                      <MdAutoDelete size={28} />
                     </button>
-                  </div>
+                  </Tooltip>
                 </div>
-
-                {isLoadingJobs ? (
-                  <div className="flex justify-center items-center py-10">
-                    <span className="inline-block animate-spin mr-2">↻</span>
-                    Loading job postings...
-                  </div>
-                ) : jobPostings.length === 0 ? (
-                  <div className="bg-white shadow overflow-hidden sm:rounded-lg p-6 text-center">
-                    <FaBriefcase className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">
-                      No job postings
-                    </h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                      You haven't posted any jobs yet.
-                    </p>
-                    <div className="mt-6">
+                <div>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      Job Positions
+                    </h2>
+                    <div className="flex gap-4">
                       <button
                         onClick={() => setIsModalOpen(true)}
-                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                       >
-                        <FaBriefcase className="-ml-1 mr-2 h-5 w-5" />
-                        Create First Job Posting
+                        Create New Position
                       </button>
                     </div>
                   </div>
-                ) : (
-                  <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-                    <ul className="divide-y divide-gray-200">
-                      {jobPostings.map((job) => (
-                        <li key={job.id}>
-                          <div className="px-4 py-4 sm:px-6">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center">
-                                <p className="text-lg font-medium text-blue-600 truncate">
-                                  {job.job_title}
-                                </p>
-                                {typeof job.applicants !== 'undefined' && (
-                                  <span className="inline-flex items-center px-2 py-1 ml-3 text-xs font-semibold rounded-full bg-blue-50 text-blue-700">
-                                    <FaUserFriends className="mr-1" />
-                                    {job.applicants} applicant{job.applicants === 1 ? '' : 's'}
-                                  </span>
-                                )}
+
+                  {isLoadingJobs ? (
+                    <div className="flex justify-center items-center py-10">
+                      <span className="inline-block animate-spin mr-2">↻</span>
+                      Loading job postings...
+                    </div>
+                  ) : jobPostings.length === 0 ? (
+                    <div className="bg-white shadow overflow-hidden sm:rounded-lg p-6 text-center">
+                      <FaBriefcase className="mx-auto h-12 w-12 text-gray-400" />
+                      <h3 className="mt-2 text-sm font-medium text-gray-900">
+                        No job postings
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        You haven't posted any jobs yet.
+                      </p>
+                      <div className="mt-6">
+                        <button
+                          onClick={() => setIsModalOpen(true)}
+                          className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        >
+                          <FaBriefcase className="-ml-1 mr-2 h-5 w-5" />
+                          Create First Job Posting
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+                      <ul className="divide-y divide-gray-200">
+                        {jobPostings.map((job) => (
+                          <li key={job.id}>
+                            <div className="px-4 py-4 sm:px-6">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <p className="text-lg font-medium text-blue-600 truncate">
+                                    {job.job_title}
+                                  </p>
+                                  {typeof job.applicants !== 'undefined' && (
+                                    <span className="inline-flex items-center px-2 py-1 ml-3 text-xs font-semibold rounded-full bg-blue-50 text-blue-700">
+                                      <FaUserFriends className="mr-1" />
+                                      {job.applicants} applicant{job.applicants === 1 ? '' : 's'}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="ml-2 flex-shrink-0 flex">
+                                  {job.status === "active" ? (
+                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                      Active
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                      Closed
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                              <div className="ml-2 flex-shrink-0 flex">
-                                {job.status === "active" ? (
-                                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                    Active
-                                  </span>
-                                ) : (
-                                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                                    Closed
-                                  </span>
-                                )}
+                              <div className="mt-2 sm:flex sm:justify-between">
+                                <div className="sm:flex">
+                                  <p className="flex items-center text-sm text-gray-500">
+                                    <FaCalendarAlt className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+                                    Posted on {new Date(job.posted_date).toLocaleDateString()}
+                                  </p>
+                                </div>
+                                <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+                                  <button
+                                    className="mr-3 text-blue-600 hover:text-blue-800"
+                                    onClick={() => {
+                                      const applicantsForJob = applicants.filter(a => a.job?.id === job.id);
+                                      setSelectedJobApplicants(applicantsForJob);
+                                      setSelectedJobTitle(job.job_title);
+                                      setIsApplicantsModalOpen(true);
+                                    }}
+                                  >
+                                    View Applicants
+                                  </button>
+                                  <button 
+                                    onClick={() => handleEditJob(job)}
+                                    className="text-gray-600 hover:text-gray-800"
+                                  >
+                                    Edit
+                                  </button>
+                                </div>
                               </div>
                             </div>
-                            <div className="mt-2 sm:flex sm:justify-between">
-                              <div className="sm:flex">
-                                <p className="flex items-center text-sm text-gray-500">
-                                  <FaCalendarAlt className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                                  Posted on {new Date(job.posted_date).toLocaleDateString()}
-                                </p>
-                              </div>
-                              <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                                <button
-                                  className="mr-3 text-blue-600 hover:text-blue-800"
-                                  onClick={() => {
-                                    const applicantsForJob = applicants.filter(a => a.job?.id === job.id);
-                                    setSelectedJobApplicants(applicantsForJob);
-                                    setSelectedJobTitle(job.job_title);
-                                    setIsApplicantsModalOpen(true);
-                                  }}
-                                >
-                                  View Applicants
-                                </button>
-                                <button 
-                                  onClick={() => handleEditJob(job)}
-                                  className="text-gray-600 hover:text-gray-800"
-                                >
-                                  Edit
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
 
             {activeTab === "applicants" && (

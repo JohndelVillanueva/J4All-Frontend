@@ -40,13 +40,12 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({
 
   const showToast = useCallback((toast: Omit<Toast, 'id'>) => {
     const id = Math.random().toString(36).substr(2, 9);
-    // Set global defaults for error toasts
-    const isError = toast.type === 'error';
+    // Set global defaults for all toasts
     const newToast: Toast = {
       ...toast,
       id,
-      autoHide: toast.autoHide !== undefined ? toast.autoHide : isError ? true : undefined,
-      autoHideDelay: toast.autoHideDelay !== undefined ? toast.autoHideDelay : isError ? 3000 : undefined,
+      autoHide: toast.autoHide !== undefined ? toast.autoHide : true,
+      autoHideDelay: toast.autoHideDelay !== undefined ? toast.autoHideDelay : 3000,
     };
     setToasts(prev => {
       const updated = [newToast, ...prev];
