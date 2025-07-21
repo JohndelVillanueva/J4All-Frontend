@@ -34,8 +34,8 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-blur bg-opacity-30" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md">
+      <div className="fixed inset-0" onClick={onClose} />
       <div className="relative z-50 bg-white rounded-lg shadow-xl max-w-md w-full p-6">
         <h2 className="text-xl font-bold mb-4">Schedule Interview for {applicantName}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
