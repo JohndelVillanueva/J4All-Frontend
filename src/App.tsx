@@ -9,6 +9,7 @@ import { AuthProvider } from "../contexts/AuthContext";
 import { ToastProvider } from "../components/ToastContainer";
 import LoadingScreen from "../components/LoadingScreen"; // Create this component
 import Settings from "../pages/settings/Settings";
+import ForgotPassword from "../pages/auth/ForgotPasswordPage"; // Import the new ForgotPassword component
 // import ApplicationDetailsPage from '../pages/applicant/ApplicationDetails';
 
 // Lazy-loaded components
@@ -19,6 +20,7 @@ const ApplicantDashboard = lazy(
 );
 const AdminDashboard = lazy(() => import("../routing/admin/AdminDashboard"));
 const EmployerDashboard = lazy(() => import("../routing/employer/EmployerDashboard"));
+
 
 export default function App() {
   return (
@@ -33,6 +35,7 @@ export default function App() {
                 <Route path="/EmployerSignUpForm" element={<EmployerSignUpForm />} />
                 <Route path="/verify-email" element={<EmailVerification />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
 
                 {/* Lazy-loaded routes with Suspense */}
                 <Route
