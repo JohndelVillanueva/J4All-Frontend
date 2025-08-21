@@ -20,6 +20,7 @@ const ApplicantDashboard = lazy(
 );
 const AdminDashboard = lazy(() => import("../routing/admin/AdminDashboard"));
 const EmployerDashboard = lazy(() => import("../routing/employer/EmployerDashboard"));
+const StatisticsPage = lazy(() => import("../pages/admin/StatisticsPage"));
 
 
 export default function App() {
@@ -83,6 +84,14 @@ export default function App() {
                   element={
                     <Suspense fallback={<LoadingScreen />}>
                       <AdminDashboard />
+                    </Suspense>
+                  }
+                />
+                <Route
+                  path="/admin/statistics"
+                  element={
+                    <Suspense fallback={<LoadingScreen />}>
+                      <StatisticsPage />
                     </Suspense>
                   }
                 />

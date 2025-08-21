@@ -77,6 +77,14 @@ export default function EmployerSignupForm() {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
 const onSubmit = async (data: FormData) => {
   setIsSubmitting(true);
   setFormError(null);
@@ -252,16 +260,16 @@ const onSubmit = async (data: FormData) => {
             <div className="p-3 bg-indigo-500 rounded-xl text-white">
               <FaBuilding className="text-2xl" />
             </div>
-            <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
+            <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 text-black">
               J4IPWDs Employers
             </h1>
           </div>
 
-          <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+          <h2 className="text-2xl font-semibold text-black mb-4">
             Join our inclusive hiring platform
           </h2>
 
-          <p className="text-gray-600 mb-8 leading-relaxed">
+          <p className="text-black mb-8 leading-relaxed">
             Connect with talented professionals from diverse backgrounds. Our
             platform helps you find the right candidates while promoting
             workplace inclusivity.
@@ -281,7 +289,7 @@ const onSubmit = async (data: FormData) => {
                     <div className="w-2 h-2 rounded-full bg-indigo-600" />
                   </div>
                 </div>
-                <p className="text-gray-600">{feature}</p>
+                <p className="text-black">{feature}</p>
               </div>
             ))}
           </div>
@@ -300,8 +308,8 @@ const onSubmit = async (data: FormData) => {
 
             <form onSubmit={handleSubmit(onSubmit)} encType="multipart/form-data">
               <div className="text-center">
-                <h2 className="text-2xl font-bold text-white mb-1">Create Employer Account</h2>
-                <p className="text-white/80">Fill in your company details to get started</p>
+                <h2 className="text-2xl font-bold text-black mb-1">Create Employer Account</h2>
+                <p className="text-black">Fill in your company details to get started</p>
               </div>
               {/* Form error */}
               {formError && (
@@ -313,10 +321,10 @@ const onSubmit = async (data: FormData) => {
               {/* Step 1: Account Information */}
               {step === 1 && (
                 <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-white border-b pb-2">Account Information</h3>
+                  <h3 className="text-sm font-medium text-black border-b pb-2">Account Information</h3>
                   {/* Email */}
                   <div className="space-y-1">
-                    <label className="block text-sm font-medium text-white">Email</label>
+                    <label className="block text-sm font-medium text-black">Email</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaUser className="w-4 h-4" /></div>
                       <input type="email" className={`block w-full pl-10 pr-3 py-2.5 border ${errors.email ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`} placeholder="your@email.com" {...register("email", { required: "Email is required" })} />
@@ -325,7 +333,7 @@ const onSubmit = async (data: FormData) => {
                   </div>
                   {/* Username */}
                   <div className="space-y-1">
-                    <label className="block text-sm font-medium text-white">Username</label>
+                    <label className="block text-sm font-medium text-black">Username</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaUser className="w-4 h-4" /></div>
                       <input type="text" className={`block w-full pl-10 pr-3 py-2.5 border ${errors.username ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`} placeholder="username" {...register("username", { required: "Username is required" })} />
@@ -334,7 +342,7 @@ const onSubmit = async (data: FormData) => {
                   </div>
                   {/* Password */}
                   <div className="space-y-1">
-                    <label className="block text-sm font-medium text-white">Password</label>
+                    <label className="block text-sm font-medium text-black">Password</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaLock className="w-4 h-4" /></div>
                       <input type={showPassword ? "text" : "password"} className={`block w-full pl-10 pr-10 py-2.5 border ${errors.password ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`} placeholder="••••••••" {...register("password", { required: "Password is required", pattern: { value: /^(?=.*[0-9])(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{6,}$/, message: "Password must be at least 6 characters and include a number and special character" } })} />
@@ -344,7 +352,7 @@ const onSubmit = async (data: FormData) => {
                   </div>
                   {/* Confirm Password */}
                   <div className="space-y-1">
-                    <label className="block text-sm font-medium text-white">Confirm Password</label>
+                    <label className="block text-sm font-medium text-black">Confirm Password</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaLock className="w-4 h-4" /></div>
                       <input type={showConfirmPassword ? "text" : "password"} className={`block w-full pl-10 pr-10 py-2.5 border ${errors.confirmPassword ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`} placeholder="••••••••" {...register("confirmPassword", { required: "Please confirm your password", validate: (val) => val === passwordValue || "Passwords do not match" })} />
@@ -361,74 +369,73 @@ const onSubmit = async (data: FormData) => {
               {step === 2 && (
                 <>
                   <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-white border-b pb-2">Company Information</h3>
-                    {/* Company Name */}
-                    <div className="space-y-1">
-                      <label className="block text-sm font-medium text-white">Company Name</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaBuilding className="w-4 h-4" /></div>
-                        <input type="text" className={`block w-full pl-10 pr-3 py-2.5 border ${errors.companyName ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`} placeholder="Acme Inc." {...register("companyName", { required: "Company name is required" })} />
+                    <h3 className="text-sm font-medium text-black border-b pb-2">Company Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Company Name */}
+                      <div className="space-y-1">
+                        <label className="block text-sm font-medium text-black">Company Name</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaBuilding className="w-4 h-4" /></div>
+                          <input type="text" className={`block w-full pl-10 pr-3 py-2.5 border ${errors.companyName ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`} placeholder="Acme Inc." {...register("companyName", { required: "Company name is required" })} />
+                        </div>
+                        {errors.companyName && (<p className="text-xs text-red-500">{errors.companyName.message}</p>)}
                       </div>
-                      {errors.companyName && (<p className="text-xs text-red-500">{errors.companyName.message}</p>)}
-                    </div>
-                    {/* Contact Person */}
-                    <div className="space-y-1">
-                      <label className="block text-sm font-medium text-white">Contact Person</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaUserTie className="w-4 h-4" /></div>
-                        <input type="text" className={`block w-full pl-10 pr-3 py-2.5 border ${errors.contactPerson ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`} placeholder="Jane Smith" {...register("contactPerson", { required: "Contact person is required" })} />
+                      {/* Contact Person */}
+                      <div className="space-y-1">
+                        <label className="block text-sm font-medium text-black">Contact Person</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaUserTie className="w-4 h-4" /></div>
+                          <input type="text" className={`block w-full pl-10 pr-3 py-2.5 border ${errors.contactPerson ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`} placeholder="Jane Smith" {...register("contactPerson", { required: "Contact person is required" })} />
+                        </div>
+                        {errors.contactPerson && (<p className="text-xs text-red-500">{errors.contactPerson.message}</p>)}
                       </div>
-                      {errors.contactPerson && (<p className="text-xs text-red-500">{errors.contactPerson.message}</p>)}
-                    </div>
-                    {/* Industry */}
-                    <div className="space-y-1">
-                      <label className="block text-sm font-medium text-white">Industry</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaBriefcase className="w-4 h-4" /></div>
-                        <input type="text" className={`block w-full pl-10 pr-3 py-2.5 border ${errors.industry ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`} placeholder="Technology" {...register("industry", { required: "Industry is required" })} />
+                      {/* Industry */}
+                      <div className="space-y-1">
+                        <label className="block text-sm font-medium text-black">Industry</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaBriefcase className="w-4 h-4" /></div>
+                          <input type="text" className={`block w-full pl-10 pr-3 py-2.5 border ${errors.industry ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`} placeholder="Technology" {...register("industry", { required: "Industry is required" })} />
+                        </div>
+                        {errors.industry && (<p className="text-xs text-red-500">{errors.industry.message}</p>)}
                       </div>
-                      {errors.industry && (<p className="text-xs text-red-500">{errors.industry.message}</p>)}
-                    </div>
-                    {/* Company Size */}
-                    <div className="space-y-1">
-                      <label className="block text-sm font-medium text-white">Company Size</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaUser className="w-4 h-4" /></div>
-                        <select className={`block w-full pl-10 pr-3 py-2.5 border ${errors.companySize ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors appearance-none`} {...register("companySize", { required: "Company size is required" })}>
-                          <option value="">Select Company Size</option>
-                          <option value="1-10">1-10</option>
-                          <option value="11-50">11-50</option>
-                          <option value="51-200">51-200</option>
-                          <option value="201-500">201-500</option>
-                          <option value="501+">501+</option>
-                        </select>
+                      {/* Company Size */}
+                      <div className="space-y-1">
+                        <label className="block text-sm font-medium text-black">Company Size</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaUser className="w-4 h-4" /></div>
+                          <select className={`block w-full pl-10 pr-3 py-2.5 border ${errors.companySize ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors appearance-none`} {...register("companySize", { required: "Company size is required" })}>
+                            <option value="">Select Company Size</option>
+                            <option value="1-10">1-10</option>
+                            <option value="11-50">11-50</option>
+                            <option value="51-200">51-200</option>
+                            <option value="201-500">201-500</option>
+                            <option value="501+">501+</option>
+                          </select>
+                        </div>
+                        {errors.companySize && (<p className="text-xs text-red-500">{errors.companySize.message}</p>)}
                       </div>
-                      {errors.companySize && (<p className="text-xs text-red-500">{errors.companySize.message}</p>)}
-                    </div>
-                  </div>
-                  {/* Personal Information Section */}
-                  <div className="space-y-4">
-                    {/* Website URL */}
-                    <div className="space-y-1">
-                      <label className="block text-sm font-medium text-white">Website URL</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaGlobe className="w-4 h-4" /></div>
-                        <input type="text" className={`block w-full pl-10 pr-3 py-2.5 border ${errors.websiteUrl ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`} placeholder="https://yourcompany.com" {...register("websiteUrl", { required: "Website URL is required", pattern: { value: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/, message: "Please enter a valid URL" } })} />
+                      {/* Website URL */}
+                      <div className="space-y-1">
+                        <label className="block text-sm font-medium text-black">Website URL</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaGlobe className="w-4 h-4" /></div>
+                          <input type="text" className={`block w-full pl-10 pr-3 py-2.5 border ${errors.websiteUrl ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`} placeholder="https://yourcompany.com" {...register("websiteUrl", { required: "Website URL is required", pattern: { value: /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/, message: "Please enter a valid URL" } })} />
+                        </div>
+                        {errors.websiteUrl && (<p className="text-xs text-red-500">{errors.websiteUrl.message}</p>)}
                       </div>
-                      {errors.websiteUrl && (<p className="text-xs text-red-500">{errors.websiteUrl.message}</p>)}
-                    </div>
-                    {/* Founded Year */}
-                    <div className="space-y-1">
-                      <label className="block text-sm font-medium text-white">Founded Year</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaCalendarAlt className="w-4 h-4" /></div>
-                        <input type="number" className={`block w-full pl-10 pr-3 py-2.5 border ${errors.foundedYear ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`} placeholder="2020" {...register("foundedYear", { required: "Founded year is required", min: { value: 1900, message: "Year must be after 1900" }, max: { value: new Date().getFullYear(), message: `Year cannot be in the future` } })} />
+                      {/* Founded Year */}
+                      <div className="space-y-1">
+                        <label className="block text-sm font-medium text-black">Founded Year</label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaCalendarAlt className="w-4 h-4" /></div>
+                          <input type="number" className={`block w-full pl-10 pr-3 py-2.5 border ${errors.foundedYear ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`} placeholder="2020" {...register("foundedYear", { required: "Founded year is required", min: { value: 1900, message: "Year must be after 1900" }, max: { value: new Date().getFullYear(), message: `Year cannot be in the future` } })} />
+                        </div>
+                        {errors.foundedYear && (<p className="text-xs text-red-500">{errors.foundedYear.message}</p>)}
                       </div>
-                      {errors.foundedYear && (<p className="text-xs text-red-500">{errors.foundedYear.message}</p>)}
                     </div>
-                    {/* Company Logo */}
+                    {/* Company Logo - Full width */}
                     <div className="space-y-1">
-                      <label className="block text-sm font-medium text-white">Company Logo</label>
+                      <label className="block text-sm font-medium text-black">Company Logo</label>
                       <input type="file" accept="image/*" className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:border file:rounded-lg file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors" {...register("logo_path")} />
                     </div>
                   </div>
@@ -442,11 +449,11 @@ const onSubmit = async (data: FormData) => {
               {step === 3 && (
                 <>
                   <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-white border-b pb-2">Personal Information</h3>
+                    <h3 className="text-sm font-medium text-black border-b pb-2">Personal Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* First Name */}
                       <div className="space-y-1">
-                        <label className="block text-sm font-medium text-white">First Name</label>
+                        <label className="block text-sm font-medium text-black">First Name</label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaUserTie className="w-4 h-4" /></div>
                           <input type="text" className={`block w-full pl-10 pr-3 py-2.5 border ${errors.firstName ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`} placeholder="John" {...register("firstName", { required: "First name is required" })} />
@@ -455,7 +462,7 @@ const onSubmit = async (data: FormData) => {
                       </div>
                       {/* Last Name */}
                       <div className="space-y-1">
-                        <label className="block text-sm font-medium text-white">Last Name</label>
+                        <label className="block text-sm font-medium text-black">Last Name</label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaUserTie className="w-4 h-4" /></div>
                           <input type="text" className={`block w-full pl-10 pr-3 py-2.5 border ${errors.lastName ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`} placeholder="Doe" {...register("lastName", { required: "Last name is required" })} />
@@ -465,7 +472,7 @@ const onSubmit = async (data: FormData) => {
                     </div>
                     {/* Phone */}
                     <div className="space-y-1">
-                      <label className="block text-sm font-medium text-white">Phone Number</label>
+                      <label className="block text-sm font-medium text-black">Phone Number</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaPhone className="w-4 h-4" /></div>
                         <input type="text" className={`block w-full pl-10 pr-3 py-2.5 border ${errors.phone ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`} placeholder="+1 (555) 123-4567" {...register("phone", { required: "Phone number is required", pattern: { value: /^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/, message: "Please enter a valid phone number" } })} />
@@ -474,7 +481,7 @@ const onSubmit = async (data: FormData) => {
                     </div>
                     {/* Address */}
                     <div className="space-y-1">
-                      <label className="block text-sm font-medium text-white">Address</label>
+                      <label className="block text-sm font-medium text-black">Address</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaMapMarkerAlt className="w-4 h-4" /></div>
                         <input type="text" className={`block w-full pl-10 pr-3 py-2.5 border ${errors.address ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`} placeholder="123 Main St, City, Country" {...register("address", { required: "Address is required" })} />
@@ -483,7 +490,7 @@ const onSubmit = async (data: FormData) => {
                     </div>
                     {/* Profile Photo Upload */}
                     <div className="space-y-1 mt-4">
-                      <label className="block text-sm font-medium text-white">Profile Photo</label>
+                      <label className="block text-sm font-medium text-black">Profile Photo</label>
                       <div className="flex justify-center">
                         <input type="file" accept="image/*" onChange={(e) => {
                           const file = e.target.files?.[0];
@@ -497,7 +504,7 @@ const onSubmit = async (data: FormData) => {
                           }
                         }} className="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:border file:rounded-lg file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors" />
                       </div>
-                      <p className="text-xs text-white/80 text-center">Upload a professional photo for your profile (optional)</p>
+                      <p className="text-xs text-black/80 text-center">Upload a professional photo for your profile (optional)</p>
                     </div>
                     {/* Photo Preview */}
                     {photoPreview && (
@@ -511,10 +518,10 @@ const onSubmit = async (data: FormData) => {
                         <div className="flex items-center h-5">
                           <input type="checkbox" className="h-4 w-4 text-indigo-600 focus:ring-indigo-200 border-gray-300 rounded" {...register("agreeToTerms", { validate: (value) => value === true || "You must accept terms" })} />
                         </div>
-                        <span className="text-sm text-white/80">I agree to the{" "}
-                          <a href="#" className="text-indigo-200 hover:underline">Terms and Conditions</a>{" "}
+                        <span className="text-sm text-black">I agree to the{" "}
+                          <a href="#" className="text-indigo-600 hover:underline">Terms and Conditions</a>{" "}
                           and{" "}
-                          <a href="#" className="text-indigo-200 hover:underline">Privacy Policy</a>
+                          <a href="#" className="text-indigo-600 hover:underline">Privacy Policy</a>
                         </span>
                       </label>
                       {errors.agreeToTerms && (<p className="text-xs text-red-500">{errors.agreeToTerms.message}</p>)}

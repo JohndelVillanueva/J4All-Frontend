@@ -324,7 +324,7 @@ const LoginPage: React.FC = () => {
                 <h2 className="text-2xl font-bold text-gray-800 mb-1">
                   Welcome back
                 </h2>
-                <p className="text-white">Sign in to access your account</p>
+                <p className="text-black">Sign in to access your account</p>
               </div>
 
               {/* Error message */}
@@ -353,7 +353,7 @@ const LoginPage: React.FC = () => {
               <div className="space-y-2">
                 <label
                   htmlFor="email"
-                  className="block text-sm font-medium text-white"
+                  className="block text-sm font-medium text-black"
                 >
                   Email address
                 </label>
@@ -383,14 +383,14 @@ const LoginPage: React.FC = () => {
                 <div className="flex justify-between items-center">
                   <label
                     htmlFor="password"
-                    className="block text-sm font-medium text-white"
+                    className="block text-sm font-medium text-black"
                   >
                     Password
                   </label>
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="text-xs text-white hover:text-red-500"
+                    className="text-xs text-black hover:text-red-500"
                     aria-label={
                       showPassword ? "Hide password" : "Show password"
                     }
@@ -446,14 +446,14 @@ const LoginPage: React.FC = () => {
                   />
                   <label
                     htmlFor="remember-me"
-                    className="ml-2 block text-sm text-white"
+                    className="ml-2 block text-sm text-black"
                   >
                     Remember me
                   </label>
                 </div>
                 <a
                   href="/forgot-password"
-                  className="text-sm text-white hover:text-red-500 font-medium"
+                  className="text-sm text-black hover:text-red-500 font-medium"
                 >
                   Forgot password?
                 </a>

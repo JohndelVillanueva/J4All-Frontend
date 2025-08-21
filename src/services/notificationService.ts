@@ -110,4 +110,36 @@ export const notificationService = {
       throw error;
     }
   },
+};
+
+export const getUnreadNotifications = async (token: string) => {
+	const res = await axios.get('/api/notifications/unread-count', {
+		headers: { Authorization: `Bearer ${token}` },
+	});
+	return res.data;
+};
+
+export const getAdminStats = async () => {
+	const res = await apiClient.get('/admin/stats');
+	return res.data;
+};
+
+export const getAdminUsers = async (params?: { type?: 'all' | 'general' | 'pwd'; page?: number; pageSize?: number; }) => {
+	const res = await apiClient.get('/admin/users', { params });
+	return res.data;
+};
+
+export const getAdminEmployers = async (params?: { page?: number; pageSize?: number; }) => {
+	const res = await apiClient.get('/admin/employers', { params });
+	return res.data;
+};
+
+export const getAdminAnalytics = async () => {
+	const res = await apiClient.get('/admin/analytics');
+	return res.data;
+};
+
+export const getAdminActivities = async (params?: { limit?: number; days?: number }) => {
+	const res = await apiClient.get('/admin/activities', { params });
+	return res.data;
 }; 

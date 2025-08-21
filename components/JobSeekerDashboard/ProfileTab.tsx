@@ -82,7 +82,7 @@ const ProfileTab: React.FC = () => {
           {jobSeekerData ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <h4 className="text-md font-medium text-gray-900 mb-2">Job Seeker Info</h4>
+                <h5 className="text-md font-medium text-gray-900 mb-2">Information</h5>
                 <ul className="space-y-2 text-gray-700">
                   <li><strong>Education:</strong> {jobSeekerData.education || "-"}</li>
                   <li><strong>Experience (years):</strong> {jobSeekerData.experience_years ?? "-"}</li>
