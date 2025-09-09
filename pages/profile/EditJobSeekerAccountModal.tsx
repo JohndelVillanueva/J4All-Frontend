@@ -161,16 +161,10 @@ const EditJobSeekerAccountModal: React.FC<EditJobSeekerAccountModalProps> = ({ i
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
       <div className="relative w-full max-w-4xl mx-auto rounded-3xl shadow-2xl border border-blue-100 bg-white/70 backdrop-blur-lg transition-all duration-300
-        md:mt-0 md:mb-0 md:scale-100 md:max-h-[90vh] overflow-y-auto
-        min-h-[100vh] md:min-h-0 md:h-auto
-        flex flex-col md:flex-row justify-center"
-        style={{
-          maxWidth: '56rem',
-          width: '100%',
-          margin: '0 auto',
-        }}
+        overflow-y-auto max-h-[95vh]
+        flex flex-col md:flex-row"
       >
         {/* Close button */}
         <button
@@ -180,8 +174,9 @@ const EditJobSeekerAccountModal: React.FC<EditJobSeekerAccountModalProps> = ({ i
         >
           <FaTimes size={20} />
         </button>
-        {/* Left: Avatar and user info */}
-        <div className="md:w-1/3 w-full flex flex-col items-center justify-center py-10 px-6 bg-gradient-to-b from-blue-100/60 to-purple-100/40 rounded-t-3xl md:rounded-l-3xl md:rounded-tr-none shadow-md">
+        
+        {/* Left: Avatar and user info - Full width on mobile, 1/3 on desktop */}
+        <div className="w-full md:w-1/3 flex flex-col items-center justify-center py-10 px-6 bg-gradient-to-b from-blue-100/60 to-purple-100/40 rounded-t-3xl md:rounded-l-3xl md:rounded-tr-none shadow-md">
           <div className="relative group shadow-lg rounded-full bg-white/80 p-2 ring-4 ring-blue-200 mb-4">
             <UserAvatar
               photoUrl={avatarFile ? avatarPreview : getFullPhotoUrl(userPhotoUrl)}
@@ -212,15 +207,16 @@ const EditJobSeekerAccountModal: React.FC<EditJobSeekerAccountModalProps> = ({ i
           </h1>
           <div className="text-gray-500 text-sm mt-1 text-center break-all">{userData?.email}</div>
         </div>
-        {/* Right: Form */}
-        <form className="flex-1 space-y-10 px-8 pb-8 pt-10 md:pt-8 md:pb-8" onSubmit={handleSave}>
+        
+        {/* Right: Form - Full width on mobile, 2/3 on desktop */}
+        <form className="w-full md:w-2/3 space-y-6 px-6 pb-8 pt-8 md:pt-8 overflow-y-auto" onSubmit={handleSave}>
           {/* Account Details Card */}
-          <div className="rounded-2xl border border-blue-100 bg-white/80 p-8 shadow-md transition-all">
+          <div className="rounded-2xl border border-blue-100 bg-white/80 p-6 shadow-md transition-all">
             <div className="flex items-center gap-3 mb-6">
               <FaIdBadge className="text-blue-600 text-2xl" />
               <span className="text-xl font-bold text-blue-700 tracking-wide">Account Details</span>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[{ label: 'Username', name: 'username', type: 'text', required: true },
                 { label: 'Email', name: 'email', type: 'email', required: true },
                 { label: 'First Name', name: 'first_name', type: 'text' },
@@ -251,55 +247,60 @@ const EditJobSeekerAccountModal: React.FC<EditJobSeekerAccountModalProps> = ({ i
               ))}
             </div>
           </div>
+          
           {/* Divider */}
           {jobSeekerData && <div className="flex items-center justify-center my-2"><div className="h-1 w-16 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 rounded-full opacity-40"></div></div>}
+          
           {/* Job Seeker Details */}
+          {jobSeekerData && (
+            <div className="rounded-2xl border border-blue-100 bg-white/80 p-6 shadow-md transition-all">
+              <div className="flex items-center gap-3 mb-6">
+                <FaUserGraduate className="text-blue-600 text-2xl" />
+                <span className="text-xl font-bold text-blue-700 tracking-wide">Job Seeker Details</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-gray-600 text-sm mb-1">Resume Text</label>
+                  <textarea name="resume_text" value={jobSeekerData?.resume_text || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200 min-h-[100px]" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-gray-600 text-sm mb-1">Resume File Path</label>
+                  <input name="resume_file_path" type="text" value={jobSeekerData?.resume_file_path || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-sm mb-1">Education</label>
+                  <input name="education" type="text" value={jobSeekerData?.education || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-sm mb-1">Experience Years</label>
+                  <input name="experience_years" type="number" value={jobSeekerData?.experience_years ?? ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-sm mb-1">Current Job Title</label>
+                  <input name="current_job_title" type="text" value={jobSeekerData?.current_job_title || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-sm mb-1">Desired Job Title</label>
+                  <input name="desired_job_title" type="text" value={jobSeekerData?.desired_job_title || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-sm mb-1">Desired Salary</label>
+                  <input name="desired_salary" type="number" value={jobSeekerData?.desired_salary ?? ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+                </div>
+                <div>
+                  <label className="block text-gray-600 text-sm mb-1">Location Preference</label>
+                  <input name="location_preference" type="text" value={jobSeekerData?.location_preference || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-gray-600 text-sm mb-1">Disability</label>
+                  <input name="disability" type="text" value={jobSeekerData?.disability || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Skills Section */}
           <div className="rounded-2xl border border-blue-100 bg-white/80 p-6 shadow-md transition-all">
-            <div className="flex items-center gap-3 mb-6">
-              <FaUserGraduate className="text-blue-600 text-2xl" />
-              <span className="text-xl font-bold text-blue-700 tracking-wide">Job Seeker Detailss</span>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-gray-600 text-sm mb-1">Resume Text</label>
-                <textarea name="resume_text" value={jobSeekerData?.resume_text || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200 min-h-[40px]" />
-              </div>
-              <div>
-                <label className="block text-gray-600 text-sm mb-1">Resume File Path</label>
-                <input name="resume_file_path" type="text" value={jobSeekerData?.resume_file_path || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
-              </div>
-              <div>
-                <label className="block text-gray-600 text-sm mb-1">Education</label>
-                <input name="education" type="text" value={jobSeekerData?.education || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
-              </div>
-              <div>
-                <label className="block text-gray-600 text-sm mb-1">Experience Years</label>
-                <input name="experience_years" type="number" value={jobSeekerData?.experience_years ?? ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
-              </div>
-              <div>
-                <label className="block text-gray-600 text-sm mb-1">Current Job Title</label>
-                <input name="current_job_title" type="text" value={jobSeekerData?.current_job_title || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
-              </div>
-              <div>
-                <label className="block text-gray-600 text-sm mb-1">Desired Job Title</label>
-                <input name="desired_job_title" type="text" value={jobSeekerData?.desired_job_title || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
-              </div>
-              <div>
-                <label className="block text-gray-600 text-sm mb-1">Desired Salary</label>
-                <input name="desired_salary" type="number" value={jobSeekerData?.desired_salary ?? ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
-              </div>
-              <div>
-                <label className="block text-gray-600 text-sm mb-1">Location Preference</label>
-                <input name="location_preference" type="text" value={jobSeekerData?.location_preference || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
-              </div>
-              <div className="md:col-span-2">
-                <label className="block text-gray-600 text-sm mb-1">Disability</label>
-                <input name="disability" type="text" value={jobSeekerData?.disability || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
-              </div>
-            </div>
-          </div>
-          {/* Skills Section - always visible */}
-          <div className="rounded-2xl border border-blue-100 bg-white/80 p-6 shadow-md transition-all mt-6">
             <label className="block text-gray-600 text-sm mb-1 font-bold">Skills (comma separated)</label>
             <input
               type="text"
@@ -309,8 +310,9 @@ const EditJobSeekerAccountModal: React.FC<EditJobSeekerAccountModalProps> = ({ i
               onChange={e => setSkillsInput(e.target.value)}
             />
           </div>
+          
           {/* Buttons */}
-          <div className="flex justify-end mt-8 gap-4">
+          <div className="flex justify-end gap-4 pb-2">
             <button
               type="button"
               className="inline-flex items-center gap-2 px-6 py-2 bg-gray-200 text-gray-700 rounded-full shadow hover:bg-gray-300 transition-colors"
@@ -333,4 +335,4 @@ const EditJobSeekerAccountModal: React.FC<EditJobSeekerAccountModalProps> = ({ i
   );
 };
 
-export default EditJobSeekerAccountModal; 
+export default EditJobSeekerAccountModal;
