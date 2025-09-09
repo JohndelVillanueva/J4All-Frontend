@@ -248,7 +248,7 @@ const onSubmit = async (data: FormData) => {
       )}
 
       {/* Main content */}
-      <div className="container mx-auto px-4 py-12 flex flex-col md:flex-row items-center justify-center min-h-screen relative z-10">
+      <div className="container mx-auto px-2 py-12 flex flex-col md:flex-row items-center justify-center min-h-screen relative z-10">
         {/* Left side - Branding */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -275,7 +275,8 @@ const onSubmit = async (data: FormData) => {
             workplace inclusivity.
           </p>
 
-          <div className="space-y-4">
+          <div className="space-y-1"> 
+            {/* 4 - 1 */}
             {[
               "Access to a diverse talent pool",
               "Streamlined hiring process",
@@ -305,6 +306,36 @@ const onSubmit = async (data: FormData) => {
           <div className="rounded-2xl shadow-2xl border border-gray-100 p-8 relative overflow-hidden backdrop-blur-xl bg-white/30 dark:bg-gray-900/60" style={{ boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)' }}>
             {/* Decorative element */}
             <div className="absolute -top-20 -right-20 w-40 h-40 bg-indigo-100 rounded-full filter blur-3xl opacity-20" />
+            
+            {/* Progress Bar */}
+            <div className="mb-6">
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full transition-all duration-500" 
+                  style={{ width: `${(step / 3) * 100}%` }}
+                ></div>
+              </div>
+              <div className="flex justify-between mt-2">
+                <div className={`flex flex-col items-center ${step >= 1 ? 'text-indigo-600' : 'text-gray-400'}`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-indigo-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                    {step > 1 ? <FaCheck className="text-xs" /> : '1'}
+                  </div>
+                  <span className="text-xs mt-1">Account</span>
+                </div>
+                <div className={`flex flex-col items-center ${step >= 2 ? 'text-indigo-600' : 'text-gray-400'}`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-indigo-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                    {step > 2 ? <FaCheck className="text-xs" /> : '2'}
+                  </div>
+                  <span className="text-xs mt-1">Company</span>
+                </div>
+                <div className={`flex flex-col items-center ${step >= 3 ? 'text-indigo-600' : 'text-gray-400'}`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-indigo-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                    3
+                  </div>
+                  <span className="text-xs mt-1">Personal</span>
+                </div>
+              </div>
+            </div>
 
             <form onSubmit={handleSubmit(onSubmit)} encType="multipart/form-data">
               <div className="text-center">
