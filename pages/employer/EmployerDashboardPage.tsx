@@ -175,10 +175,10 @@ const EmployerDashboardPage = () => {
   const openPositions = jobPostings.filter(job => job.status === "active");
 
   const metrics = [
-    { title: "Open Positions", value: openPositions.length, change: "+1", trend: "up" },
-    { title: "Total Applicants", value: applicants.length, change: "+12", trend: "up" },
-    { title: "Interview Rate", value: "32%", change: "+5%", trend: "up" },
-    { title: "Hire Rate", value: "18%", change: "-2%", trend: "down" },
+    { title: "Open Positions", value: openPositions.length, change: "", trend: "up" },
+    { title: "Total Applicants", value: applicants.length, change: "", trend: "up" },
+    { title: "Interview Rate", value: "32%", change: "", trend: "up" },
+    { title: "Hire Rate", value: "18%", change: "", trend: "down" },
   ];
 
   const filteredApplicants = applicants.filter((applicant) => {

@@ -154,11 +154,11 @@ const JobSeekerDashboard = () => {
   };
 
   // Mock data for stats (keep exactly as is)
-  const stats: StatItem[] = [
-    { name: "Applications Sent", value: applications.length, change: "+2", trend: "up" },
-    { name: "Interview Rate", value: "25%", change: "+5%", trend: "up" },
-    { name: "Profile Views", value: 24, change: "+8", trend: "up" },
-    { name: "Saved Jobs", value: 5, change: "+1", trend: "up" },
+    const stats: StatItem[] = [
+    { name: "Applications Sent", value: applications.length, change: "", trend: "up" },
+    { name: "Interview Rate", value: "25%", change: "", trend: "up" },
+    { name: "Profile Views", value: 24, change: "", trend: "up" },
+    { name: "Saved Jobs", value: 5, change: "", trend: "up" },
   ];
 
   // Enhanced fetch functions with better error handling
