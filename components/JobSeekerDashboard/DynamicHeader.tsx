@@ -31,7 +31,7 @@ const DynamicHeader: React.FC<ApplicantHeaderProps> = ({
             )}
           </h1>
         </div>
-        {showSearch && (
+        {/* {showSearch && (
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <FaSearch className="text-gray-400" />
@@ -44,7 +44,7 @@ const DynamicHeader: React.FC<ApplicantHeaderProps> = ({
               onChange={handleSearchChange}
             />
           </div>
-        )}
+        )} */}
       </div>
     </header>
   );

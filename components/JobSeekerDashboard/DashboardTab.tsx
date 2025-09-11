@@ -10,6 +10,37 @@ import JobDescriptionModal from "./JobDescriptionModal";
 import ApplyModal from "./ApplyModal";
 import UserAvatar from '../UserAvatar';
 
+// Helper hook to fetch employer photo and name
+function useEmployerAvatarInfo(userId?: number) {
+  const [photoUrl, setPhotoUrl] = React.useState<string | null>(null);
+  const [firstName, setFirstName] = React.useState<string>('');
+  const [lastName, setLastName] = React.useState<string>('');
+
+  React.useEffect(() => {
+    if (!userId) return;
+    const fetchInfo = async () => {
+      try {
+        const userRes = await fetch(`/api/users/${userId}`);
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          setFirstName(userData?.data?.first_name || '');
+          setLastName(userData?.data?.last_name || '');
+        }
+        const photoRes = await fetch(`/api/photos/${userId}`);
+        if (photoRes.ok) {
+          const photoData = await photoRes.json();
+          setPhotoUrl(photoData?.data?.photo_url || null);
+        }
+      } catch (e) {
+        setPhotoUrl(null);
+      }
+    };
+    fetchInfo();
+  }, [userId]);
+
+  return { photoUrl, firstName, lastName };
+}
+
 interface DashboardTabProps {
   stats: StatItem[];
   jobListings: JobListing[];
@@ -177,9 +208,9 @@ const JobListItem: React.FC<{ job: JobListing; onViewDetails?: (job: JobListing)
             <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 mr-2">
               {job.work_mode || null}
             </span>
-            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 mb-2">
+            {/* <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 mb-2">
               {job.match}% Match
-            </span>
+            </span> */}
           </div>
           <span className="text-sm text-gray-500">{job.posted}</span>
         </div>
@@ -281,54 +312,81 @@ const createDefaultJob = (jobId: number): JobListing => ({
 const ApplicationListItem: React.FC<{
   application: Application;
   job: JobListing;
-}> = ({ application, job }) => (
-  <li>
-    <div className="px-4 py-4 sm:px-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <p className="text-sm font-medium text-blue-600">
-            {job.title} at {typeof job.company === 'string' ? job.company : job.company?.name || 'Unknown Company'}
-          </p>
-          <p className="ml-2 flex-shrink-0 text-xs text-gray-500">
-            Applied on {application.date}
-          </p>
-        </div>
-        <div className="ml-2 flex-shrink-0 flex">
-          {application.status === "under review" && (
-            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-              Under Review
-            </span>
-          )}
-          {application.status === "interview" && (
-            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-              Interview Stage
-            </span>
-          )}
-        </div>
-      </div>
-      <div className="mt-2">
-        <ProgressBar status={application.status} />
-        <div className="mt-2">
-          <h4 className="text-sm font-medium text-gray-700 mb-1">Updates:</h4>
-          <ul className="text-sm text-gray-600 space-y-1">
-            {application.updates.map((update, i) => (
-              <li key={i} className="flex items-start">
-                <span className="text-blue-500 mr-2">•</span>
-                <span>
-                  {update.date}: {update.message}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </div>
-  </li>
-);
+}> = ({ application, job }) => {
+  // Fetch employer avatar info
+  const { photoUrl, firstName, lastName } = useEmployerAvatarInfo(job.employer_user_id);
 
-const ProgressBar: React.FC<{ status: string }> = ({
-  status,
-}) => (
+  return (
+    <li>
+      <div className="px-4 py-4 sm:px-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <UserAvatar
+              photoUrl={photoUrl ? `http://localhost:3111${photoUrl}` : undefined}
+              firstName={firstName}
+              lastName={lastName}
+              size="md"
+              className="flex-shrink-0"
+            />
+            <div className="ml-4">
+              <p className="text-sm font-medium text-blue-600">
+                {job.title} at {typeof job.company === 'string' ? job.company : job.company?.name || 'Unknown Company'}
+              </p>
+              <p className="text-xs text-gray-500">
+                Applied on {application.date}
+              </p>
+            </div>
+          </div>
+          <div className="ml-2 flex-shrink-0 flex">
+            {application.status === "under review" && (
+              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                Under Review
+              </span>
+            )}
+            {application.status === "interview" && (
+              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                Interview Stage
+              </span>
+            )}
+            {application.status === "rejected" && (
+              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                REJECTED
+              </span>
+            )}
+            {application.status === "hired" && (
+              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                HIRED
+              </span>
+            )}
+            {!application.status && (
+              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                Status Unknown
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="mt-2">
+          <ProgressBar status={application.status} />
+          <div className="mt-2">
+            <h4 className="text-sm font-medium text-gray-700 mb-1">Updates:</h4>
+            <ul className="text-sm text-gray-600 space-y-1">
+              {application.updates.map((update, i) => (
+                <li key={i} className="flex items-start">
+                  <span className="text-blue-500 mr-2">•</span>
+                  <span>
+                    {update.date}: {update.message}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </li>
+  );
+};
+
+const ProgressBar: React.FC<{ status: string }> = ({ status }) => (
   <div className="flex items-center text-sm text-gray-500">
     <div className="relative pt-1 w-full">
       <div className="flex mb-2 items-center justify-between">
@@ -339,15 +397,21 @@ const ProgressBar: React.FC<{ status: string }> = ({
                 ? "text-green-600 bg-green-200"
                 : status === "interview"
                 ? "text-yellow-600 bg-yellow-200"
+                : status === "rejected"
+                ? "text-red-600 bg-red-200"
                 : "text-blue-600 bg-blue-200"
             }`}
           >
-            {status}
+            {status === "hired"
+              ? "HIRED"
+              : status === "rejected"
+              ? "REJECTED"
+              : status || "pending"}
           </span>
         </div>
         <div className="text-right">
           <span className="text-xs font-semibold inline-block">
-            {status === "hired"
+            {status === "hired" || status === "rejected"
               ? "100%"
               : status === "interview"
               ? "75%"
@@ -357,10 +421,20 @@ const ProgressBar: React.FC<{ status: string }> = ({
       </div>
       <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200">
         <div
-          style={{ width: `${status === "hired" ? "100%" : status === "interview" ? "75%" : "40%"}` }}
+          style={{
+            width: `${
+              status === "hired" || status === "rejected"
+                ? "100%"
+                : status === "interview"
+                ? "75%"
+                : "40%"
+            }`}
+          }
           className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center ${
             status === "hired"
               ? "bg-green-500"
+              : status === "rejected"
+              ? "bg-red-500"
               : status === "interview"
               ? "bg-yellow-500"
               : "bg-blue-500"
