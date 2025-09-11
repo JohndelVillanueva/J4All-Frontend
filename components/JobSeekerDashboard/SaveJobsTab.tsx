@@ -227,9 +227,17 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-gray-600 text-lg font-medium">
-                            {job.company.charAt(0)}
-                          </span>
+                          {job.logo ? (
+                            <img
+                              src={job.logo}
+                              alt={job.company}
+                              className="h-12 w-12 rounded-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-gray-600 text-lg font-medium">
+                              {job.company.charAt(0)}
+                            </span>
+                          )}
                         </div>
                         <div className="ml-4">
                           <p className="text-lg font-medium text-blue-600">{job.title}</p>
@@ -249,7 +257,9 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
                       <div className="sm:flex">
                         <p className="flex items-center text-sm text-gray-500">
                           <FaBriefcase className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                          {job.salary}
+                          {job.salary
+                            ? job.salary.replace(/\$/g, "₱")
+                            : "₱ Negotiable"}
                         </p>
                         <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
                           {job.type}
