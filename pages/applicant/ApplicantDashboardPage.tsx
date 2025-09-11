@@ -87,6 +87,7 @@ const JobSeekerDashboard = () => {
   const [applicationsError, setApplicationsError] = useState<string | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [userError, setUserError] = useState<string | null>(null);
+  const [showHeader, setShowHeader] = useState(true);
 
   console.log('JobSeekerDashboard user:', user);
 
@@ -116,6 +117,12 @@ const JobSeekerDashboard = () => {
       fetchJobListings();
     }
   }, [applications]); // Re-fetch jobs when applications change
+
+  // Hide header after 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => setShowHeader(false), 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Fetch applications from backend
   const fetchApplications = async () => {
@@ -313,16 +320,18 @@ const JobSeekerDashboard = () => {
         {/* Main dashboard content (z-10) */}
         <div className="relative z-10">
           {/* Header (keep exactly as is) */}
-          <DynamicHeader
-            title="DevCareer Dashboard"
-            user={{
-              firstName: currentUser?.first_name || "",
-              lastName: currentUser?.last_name || "",
-            }}
-            showSearch={true}
-            onSearchChange={setSearchTerm}
-            className="bg-white shadow-sm"
-          />
+          {showHeader && (
+            <DynamicHeader
+              title="DevCareer Dashboard"
+              user={{
+                firstName: currentUser?.first_name || "",
+                lastName: currentUser?.last_name || "",
+              }}
+              showSearch={true}
+              onSearchChange={setSearchTerm}
+              className="bg-white shadow-sm"
+            />
+          )}
 
           {/* Main Content (keep exactly as is) */}
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
