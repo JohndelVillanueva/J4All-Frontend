@@ -10,6 +10,7 @@ import { ToastProvider } from "../components/ToastContainer";
 import LoadingScreen from "../components/LoadingScreen"; // Create this component
 import Settings from "../pages/settings/Settings";
 import ForgotPassword from "../pages/auth/ForgotPasswordPage"; // Import the new ForgotPassword component
+import ResetPasswordPage from "../pages/auth/ResetPasswordPage"; // <-- Add this import
 // import ApplicationDetailsPage from '../pages/applicant/ApplicationDetails';
 
 // Lazy-loaded components
@@ -37,6 +38,7 @@ export default function App() {
                 <Route path="/verify-email" element={<EmailVerification />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} /> {/* <-- Add this route */}
 
                 {/* Lazy-loaded routes with Suspense */}
                 <Route

@@ -4,8 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import axios from 'axios';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { FaLock, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaLock, FaCheck, FaExclamationTriangle, FaEye, FaEyeSlash, FaArrowLeft } from 'react-icons/fa';
 import { useToast } from '../../components/ToastContainer';
 
 // Validation schema
@@ -30,6 +30,8 @@ const ResetPasswordPage: React.FC = () => {
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
   const {
     register,
@@ -41,6 +43,7 @@ const ResetPasswordPage: React.FC = () => {
   });
 
   const password = watch("password");
+  const confirmPassword = watch("confirmPassword");
 
   useEffect(() => {
     const token = searchParams.get('token');
@@ -104,14 +107,42 @@ const ResetPasswordPage: React.FC = () => {
     }
   };
 
+  // Password strength calculator
+  const calculatePasswordStrength = (password: string) => {
+    if (!password) return 0;
+    
+    let strength = 0;
+    if (password.length >= 8) strength += 25;
+    if (/[A-Z]/.test(password)) strength += 25;
+    if (/[a-z]/.test(password)) strength += 25;
+    if (/[0-9]/.test(password)) strength += 25;
+    
+    return strength;
+  };
+
+  const getPasswordStrengthColor = (strength: number) => {
+    if (strength < 50) return 'bg-red-500';
+    if (strength < 75) return 'bg-yellow-500';
+    return 'bg-green-500';
+  };
+
+  const getPasswordStrengthText = (strength: number) => {
+    if (strength < 50) return 'Weak';
+    if (strength < 75) return 'Medium';
+    return 'Strong';
+  };
+
   if (tokenValid === null) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white rounded-xl shadow-2xl p-8 text-center">
-          <div className="animate-pulse flex flex-col items-center">
-            <div className="h-12 w-12 bg-blue-100 rounded-full mb-4"></div>
-            <div className="h-6 w-3/4 bg-blue-100 rounded mb-4"></div>
-            <div className="h-4 w-1/2 bg-blue-100 rounded"></div>
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 text-center">
+          <div className="flex flex-col items-center">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="h-12 w-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full mb-4"
+            ></motion.div>
+            <p className="text-gray-600">Verifying your reset link...</p>
           </div>
         </div>
       </div>
@@ -121,10 +152,14 @@ const ResetPasswordPage: React.FC = () => {
   if (!tokenValid) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white rounded-xl shadow-2xl p-8">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8"
+        >
           <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-              <FaExclamationTriangle className="h-5 w-5 text-red-600" />
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+              <FaExclamationTriangle className="h-8 w-8 text-red-600" />
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
               Invalid or Expired Link
@@ -133,14 +168,23 @@ const ResetPasswordPage: React.FC = () => {
               The password reset link is invalid or has expired. 
               Please request a new password reset link.
             </p>
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => navigate('/forgot-password')}
-              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+              className="w-full py-3 px-4 rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 font-medium"
             >
               Request New Reset Link
+            </motion.button>
+            <button
+              onClick={() => navigate('/login')}
+              className="mt-4 w-full py-3 px-4 rounded-lg text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors duration-200 font-medium flex items-center justify-center gap-2"
+            >
+              <FaArrowLeft className="text-sm" />
+              Back to Login
             </button>
           </div>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -148,25 +192,47 @@ const ResetPasswordPage: React.FC = () => {
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white rounded-xl shadow-2xl p-8">
-          <div className="text-center py-8">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-              <FaCheck className="h-5 w-5 text-green-600" />
-            </div>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8"
+        >
+          <div className="text-center py-6">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 200 }}
+              className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4"
+            >
+              <FaCheck className="h-8 w-8 text-green-600" />
+            </motion.div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
               Password Updated!
             </h2>
             <p className="text-gray-600 mb-6">
               Your password has been successfully updated. You will be redirected to the login page shortly.
             </p>
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div className="bg-indigo-600 h-2.5 rounded-full animate-pulse"></div>
+            <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 3 }}
+                className="bg-indigo-600 h-2 rounded-full"
+              ></motion.div>
             </div>
+            <button
+              onClick={() => navigate('/login')}
+              className="text-indigo-600 font-medium hover:text-indigo-700 transition-colors"
+            >
+              Go to login now
+            </button>
           </div>
-        </div>
+        </motion.div>
       </div>
     );
   }
+
+  const passwordStrength = calculatePasswordStrength(password || '');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -175,11 +241,11 @@ const ResetPasswordPage: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-white rounded-xl shadow-2xl p-8"
+          className="bg-white rounded-2xl shadow-xl p-8"
         >
           <div className="text-center mb-8">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 mb-4">
-              <FaLock className="h-5 w-5 text-indigo-600" />
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-indigo-100 mb-4">
+              <FaLock className="h-6 w-6 text-indigo-600" />
             </div>
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
               Reset Your Password
@@ -191,73 +257,134 @@ const ResetPasswordPage: React.FC = () => {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                 New Password
               </label>
               <div className="relative">
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   className={`block w-full px-4 py-3 rounded-lg border ${
                     errors.password ? 'border-red-300' : 'border-gray-300'
-                  } focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors`}
-                  placeholder="••••••••"
+                  } focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors pr-10`}
+                  placeholder="Enter your new password"
                   {...register('password')}
                 />
-                {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-                )}
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <FaEyeSlash className="text-gray-400" />
+                  ) : (
+                    <FaEye className="text-gray-400" />
+                  )}
+                </button>
               </div>
-              {password && password.length >= 8 && (
-                <div className="mt-2">
-                  <p className="text-xs text-gray-500">Password strength:</p>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+              {errors.password && (
+                <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                  <FaExclamationTriangle className="text-xs" />
+                  {errors.password.message}
+                </p>
+              )}
+              
+              {password && (
+                <div className="mt-3">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs text-gray-500">Password strength:</span>
+                    <span className={`text-xs font-medium ${
+                      passwordStrength < 50 ? 'text-red-600' : 
+                      passwordStrength < 75 ? 'text-yellow-600' : 'text-green-600'
+                    }`}>
+                      {getPasswordStrengthText(passwordStrength)}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-1.5">
                     <div 
-                      className={`h-1.5 rounded-full ${
-                        password.length > 12 ? 'bg-green-500' : 
-                        password.length > 8 ? 'bg-yellow-500' : 'bg-red-500'
-                      }`}
-                      style={{ width: `${Math.min(100, password.length * 8)}%` }}
+                      className={`h-1.5 rounded-full ${getPasswordStrengthColor(passwordStrength)}`}
+                      style={{ width: `${passwordStrength}%` }}
                     ></div>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1 mt-2">
+                    {[
+                      'At least 8 characters',
+                      'One uppercase letter',
+                      'One lowercase letter',
+                      'One number'
+                    ].map((req, index) => (
+                      <div key={index} className="flex items-center">
+                        <div className={`w-2 h-2 rounded-full mr-1 ${
+                          (index === 0 && password.length >= 8) ||
+                          (index === 1 && /[A-Z]/.test(password)) ||
+                          (index === 2 && /[a-z]/.test(password)) ||
+                          (index === 3 && /[0-9]/.test(password)) 
+                            ? 'bg-green-500' : 'bg-gray-300'
+                        }`}></div>
+                        <span className="text-xs text-gray-500">{index + 1}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
                 Confirm New Password
               </label>
               <div className="relative">
                 <input
                   id="confirmPassword"
-                  type="password"
+                  type={showConfirmPassword ? "text" : "password"}
                   className={`block w-full px-4 py-3 rounded-lg border ${
                     errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                  } focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors`}
-                  placeholder="••••••••"
+                  } focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors pr-10`}
+                  placeholder="Confirm your new password"
                   {...register('confirmPassword')}
                 />
-                {errors.confirmPassword && (
-                  <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
-                )}
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? (
+                    <FaEyeSlash className="text-gray-400" />
+                  ) : (
+                    <FaEye className="text-gray-400" />
+                  )}
+                </button>
               </div>
+              {errors.confirmPassword && (
+                <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                  <FaExclamationTriangle className="text-xs" />
+                  {errors.confirmPassword.message}
+                </p>
+              )}
+              {confirmPassword && password === confirmPassword && (
+                <p className="mt-2 text-sm text-green-600 flex items-center gap-1">
+                  <FaCheck className="text-xs" />
+                  Passwords match
+                </p>
+              )}
             </div>
 
-            <div>
+            <div className="pt-2">
               <motion.button
                 type="submit"
                 disabled={isLoading}
-                className={`w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${
-                  isLoading ? 'bg-indigo-400' : 'bg-indigo-600 hover:bg-indigo-700'
-                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors`}
+                className={`w-full py-3 px-4 rounded-lg text-white font-medium ${
+                  isLoading 
+                    ? 'bg-indigo-400 cursor-not-allowed' 
+                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700'
+                } transition-all duration-200 flex items-center justify-center gap-2`}
                 whileHover={!isLoading ? { scale: 1.02 } : {}}
                 whileTap={!isLoading ? { scale: 0.98 } : {}}
               >
                 {isLoading ? (
                   <>
                     <svg
-                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      className="animate-spin h-5 w-5 text-white"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
@@ -276,12 +403,21 @@ const ResetPasswordPage: React.FC = () => {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
-                    Updating...
+                    Updating Password...
                   </>
                 ) : (
                   'Reset Password'
                 )}
               </motion.button>
+              
+              <button
+                type="button"
+                onClick={() => navigate('/login')}
+                className="mt-4 w-full py-3 px-4 rounded-lg text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors duration-200 font-medium flex items-center justify-center gap-2"
+              >
+                <FaArrowLeft className="text-sm" />
+                Back to Login
+              </button>
             </div>
           </form>
         </motion.div>
