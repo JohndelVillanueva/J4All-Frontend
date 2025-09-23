@@ -159,7 +159,7 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
   useEffect(() => {
     fetchConversations();
     fetchUnreadMessageCount();
-  }, [fetchConversations, fetchUnreadMessageCount]);
+  }, [fetchConversations, fetchUnreadMessageCount]);1
   // Sample messages data
   const messages = useMemo(
     () => [
