@@ -9,6 +9,8 @@ import { Application, JobListing, StatItem } from "../types/types";
 import JobDescriptionModal from "./JobDescriptionModal";
 import ApplyModal from "./ApplyModal";
 import UserAvatar from '../UserAvatar';
+import { useToast } from "../ToastContainer"; // Add this import
+import { handleJobApplicationError } from "../../src/utils/errorHandler"; // Add this import
 
 // Helper hook to fetch employer photo and name
 function useEmployerAvatarInfo(userId?: number) {
@@ -56,6 +58,80 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
 }) => {
   const [selectedJob, setSelectedJob] = useState<JobListing | null>(null);
   const [applyJob, setApplyJob] = useState<JobListing | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Add this state
+  const [error, setError] = useState<string | null>(null); // Add this state
+  const { showToast } = useToast(); // Add this hook
+
+  // Add the handleApply function similar to JobListItem
+  const handleApply = async (resume: File | null, coverLetter: string) => {
+    if (!applyJob) return;
+    
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const rawToken = localStorage.getItem("token");
+      if (!rawToken) {
+        throw new Error("Please log in to apply");
+      }
+
+      const formData = new FormData();
+      formData.append("job_listing_id", applyJob.id.toString());
+      formData.append("employer_id", applyJob.employer_id.toString());
+      formData.append("cover_letter", coverLetter || "");
+      if (resume) {
+        formData.append("resume", resume);
+      }
+
+      const response = await fetch("/api/job-applications", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${rawToken.trim()}`
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const mockError = {
+          response: {
+            status: response.status,
+            data: errorData
+          }
+        };
+        const errorInfo = handleJobApplicationError(mockError);
+        showToast(errorInfo);
+        setError(errorInfo.message);
+        return;
+      }
+
+      showToast({
+        type: 'success',
+        title: 'Application Submitted',
+        message: `Your application for "${applyJob.title}" has been submitted successfully!`,
+        autoHide: true,
+        autoHideDelay: 4000
+      });
+      
+      setApplyJob(null);
+      
+      // Update job status to "applied"
+      if (onJobStatusUpdate) {
+        onJobStatusUpdate(applyJob.id, "applied");
+      }
+    } catch (err) {
+      const errorInfo = handleJobApplicationError(err);
+      showToast(errorInfo);
+      setError(errorInfo.message);
+      
+      if (errorInfo.message.toLowerCase().includes("log in")) {
+        localStorage.removeItem("token");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div>
       <h2 className="text-xl font-semibold text-gray-900 mb-6">
@@ -97,8 +173,13 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
       {applyJob && (
         <ApplyModal
           job={applyJob}
-          onClose={() => setApplyJob(null)}
-          onApply={async () => setApplyJob(null)}
+          onClose={() => {
+            setApplyJob(null);
+            setError(null);
+          }}
+          onApply={handleApply}
+          isSubmitting={isSubmitting}
+          error={error}
         />
       )}
     </div>

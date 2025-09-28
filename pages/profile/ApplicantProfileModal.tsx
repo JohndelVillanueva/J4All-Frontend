@@ -125,7 +125,7 @@ const ApplicantProfileModal: React.FC<ApplicantProfileModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/30 backdrop-blur-md pt-16">
       <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -362,4 +362,4 @@ const ApplicantProfileModal: React.FC<ApplicantProfileModalProps> = ({
   );
 };
 
-export default ApplicantProfileModal; 
+export default ApplicantProfileModal;

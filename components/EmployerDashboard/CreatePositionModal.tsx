@@ -418,10 +418,10 @@ const CreatePositionModal = ({
         onClick={onClose}
       />
 
-      <div className="relative z-50 bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="relative z-50 bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[70vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
-          <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center z-10">
-            <h2 className="text-2xl font-bold text-gray-900">
+          <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex justify-between items-center z-10">
+            <h2 className="text-xl font-bold text-gray-900">
               {isEditing ? "Edit Job" : "Post a New Job"}
             </h2>
             <button
@@ -430,19 +430,19 @@ const CreatePositionModal = ({
               className="text-gray-500 hover:text-gray-700 transition-colors"
               aria-label="Close modal"
             >
-              <XMarkIcon className="h-6 w-6" />
+              <XMarkIcon className="h-5 w-5" />
             </button>
           </div>
 
-          <div className="p-6 space-y-6">
+          <div className="p-4 space-y-3">
             {isSuccess && !isEditing && (
-              <div className="p-4 bg-green-50 text-green-600 rounded-lg flex items-center">
-                <FaCheckCircle className="h-5 w-5 mr-2" />
+              <div className="p-2 bg-green-50 text-green-600 rounded-lg flex items-center text-sm">
+                <FaCheckCircle className="h-4 w-4 mr-1" />
                 {isEditing ? "Job posting updated successfully!" : "Job posting created successfully!"}
               </div>
             )}
 
-            <div className="space-y-4">
+            <div className="space-y-2">
               <div>
                 <label
                   htmlFor="job_title"
@@ -456,7 +456,7 @@ const CreatePositionModal = ({
                   name="job_title"
                   value={formData.job_title}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
                   placeholder="e.g. Senior Frontend Developer"
                   required
                 />
@@ -472,10 +472,10 @@ const CreatePositionModal = ({
                 <textarea
                   id="job_description"
                   name="job_description"
-                  rows={4}
+                  rows={2}
                   value={formData.job_description}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
                   placeholder="Describe the role, responsibilities, and requirements..."
                   required
                 />
@@ -491,16 +491,16 @@ const CreatePositionModal = ({
                 <textarea
                   id="job_requirements"
                   name="job_requirements"
-                  rows={3}
+                  rows={2}
                   value={formData.job_requirements}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  className="w-full px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
                   placeholder="List the requirements for this position..."
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div>
                   <label
                     htmlFor="job_location"
@@ -514,7 +514,7 @@ const CreatePositionModal = ({
                     name="job_location"
                     value={formData.job_location}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
                     placeholder="e.g. Remote, New York, etc."
                     required
                   />
@@ -531,7 +531,7 @@ const CreatePositionModal = ({
                     name="job_type"
                     value={formData.job_type}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
                     required
                   >
                     <option value="">Select job type</option>
@@ -543,7 +543,7 @@ const CreatePositionModal = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div>
                   <label
                     htmlFor="work_mode"
@@ -556,7 +556,7 @@ const CreatePositionModal = ({
                     name="work_mode"
                     value={formData.work_mode}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
                     required
                   >
                     {workModeOptions.map((option) => (
@@ -579,13 +579,13 @@ const CreatePositionModal = ({
                     name="expiration_date"
                     value={formData.expiration_date}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
                     min={new Date().toISOString().split("T")[0]}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div>
                   <label
                     htmlFor="salary_range_min"
@@ -599,7 +599,7 @@ const CreatePositionModal = ({
                     name="salary_range_min"
                     value={formData.salary_range_min}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
                     placeholder="e.g. 90000"
                     min="0"
                   />
@@ -617,7 +617,7 @@ const CreatePositionModal = ({
                     name="salary_range_max"
                     value={formData.salary_range_max}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
                     placeholder="e.g. 120000"
                     min="0"
                   />
@@ -628,7 +628,7 @@ const CreatePositionModal = ({
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Required Skills
                 </label>
-                <div className="mb-4">
+                <div className="mb-2">
                   <select
                     onChange={(e) => {
                       const selectedId = parseInt(e.target.value);
@@ -644,7 +644,7 @@ const CreatePositionModal = ({
                         });
                       }
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    className="w-full px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
                     disabled={isLoadingSkills}
                   >
                     <option value="">Select from existing skills</option>
@@ -656,24 +656,24 @@ const CreatePositionModal = ({
                     ))}
                   </select>
                   {isLoadingSkills && (
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 mt-1">
                       Loading skills...
                     </p>
                   )}
                 </div>
-                <div>
+                <div className="max-h-20 overflow-y-auto">
                   {formData.required_skills.map((skill, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between border rounded p-2 my-1"
+                      className="flex items-center justify-between border rounded p-1 my-1 text-xs"
                     >
-                      <span>
+                      <span className="truncate">
                         {skill.skill_name} ({skill.category})
                       </span>
                       <button
                         type="button"
                         onClick={() => removeSkill(index)}
-                        className="text-red-500 text-sm"
+                        className="text-red-500 text-xs hover:text-red-700 ml-2"
                       >
                         Remove
                       </button>
@@ -681,20 +681,20 @@ const CreatePositionModal = ({
                   ))}
                 </div>
                 {showSkillInput ? (
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="flex items-center gap-1 mt-1">
                     <input
                       type="text"
                       value={newSkillName}
                       onChange={(e) => setNewSkillName(e.target.value)}
                       placeholder="Enter skill name"
-                      className="flex-1 px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                      className="flex-1 px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                       autoFocus
                     />
                     <button
                       type="button"
                       onClick={() => addSkill()}
                       disabled={!newSkillName.trim()}
-                      className="px-2 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                      className="px-2 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-xs"
                     >
                       Add
                     </button>
@@ -704,7 +704,7 @@ const CreatePositionModal = ({
                         setShowSkillInput(false);
                         setNewSkillName("");
                       }}
-                      className="px-2 py-1 text-gray-500 hover:text-gray-700 text-sm"
+                      className="px-2 py-1 text-gray-500 hover:text-gray-700 text-xs"
                     >
                       Cancel
                     </button>
@@ -713,7 +713,7 @@ const CreatePositionModal = ({
                   <button
                     type="button"
                     onClick={() => setShowSkillInput(true)}
-                    className="mt-2 px-3 py-1 text-sm text-blue-600 hover:text-blue-800"
+                    className="mt-1 px-2 py-1 text-xs text-blue-600 hover:text-blue-800"
                     aria-label="Add skill"
                   >
                     + Add Custom Skill
@@ -723,23 +723,23 @@ const CreatePositionModal = ({
             </div>
           </div>
 
-          <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 flex justify-end space-x-3">
+          <div className="sticky bottom-0 bg-white border-t border-gray-200 p-3 flex justify-end space-x-2">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="px-3 py-1 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 text-sm"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
             >
               {isSubmitting ? (
                 <>
-                  <span className="inline-block animate-spin mr-2">↻</span>
+                  <span className="inline-block animate-spin mr-1">↻</span>
                   Posting...
                 </>
               ) : (

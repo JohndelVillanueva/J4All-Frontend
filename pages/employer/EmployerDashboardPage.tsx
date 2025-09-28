@@ -671,7 +671,7 @@ console.log('EmployerDashboard mounted');
                 <FaUserTie className="inline mr-2" />
                 Applicants
               </button>
-              <button
+              {/* <button
                 onClick={() => setActiveTab("messages")}
                 className={`${
                   activeTab === "messages"
@@ -681,7 +681,7 @@ console.log('EmployerDashboard mounted');
               >
                 <FaEnvelope className="inline mr-2" />
                 Messages
-              </button>
+              </button> */}
             </nav>
           </div>
 
@@ -1183,7 +1183,7 @@ console.log('EmployerDashboard mounted');
               </div>
             )}
 
-            {activeTab === "messages" && (
+            {/* {activeTab === "messages" && (
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">
                   Messages
@@ -1211,7 +1211,7 @@ console.log('EmployerDashboard mounted');
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
           </div>
         </main>
         <CreatePositionModal

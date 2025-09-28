@@ -551,7 +551,7 @@ const SignUpPage: React.FC = () => {
                         type="tel"
                         autoComplete="tel"
                         className={`block w-full pl-10 pr-3 py-2 border ${errors.phone ? 'border-red-500' : 'border-gray-300'} rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors`}
-                        placeholder="(123) 456-7890"
+                        placeholder="(+63) 912-345-6789"
                         aria-invalid={!!errors.phone}
                         aria-describedby="phone-error"
                         {...register('phone')}
