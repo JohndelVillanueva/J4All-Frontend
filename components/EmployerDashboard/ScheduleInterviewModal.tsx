@@ -19,6 +19,9 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
   const [location, setLocation] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Get today's date in YYYY-MM-DD format for the min attribute
+  const today = new Date().toISOString().split('T')[0];
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,6 +48,7 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
+              min={today} // Add this line to disable past dates
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
             />
@@ -102,4 +106,4 @@ const ScheduleInterviewModal: React.FC<ScheduleInterviewModalProps> = ({
   );
 };
 
-export default ScheduleInterviewModal; 
+export default ScheduleInterviewModal;
