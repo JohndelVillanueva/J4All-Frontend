@@ -62,7 +62,7 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
   const notificationRef = useRef<HTMLDivElement>(null);
   const messageSidebarRef = useRef<HTMLDivElement>(null);
 
-  const HeaderStyle = "J4IPWDs";
+  const HeaderStyle = "J4PWD's";
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 

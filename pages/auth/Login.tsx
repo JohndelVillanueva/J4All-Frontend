@@ -247,7 +247,7 @@ const LoginPage: React.FC = () => {
             transition={{ duration: 0.7, delay: 0.2 }}
           />
           <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 mb-2 text-center">
-            J4IPWDs
+            J4PWD's
           </h1>
           <h2 className="text-2xl font-semibold text-gray-800 mb-4 text-center">
             Welcome to your inclusive community
