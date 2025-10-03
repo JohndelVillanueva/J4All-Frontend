@@ -118,7 +118,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
         </div>
 
         {/* New Conversation Button */}
-        <div className="p-4 border-t border-gray-200">
+        {/* <div className="p-4 border-t border-gray-200">
           <button
             onClick={onNewConversation}
             className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
@@ -126,7 +126,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
             <FaPlus className="mr-2" />
             New Conversation
           </button>
-        </div>
+        </div> */}
       </div>
     </div>
   );

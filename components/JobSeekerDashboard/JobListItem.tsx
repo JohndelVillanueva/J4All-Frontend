@@ -10,6 +10,7 @@ import { useToast } from "../../components/ToastContainer";
 import { handleJobApplicationError } from "../../src/utils/errorHandler";
 import UserAvatar from '../UserAvatar';
 import { useChat } from "../../contexts/ChatContext";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 
 interface JobListItemProps {
@@ -196,7 +197,7 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess, onJobSta
           <div className="flex items-start justify-between">
             <div className="flex items-start">
               <UserAvatar
-                photoUrl={photoUrl ? `http://localhost:3111${photoUrl}` : undefined}
+                photoUrl={photoUrl ? `${API_BASE_URL}${photoUrl}` : undefined}
                 firstName={firstName}
                 lastName={lastName}
                 size="md"
@@ -231,9 +232,9 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess, onJobSta
               </div>
             </div>
             <div className="ml-2 flex-shrink-0 flex flex-col items-end">
-              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 mb-2">
+              {/* <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 mb-2">
                 {job.match}% Match
-              </span>
+              </span> */}
               <span className="text-sm text-gray-500">{job.posted}</span>
             </div>
           </div>

@@ -12,8 +12,6 @@ interface ApplyModalProps {
   error?: string | null;
 }
 
-
-
 const ApplyModal: React.FC<ApplyModalProps> = ({ 
     job, 
     onClose, 
@@ -51,7 +49,6 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
       );
     }
     
-
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0] || null;
       if (file) {
@@ -86,12 +83,25 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
       setFileError(null);
     };
 
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // ✅ Require resume before submitting
+        if (!resume) {
+          const errorMessage = "Resume is required to apply.";
+          showToast({
+            type: 'warning',
+            title: 'Missing Resume',
+            message: errorMessage,
+            autoHide: true,
+            autoHideDelay: 4000
+          });
+          return;
+        }
+
+        // ✅ Optional cover letter, must be at least 20 chars if provided
         if (coverLetter && coverLetter.length < 20) {
           const errorMessage = "Cover letter too short (min 20 characters)";
-          setFileError(errorMessage);
           showToast({
             type: 'warning',
             title: 'Cover Letter Too Short',
@@ -101,6 +111,7 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
           });
           return;
         }
+
         await onApply(resume, coverLetter);
     };
 
@@ -123,19 +134,17 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
                     </button>
                 </div>
 
-                {(error || fileError) && (
-                    <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-md text-sm">
-                        {error || fileError}
-                    </div>
-                )}
+                {/* Removed inline error box since toast handles errors */}
 
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
+                        {/* ✅ Resume is required (red asterisk) */}
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Upload Resume (PDF/DOC/DOCX, max 5MB)
+                            Upload Resume <span className="text-red-500">*</span> (PDF/DOC/DOCX, max 5MB)
                         </label>
                         <div className="flex items-center">
-                            <label className={`cursor-pointer bg-blue-50 text-blue-600 px-4 py-2 rounded-md flex items-center ${isSubmitting ? 'opacity-50' : ''}`}>                             <FaPaperclip className="mr-2" />
+                            <label className={`cursor-pointer bg-blue-50 text-blue-600 px-4 py-2 rounded-md flex items-center ${isSubmitting ? 'opacity-50' : ''}`}>                             
+                                <FaPaperclip className="mr-2" />
                                 {resume ? resume.name : "Choose File"}
                                 <input
                                     type="file"

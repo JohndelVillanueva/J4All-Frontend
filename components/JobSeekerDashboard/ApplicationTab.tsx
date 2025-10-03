@@ -4,6 +4,7 @@ import { Application, JobListing } from "../types/types";
 import ErrorBoundary from "./ErrorBoundary"; // Import the ErrorBoundary component
 import UserAvatar from '../UserAvatar';
 import JobDescriptionModal from "./JobDescriptionModal";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Dynamic hook to fetch user info and photo by userId (copied from JobListItem)
 function useUserAvatarInfo(userId?: number) {
@@ -60,7 +61,7 @@ const ApplicationListItem: React.FC<{ app: Application; job: JobListing; onViewJ
   const updates = app.updates || [];
 
   // Use the employer's user profile photo (hrPhoto) as the avatar
-  const photoUrl = app.job && app.job.hrPhoto ? `http://localhost:3111${app.job.hrPhoto}` : undefined;
+  const photoUrl = app.job && app.job.hrPhoto ? `${API_BASE_URL}${app.job.hrPhoto}` : undefined;
 
   return (
     <li>
@@ -178,7 +179,7 @@ const ApplicationListItem: React.FC<{ app: Application; job: JobListing; onViewJ
             </div>
           )}
         </div>
-        <div className="mt-4 flex justify-between items-center">
+        {/* <div className="mt-4 flex justify-between items-center">
           <button className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
             <FaEnvelope className="mr-2" />
             Message Recruiter
@@ -190,7 +191,7 @@ const ApplicationListItem: React.FC<{ app: Application; job: JobListing; onViewJ
             View Job Posting
             <FaExternalLinkAlt className="ml-2" />
           </button>
-        </div>
+        </div> */}
       </div>
     </li>
   );

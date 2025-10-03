@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { FaCamera, FaTrash, FaUpload, FaUser } from 'react-icons/fa';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 interface UserPhotoUploadProps {
   currentPhotoUrl?: string;
@@ -85,7 +86,7 @@ const UserPhotoUpload: React.FC<UserPhotoUploadProps> = ({
       formData.append('photo', file);
 
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3111/api/photos/upload`, {
+      const response = await fetch(`${API_BASE_URL}/api/photos/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -138,7 +139,7 @@ const UserPhotoUpload: React.FC<UserPhotoUploadProps> = ({
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3111/api/photos/delete`, {
+      const response = await fetch(`${API_BASE_URL}/api/photos/delete`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

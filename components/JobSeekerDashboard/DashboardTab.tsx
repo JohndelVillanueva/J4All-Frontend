@@ -11,6 +11,7 @@ import ApplyModal from "./ApplyModal";
 import UserAvatar from '../UserAvatar';
 import { useToast } from "../ToastContainer"; // Add this import
 import { handleJobApplicationError } from "../../src/utils/errorHandler"; // Add this import
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Helper hook to fetch employer photo and name
 function useEmployerAvatarInfo(userId?: number) {
@@ -271,7 +272,7 @@ const JobListItem: React.FC<{ job: JobListing; onViewDetails?: (job: JobListing)
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <UserAvatar
-              photoUrl={photoUrl ? `http://localhost:3111${photoUrl}` : undefined}
+              photoUrl={photoUrl ? `${API_BASE_URL}${photoUrl}` : undefined}
               firstName={firstName}
               lastName={lastName}
               size="md"
@@ -403,7 +404,7 @@ const ApplicationListItem: React.FC<{
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <UserAvatar
-              photoUrl={photoUrl ? `http://localhost:3111${photoUrl}` : undefined}
+              photoUrl={photoUrl ? `${API_BASE_URL}${photoUrl}` : undefined}
               firstName={firstName}
               lastName={lastName}
               size="md"

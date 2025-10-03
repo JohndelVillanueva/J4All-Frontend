@@ -119,7 +119,8 @@ const EditJobSeekerAccountModal: React.FC<EditJobSeekerAccountModalProps> = ({ i
         last_name: userData.last_name,
         email: userData.email,
         phone_number: userData.phone_number,
-        photo: photoUrl
+        photo: photoUrl,
+        pwd_id_number: userData.pwd_id_number,   // 👈 include this
       };
       const userRes = await fetch(`/api/users/${user!.id}`, {
         method: 'PUT',
@@ -259,14 +260,6 @@ const EditJobSeekerAccountModal: React.FC<EditJobSeekerAccountModalProps> = ({ i
                 <span className="text-xl font-bold text-blue-700 tracking-wide">Job Seeker Details</span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-gray-600 text-sm mb-1">Resume Text</label>
-                  <textarea name="resume_text" value={jobSeekerData?.resume_text || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200 min-h-[100px]" />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-gray-600 text-sm mb-1">Resume File Path</label>
-                  <input name="resume_file_path" type="text" value={jobSeekerData?.resume_file_path || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
-                </div>
                 <div>
                   <label className="block text-gray-600 text-sm mb-1">Education</label>
                   <input name="education" type="text" value={jobSeekerData?.education || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
@@ -291,10 +284,21 @@ const EditJobSeekerAccountModal: React.FC<EditJobSeekerAccountModalProps> = ({ i
                   <label className="block text-gray-600 text-sm mb-1">Location Preference</label>
                   <input name="location_preference" type="text" value={jobSeekerData?.location_preference || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
                 </div>
-                <div className="md:col-span-2">
+                <div>
                   <label className="block text-gray-600 text-sm mb-1">Disability</label>
                   <input name="disability" type="text" value={jobSeekerData?.disability || ''} onChange={handleJobSeekerChange} className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200" />
                 </div>
+                <div>
+  <label className="block text-gray-600 text-sm mb-1">PWD Number</label>
+  <input
+    name="pwd_id_number"
+    type="text"
+    value={userData?.pwd_id_number || ''}
+    onChange={handleUserChange}
+    className="w-full bg-gray-50 rounded-lg px-4 py-2 border border-gray-200"
+    placeholder="PWD ID number"
+  />
+</div>
               </div>
             </div>
           )}

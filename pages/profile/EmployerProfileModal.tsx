@@ -3,6 +3,7 @@ import UserAvatar from "../../components/UserAvatar";
 import { getFullPhotoUrl } from "../../components/utils/photo";
 import { useAuth } from "../../contexts/AuthContext";
 import { FaUser, FaIdBadge, FaBuilding } from "react-icons/fa";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 interface EmployerProfileModalProps {
   isOpen: boolean;
@@ -263,7 +264,7 @@ const EmployerProfileModal: React.FC<EmployerProfileModalProps> = ({ isOpen, onC
                   <label className="block text-gray-600 text-sm mb-1">Company Logo</label>
                   {employerData.logo_path ? (
                     <img
-                      src={`http://localhost:3111${employerData.logo_path}`}
+                      src={`${API_BASE_URL}${employerData.logo_path}`}
                       alt="Company Logo"
                       className="h-24 w-auto rounded shadow border border-gray-200 bg-white p-2"
                       style={{ maxWidth: '200px', objectFit: 'contain' }}

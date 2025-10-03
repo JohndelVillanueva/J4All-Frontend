@@ -3,6 +3,7 @@ import { FaTimes, FaUser, FaEnvelope, FaPhone, FaBriefcase, FaGraduationCap, FaM
 import UserAvatar from "../../components/UserAvatar";
 import { useToast } from "../../components/ToastContainer";
 import { handleApiError } from "../../src/utils/errorHandler";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 interface ApplicantProfileModalProps {
   isOpen: boolean;
@@ -113,7 +114,7 @@ const ApplicantProfileModal: React.FC<ApplicantProfileModalProps> = ({
 
   const getFullPhotoUrl = (photoPath: string | null) => {
     if (!photoPath) return null;
-    return photoPath.startsWith('http') ? photoPath : `http://localhost:3111${photoPath}`;
+    return photoPath.startsWith('http') ? photoPath : `${API_BASE_URL}${photoPath}`;
   };
 
   const getSkillLevelText = (level: number | null) => {
@@ -331,7 +332,7 @@ const ApplicantProfileModal: React.FC<ApplicantProfileModalProps> = ({
                       <div className="mt-4">
                         <span className="text-sm text-gray-600 block mb-2">Resume File:</span>
                         <a
-                          href={`http://localhost:3111${profileData.jobSeeker.resume_file_path}`}
+                          href={`${API_BASE_URL}${profileData.jobSeeker.resume_file_path}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"

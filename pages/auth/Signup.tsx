@@ -352,7 +352,7 @@ const SignUpPage: React.FC = () => {
             </div>
             <h1 className="text-4xl font-bold text-black mb-4">
               <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 text-black">
-                Join J4IPWDs
+                Join J4PWDs
               </span>
             </h1>
             <p className="text-xl text-black mb-6">
@@ -421,7 +421,7 @@ const SignUpPage: React.FC = () => {
                   className="absolute right-0 mt-2 w-64 bg-white p-3 rounded-lg shadow-lg border border-gray-200 z-20"
                 >
                   <p className="text-sm text-gray-600">
-                    Need help signing up? Contact support at <span className="text-indigo-600">help@j4ipwds.com</span> or call <span className="text-indigo-600">1-800-HELP-NOW</span>.
+                    Need help signing up? Contact support at <span className="text-indigo-600">help@j4pwds.com</span> or call <span className="text-indigo-600">1-800-HELP-NOW</span>.
                   </p>
                 </motion.div>
               )}

@@ -68,6 +68,7 @@ const Tooltip: React.FC<{ text: string; children: React.ReactNode }> = ({ text, 
 );
 
 const EmployerDashboardPage = () => {
+
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -95,6 +96,45 @@ const EmployerDashboardPage = () => {
   const [selectedJobApplicants, setSelectedJobApplicants] = useState<Applicant[]>([]);
   const [selectedJobTitle, setSelectedJobTitle] = useState<string>("");
   const [editEmployerAccountOpen, setEditEmployerAccountOpen] = useState(false);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  // Add handleDeleteJob function here
+  const handleDeleteJob = async (jobId: number) => {
+    if (!confirm('Are you sure you want to delete this job posting? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(`/api/jobs/${jobId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseData.message || 'Failed to delete job posting');
+      }
+
+      showToast({ type: 'success', message: 'Job posting deleted successfully!', autoHide: true, autoHideDelay: 3000 });
+      
+      // Refresh job listings
+      fetchJobPostings();
+
+    } catch (error) {
+      console.error('Error deleting job posting:', error);
+      const errorInfo = handleApiError(error);
+      showToast(errorInfo);
+    }
+  };
 
   // Guard: Show loading spinner while auth is loading
   if (loading) {
@@ -707,7 +747,7 @@ console.log('EmployerDashboard mounted');
                             <dt className="text-sm font-medium text-gray-500 truncate">
                               {metric.title}
                             </dt>
-                            <dd className="flex items-baseline">
+                            <div className="flex items-baseline">
                               <div className="text-2xl font-semibold text-gray-900">
                                 {metric.value}
                               </div>
@@ -720,7 +760,7 @@ console.log('EmployerDashboard mounted');
                               >
                                 {metric.change}
                               </div>
-                            </dd>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -805,7 +845,7 @@ console.log('EmployerDashboard mounted');
             {activeTab === "overview" && (
               <div className="bg-white shadow rounded-lg p-6 mb-8 flex flex-col items-center">
                 <UserAvatar
-                  photoUrl={currentUser?.photo ? `http://localhost:3111${currentUser.photo}` : undefined}
+                  photoUrl={currentUser?.photo ? `${API_BASE_URL}${currentUser.photo}` : undefined}
                   firstName={currentUser?.first_name}
                   lastName={currentUser?.last_name}
                   size="xl"
@@ -946,9 +986,15 @@ console.log('EmployerDashboard mounted');
                                   </button>
                                   <button 
                                     onClick={() => handleEditJob(job)}
-                                    className="text-gray-600 hover:text-gray-800"
+                                    className="mr-3 text-gray-600 hover:text-gray-800"
                                   >
                                     Edit
+                                  </button>
+                                  <button 
+                                    onClick={() => handleDeleteJob(job.id)}
+                                    className="text-red-600 hover:text-red-800"
+                                  >
+                                    Delete
                                   </button>
                                 </div>
                               </div>
@@ -1060,7 +1106,7 @@ console.log('EmployerDashboard mounted');
                               <div className="flex items-center">
                                 <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center">
                                   <UserAvatar
-                                    photoUrl={applicant.photo ? `http://localhost:3111${applicant.photo}` : undefined}
+                                    photoUrl={applicant.photo ? `${API_BASE_URL}${applicant.photo}` : undefined}
                                     firstName={applicant.name}
                                     lastName={''}
                                     size="sm"

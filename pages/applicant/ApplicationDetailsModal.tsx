@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import LoadingScreen from '../../components/LoadingScreen';
 import ErrorMessage from '../../components/ErrorMessage';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 interface ApplicationDetails {
   id: number;
@@ -31,7 +32,7 @@ const DEFAULT_PROFILE_IMAGE =
 const getFullPhotoUrl = (url?: string | null) => {
   if (!url) return null;
   if (url.startsWith('http')) return url;
-  return `http://localhost:3111${url}`;
+  return `${API_BASE_URL}${url}`;
 };
 
 const ApplicationDetailsModal: React.FC<ApplicationDetailsModalProps> = ({ applicationId, isOpen, onClose }) => {

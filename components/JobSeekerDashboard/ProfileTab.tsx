@@ -9,6 +9,7 @@ const ProfileTab: React.FC = () => {
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     if (!user?.id) return;
@@ -58,7 +59,7 @@ const ProfileTab: React.FC = () => {
       <div className="bg-white shadow overflow-hidden sm:rounded-lg">
         <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex items-center">
           <UserAvatar
-            photoUrl={photoUrl ? `http://localhost:3111${photoUrl}` : undefined}
+            photoUrl={photoUrl ? `${API_BASE_URL}${photoUrl}` : undefined}
             firstName={userData.first_name}
             lastName={userData.last_name}
             size="lg"
@@ -97,7 +98,7 @@ const ProfileTab: React.FC = () => {
                 <h4 className="text-md font-medium text-gray-900 mb-2">Resume & Skills</h4>
                 <ul className="space-y-2 text-gray-700">
                   <li><strong>Resume Text:</strong> {jobSeekerData.resume_text ? <span className="block max-h-32 overflow-y-auto bg-gray-50 p-2 rounded mt-1">{jobSeekerData.resume_text}</span> : "-"}</li>
-                  <li><strong>Resume File:</strong> {jobSeekerData.resume_file_path ? <a href={`http://localhost:3111${jobSeekerData.resume_file_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View Resume</a> : "-"}</li>
+                  <li><strong>Resume File:</strong> {jobSeekerData.resume_file_path ? <a href={`${API_BASE_URL}${jobSeekerData.resume_file_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View Resume</a> : "-"}</li>
                   <li><strong>Skills:</strong> {Array.isArray(jobSeekerData.skills) && jobSeekerData.skills.length > 0 ? (
                     <div className="flex flex-wrap gap-2 mt-1">
                       {jobSeekerData.skills.map((skill: any) => (
