@@ -223,11 +223,11 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess, onJobSta
                     HR: {((job as any).hrFirstName ?? '')} {((job as any).hrLastName ?? '')}
                   </p>
                 ) : null}
-                {job.logo_path && (
+                {/* {job.logo_path && (
                   <p className="text-xs text-gray-400 mt-1">
                     Logo URL: {job.logo_path}
                   </p>
-                )}
+                )} */}
               </div>
             </div>
             <div className="ml-2 flex-shrink-0 flex flex-col items-end">
