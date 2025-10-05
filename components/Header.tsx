@@ -355,7 +355,7 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
       setEditAccountOpen(true);
     }
   } },
-      { icon: <FaCog />, label: "Settings", path: "/settings" },
+      // { icon: <FaCog />, label: "Settings", path: "/settings" },
       {
         icon: <FaSignOutAlt />,
         label: "Logout",
