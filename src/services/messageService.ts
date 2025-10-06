@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-// Use environment variable with fallback for development
+// TEMPORARY FIX - HARDCODE YOUR PRODUCTION URL
 const API_BASE_URL = 'http://j4pwds.com/api';
 
-console.log('API Base URL:', API_BASE_URL); // Debug log
+console.log('🚨 PRODUCTION API URL:', API_BASE_URL);
 
 // Get auth token from localStorage
 const getAuthToken = () => {
