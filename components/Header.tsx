@@ -39,6 +39,20 @@ const getApiBaseUrl = () => {
   return import.meta.env.API_BASE_URL || 'https://j4pwds.com/api';
 };
 
+// Helper function to convert API conversation to sidebar format
+const convertConversation = (apiConv: any) => ({
+  id: apiConv.id,
+  participant: apiConv.other_user.first_name && apiConv.other_user.last_name 
+    ? `${apiConv.other_user.first_name} ${apiConv.other_user.last_name}`
+    : apiConv.other_user.username,
+  lastMessage: apiConv.last_message?.content || 'No messages yet',
+  time: new Date(apiConv.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  unreadCount: apiConv.unread_count,
+  photo: apiConv.other_user.photo,
+  first_name: apiConv.other_user.first_name,
+  last_name: apiConv.other_user.last_name
+});
+
 // Add prop type
 interface HeaderProps {
   onEmployerEditAccount?: () => void;
@@ -128,23 +142,8 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
   const fetchConversations = useCallback(async () => {
     try {
       const data = await messageService.getConversations();
-      // Transform service data to match component expectations
-      const transformedConversations = data.map(conversation => ({
-        id: conversation.id,
-        participant: conversation.other_user
-          ? (conversation.other_user.first_name && conversation.other_user.last_name
-              ? `${conversation.other_user.first_name} ${conversation.other_user.last_name}`
-              : conversation.other_user.username)
-          : "Unknown",
-        lastMessage: conversation.last_message?.content || 'No messages yet',
-        time: conversation.last_message
-          ? new Date(conversation.last_message.created_at).toLocaleTimeString()
-          : new Date(conversation.updated_at).toLocaleTimeString(),
-        unreadCount: conversation.unread_count || 0,
-        photo: conversation.other_user ? conversation.other_user.photo || null : null,
-        first_name: conversation.other_user ? conversation.other_user.first_name : null,
-        last_name: conversation.other_user ? conversation.other_user.last_name : null,
-      }));
+      // Transform service data using the convertConversation function
+      const transformedConversations = data.map(convertConversation);
       setConversations(transformedConversations);
       setConversationsLoaded(true);
     } catch (error) {
