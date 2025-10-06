@@ -36,7 +36,7 @@ const DEFAULT_PROFILE_IMAGE =
 
 // Helper function for API URLs
 const getApiBaseUrl = () => {
-  return import.meta.env.VITE_API_BASE_URL || 'https://j4pwds.com';
+  return import.meta.env.API_BASE_URL || 'https://j4pwds.com';
 };
 
 // Add prop type
