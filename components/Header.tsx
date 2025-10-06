@@ -142,28 +142,29 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
   const fetchConversations = useCallback(async () => {
   try {
     console.log("🔄 Starting to fetch conversations...");
-    console.log("API Base URL:", getApiBaseUrl());
+    // setIsLoading(true); // Set loading to true when starting
     
     const data = await messageService.getConversations();
     console.log("📦 Raw API response:", data);
     
     if (data && data.length > 0) {
+      // Use the convertConversation function for proper transformation
       const transformedConversations = data.map(convertConversation);
       console.log("🔄 Transformed conversations:", transformedConversations);
+      
       setConversations(transformedConversations);
       setConversationsLoaded(true);
+      console.log("✅ Successfully set conversations state");
     } else {
       console.log("📭 API returned empty data");
       setConversations([]);
     }
   } catch (error) {
     console.error('❌ Error fetching conversations:', error);
-    // Log more details about the error
-    if (error instanceof Error) {
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-    }
-    setConversations([]);
+    console.log("🚨 API call failed - will show mock data");
+    setConversations([]); // Empty array triggers mock data
+  } finally {
+    // setIsLoading(false);
   }
 }, []);
 

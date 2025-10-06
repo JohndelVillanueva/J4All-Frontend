@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+// TEMPORARY FIX - HARDCODE YOUR PRODUCTION URL
 // Use environment variable for base URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/api` : 'http://localhost:3111/api';
 
