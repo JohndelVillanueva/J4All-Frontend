@@ -140,16 +140,23 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
 
   // Fetch conversations
   const fetchConversations = useCallback(async () => {
-    try {
-      const data = await messageService.getConversations();
-      // Transform service data using the convertConversation function
-      const transformedConversations = data.map(convertConversation);
-      setConversations(transformedConversations);
-      setConversationsLoaded(true);
-    } catch (error) {
-      console.error('Error fetching conversations:', error);
-    }
-  }, []);
+  try {
+    console.log("🔄 Starting to fetch conversations...");
+    const data = await messageService.getConversations();
+    console.log("📦 Raw API response:", data);
+    
+    // Transform service data using the convertConversation function
+    const transformedConversations = data.map(convertConversation);
+    console.log("🔄 Transformed conversations:", transformedConversations);
+    
+    setConversations(transformedConversations);
+    setConversationsLoaded(true);
+    console.log("✅ Successfully set conversations state");
+  } catch (error) {
+    console.error('❌ Error fetching conversations:', error);
+    console.log("🚨 API call failed - will show mock data");
+  }
+}, []);
 
   // Fetch unread message count
   const fetchUnreadMessageCount = useCallback(async () => {

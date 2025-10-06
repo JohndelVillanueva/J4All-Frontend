@@ -1,6 +1,11 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3111/api';
+// Use environment variable with fallback for development
+const API_BASE_URL = window.location.hostname === 'j4pwds.com' 
+  ? 'http://j4pwds.com/api' 
+  : 'http://localhost:3111/api';
+
+console.log('API Base URL:', API_BASE_URL); // Debug log
 
 // Get auth token from localStorage
 const getAuthToken = () => {
@@ -23,6 +28,20 @@ apiClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Add response interceptor for better error handling
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('API Error:', error.response?.data || error.message);
+    if (error.response?.status === 401) {
+      // Token expired or invalid
+      localStorage.removeItem('token');
+      window.location.reload();
+    }
+    return Promise.reject(error);
+  }
+);
 
 export interface User {
   id: number;
@@ -66,10 +85,13 @@ export const messageService = {
   // Get all conversations for the current user
   async getConversations(): Promise<Conversation[]> {
     try {
+      console.log("🔗 Making API call to:", `${API_BASE_URL}/messages/conversations`);
       const response = await apiClient.get('/messages/conversations');
+      console.log("📡 API Response status:", response.status);
+      console.log("📡 API Response data:", response.data);
       return response.data.data;
     } catch (error) {
-      console.error('Error fetching conversations:', error);
+      console.error('❌ Error fetching conversations:', error);
       throw error;
     }
   },
@@ -139,4 +161,4 @@ export const messageService = {
       throw error;
     }
   },
-}; 
+};
