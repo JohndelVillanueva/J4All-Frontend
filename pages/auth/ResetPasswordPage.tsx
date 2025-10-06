@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import axios from 'axios';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { FaLock, FaCheck, FaExclamationTriangle, FaEye, FaEyeSlash, FaArrowLeft } from 'react-icons/fa';
 import { useToast } from '../../components/ToastContainer';
 
@@ -312,13 +312,13 @@ const ResetPasswordPage: React.FC = () => {
                       'One uppercase letter',
                       'One lowercase letter',
                       'One number'
-                    ].map((req, index) => (
+                    ].map(( index) => (
                       <div key={index} className="flex items-center">
                         <div className={`w-2 h-2 rounded-full mr-1 ${
-                          (index === 0 && password.length >= 8) ||
-                          (index === 1 && /[A-Z]/.test(password)) ||
-                          (index === 2 && /[a-z]/.test(password)) ||
-                          (index === 3 && /[0-9]/.test(password)) 
+                          (  password.length >= 8) ||
+                          (  /[A-Z]/.test(password)) ||
+                          ( /[a-z]/.test(password)) ||
+                          ( /[0-9]/.test(password)) 
                             ? 'bg-green-500' : 'bg-gray-300'
                         }`}></div>
                         <span className="text-xs text-gray-500">{index + 1}</span>

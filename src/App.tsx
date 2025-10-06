@@ -14,8 +14,6 @@ import ResetPasswordPage from "../pages/auth/ResetPasswordPage"; // <-- Add this
 // import ApplicationDetailsPage from '../pages/applicant/ApplicationDetails';
 
 // Lazy-loaded components
-const PwdPage = lazy(() => import("../pages/admin/PwdPage"));
-const IndiPeoplePage = lazy(() => import("../pages/admin/IndiPeoplePage"));
 const ApplicantDashboard = lazy(
   () => import("../routing/applicant/ApplicantDashboard")
 );
@@ -57,22 +55,6 @@ export default function App() {
                     </Suspense>
                   }
                 /> */}
-                <Route
-                  path="/indigenous-people"
-                  element={
-                    <Suspense fallback={<LoadingScreen />}>
-                      <IndiPeoplePage />
-                    </Suspense>
-                  }
-                />
-                <Route
-                  path="/Pwd"
-                  element={
-                    <Suspense fallback={<LoadingScreen />}>
-                      <PwdPage />
-                    </Suspense>
-                  }
-                />
                 <Route
                   path="/EmployerDashboard"
                   element={

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaTimes, FaArrowLeft, FaPaperPlane, FaUserCircle, FaWindowMinimize, FaComments } from "react-icons/fa";
+import { FaTimes, FaPaperPlane, FaWindowMinimize } from "react-icons/fa";
 import { messageService } from "../src/services/messageService";
 import UserAvatar from "./UserAvatar";
 import { getFullPhotoUrl } from "./utils/photo";
@@ -55,7 +55,6 @@ interface MessageViewProps {
 const MessageView: React.FC<MessageViewProps> = ({
   conversationId,
   onClose,
-  onBack,
   currentUserId,
   onMessagesRead,
   isMinimized = false,
@@ -141,14 +140,14 @@ const MessageView: React.FC<MessageViewProps> = ({
     });
   };
 
-  const getSenderName = (message: Message) => {
-    if (message.sender_id === currentUserId) {
-      return "You";
-    }
-    return message.sender.first_name && message.sender.last_name
-      ? `${message.sender.first_name} ${message.sender.last_name}`
-      : message.sender.username;
-  };
+  // const getSenderName = (message: Message) => {
+  //   if (message.sender_id === currentUserId) {
+  //     return "You";
+  //   }
+  //   return message.sender.first_name && message.sender.last_name
+  //     ? `${message.sender.first_name} ${message.sender.last_name}`
+  //     : message.sender.username;
+  // };
 
   const getOtherUserName = () => {
     if (!conversation) return "Unknown";

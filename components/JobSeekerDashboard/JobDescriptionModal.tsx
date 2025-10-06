@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { FaTimes, FaRegStar, FaStar, FaComments } from "react-icons/fa";
 import { JobListing } from "../types/types";
 import MessageModal from "./MessageModal";
+import ApplyModal from "./ApplyModal"; // Add this import
 import { useToast } from "../ToastContainer";
-import { handleApiError } from "../../src/utils/errorHandler";
+import { handleApiError, handleJobApplicationError } from "../../src/utils/errorHandler"; // Add handleJobApplicationError
 import { getFullPhotoUrl } from "../../components/utils/photo";
 
 interface JobDescriptionModalProps {
@@ -11,6 +12,7 @@ interface JobDescriptionModalProps {
   onClose: () => void;
   onSaveJob: (jobId: number) => void;
   onUnsaveJob: (jobId: number) => void;
+  onApplySuccess?: () => void; // Add this prop
 }
 
 const JobDescriptionModal: React.FC<JobDescriptionModalProps> = ({
@@ -18,11 +20,15 @@ const JobDescriptionModal: React.FC<JobDescriptionModalProps> = ({
   onClose,
   onSaveJob,
   onUnsaveJob,
+  onApplySuccess,
 }) => {
   const jobWithHR = job as any;
   const [isSaved, setIsSaved] = useState(job.status === "saved");
   const [isSaving, setIsSaving] = useState(false);
   const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false); // Add this state
+  const [isSubmitting, setIsSubmitting] = useState(false); // Add this state
+  const [error, setError] = useState<string | null>(null); // Add this state
   const { showToast } = useToast();
 
   const handleSaveToggle = async () => {
@@ -115,6 +121,73 @@ const JobDescriptionModal: React.FC<JobDescriptionModalProps> = ({
     }
   };
 
+  // Add the handleApply function
+  const handleApply = async (resume: File | null, coverLetter: string) => {
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const rawToken = localStorage.getItem("token");
+      if (!rawToken) {
+        throw new Error("Please log in to apply");
+      }
+
+      const formData = new FormData();
+      formData.append("job_listing_id", job.id.toString());
+      formData.append("employer_id", job.employer_id.toString());
+      formData.append("cover_letter", coverLetter || "");
+      if (resume) {
+        formData.append("resume", resume);
+      }
+
+      const response = await fetch("/api/job-applications", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${rawToken.trim()}`
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        const mockError = {
+          response: {
+            status: response.status,
+            data: errorData
+          }
+        };
+        
+        const errorInfo = handleJobApplicationError(mockError);
+        showToast(errorInfo);
+        setError(errorInfo.message);
+        return;
+      }
+
+      showToast({
+        type: 'success',
+        title: 'Application Submitted',
+        message: `Your application for "${job.title}" has been submitted successfully!`,
+        autoHide: true,
+        autoHideDelay: 4000
+      });
+      
+      setIsApplyModalOpen(false);
+      
+      if (onApplySuccess) onApplySuccess();
+    } catch (err) {
+      const errorInfo = handleJobApplicationError(err);
+      showToast(errorInfo);
+      setError(errorInfo.message);
+      
+      if (errorInfo.message.toLowerCase().includes("log in")) {
+        localStorage.removeItem("token");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <>
       {/* Blurred backdrop */}
@@ -165,12 +238,19 @@ const JobDescriptionModal: React.FC<JobDescriptionModalProps> = ({
                 {/* Apply and Save buttons */}
                 <div className="border-t border-b border-gray-200 py-3 my-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <button
-                      className="flex-1 min-w-[100px] py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm"
-                      disabled={isSaving || job.status === "applied"}
-                    >
-                      {job.status === "applied" ? "Applied" : "Apply Now"}
-                    </button>
+                    {job.status === "applied" ? (
+                      <span className="px-3 py-2 bg-green-100 text-green-800 rounded-lg font-medium text-sm">
+                        Applied
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => setIsApplyModalOpen(true)}
+                        className="flex-1 min-w-[100px] py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 text-sm"
+                        disabled={isSaving}
+                      >
+                        Apply Now
+                      </button>
+                    )}
                     <button
                       onClick={() => setIsMessageModalOpen(true)}
                       className="flex items-center gap-1 px-3 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition-colors text-sm"
@@ -275,6 +355,19 @@ const JobDescriptionModal: React.FC<JobDescriptionModalProps> = ({
         <MessageModal
           job={job}
           onClose={() => setIsMessageModalOpen(false)}
+        />
+      )}
+
+      {isApplyModalOpen && (
+        <ApplyModal
+          job={job}
+          onClose={() => {
+            setIsApplyModalOpen(false);
+            setError(null);
+          }}
+          onApply={handleApply}
+          isSubmitting={isSubmitting}
+          error={error}
         />
       )}
     </>

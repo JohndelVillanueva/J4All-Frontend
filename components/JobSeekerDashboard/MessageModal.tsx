@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { FaTimes, FaPaperPlane } from "react-icons/fa";
 import { JobListing } from "../types/types";
-import { useAuth } from "../../contexts/AuthContext";
+// import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../ToastContainer";
 import { handleApiError } from "../../src/utils/errorHandler";
 
@@ -20,7 +20,6 @@ const MessageModal: React.FC<MessageModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const { user } = useAuth();
   const { showToast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {

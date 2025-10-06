@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { JobListing } from "../types/types";
 import { FaBriefcase, FaTrash, FaEye } from "react-icons/fa";
 import JobDescriptionModal from "./JobDescriptionModal";
+import ApplyModal from "./ApplyModal"; // Add this import
 import { useToast } from "../ToastContainer";
-import { handleApiError } from "../../src/utils/errorHandler";
+import { handleApiError, handleJobApplicationError } from "../../src/utils/errorHandler"; // Add handleJobApplicationError
 
 interface SavedJob {
   id: number;
@@ -20,6 +21,7 @@ interface SavedJob {
   job_description?: string;
   job_requirements?: string;
   skills?: any[];
+  employer_id: number; // Changed from optional to required
 }
 
 interface SavedJobsTabProps {
@@ -33,6 +35,10 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedJob, setSelectedJob] = useState<SavedJob | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false); // Add this state
+  const [applyJob, setApplyJob] = useState<SavedJob | null>(null); // Add this state
+  const [isSubmitting, setIsSubmitting] = useState(false); // Add this state
+  const [applyError, setApplyError] = useState<string | null>(null); // Add this state
   const { showToast } = useToast();
 
   // Fetch saved jobs from backend
@@ -71,7 +77,12 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
 
       const data = await response.json();
       if (data.success) {
-        setSavedJobs(data.data);
+        // Ensure each job has employer_id
+        const jobsWithEmployer = data.data.map((job: any) => ({
+          ...job,
+          employer_id: job.employer_id || job.employer?.id || 0 // Try multiple sources for employer_id
+        }));
+        setSavedJobs(jobsWithEmployer);
       } else {
         setSavedJobs([]);
       }
@@ -135,8 +146,99 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
     }
   };
 
+  // Add the handleApply function
+  const handleApply = async (resume: File | null, coverLetter: string) => {
+    if (!applyJob) return;
+    
+    setIsSubmitting(true);
+    setApplyError(null);
+
+    // Check if we have employer_id, if not try to get it from the job object
+    let employerId = applyJob.employer_id;
+    if (!employerId && (applyJob as any).employer_id) {
+      employerId = (applyJob as any).employer_id;
+    }
+
+    if (!employerId) {
+      const errorInfo = {
+        type: 'error' as const,
+        title: 'Application Failed',
+        message: 'Employer information is missing for this job. Please contact support or try another job.',
+        autoHide: true,
+        autoHideDelay: 5000
+      };
+      showToast(errorInfo);
+      setApplyError(errorInfo.message);
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const rawToken = localStorage.getItem("token");
+      if (!rawToken) {
+        throw new Error("Please log in to apply");
+      }
+
+      const formData = new FormData();
+      formData.append("job_listing_id", applyJob.id.toString());
+      formData.append("employer_id", employerId.toString());
+      formData.append("cover_letter", coverLetter || "");
+      if (resume) {
+        formData.append("resume", resume);
+      }
+
+      const response = await fetch("/api/job-applications", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${rawToken.trim()}`
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        const mockError = {
+          response: {
+            status: response.status,
+            data: errorData
+          }
+        };
+        
+        const errorInfo = handleJobApplicationError(mockError);
+        showToast(errorInfo);
+        setApplyError(errorInfo.message);
+        return;
+      }
+
+      showToast({
+        type: 'success',
+        title: 'Application Submitted',
+        message: `Your application for "${applyJob.title}" has been submitted successfully!`,
+        autoHide: true,
+        autoHideDelay: 4000
+      });
+      
+      setIsApplyModalOpen(false);
+      setApplyJob(null);
+      
+      // Remove the job from saved jobs after applying
+      setSavedJobs(prev => prev.filter(job => job.id !== applyJob.id));
+    } catch (err) {
+      const errorInfo = handleJobApplicationError(err);
+      showToast(errorInfo);
+      setApplyError(errorInfo.message);
+      
+      if (errorInfo.message.toLowerCase().includes("log in")) {
+        localStorage.removeItem("token");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Handle save/unsave job from modal
-  const handleSaveJob = async (jobId: number) => {
+  const handleSaveJob = async () => {
     // Job is already saved, so this function won't be called
     // But we need it for the modal interface
   };
@@ -150,6 +252,22 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
   const handleViewDetails = (job: SavedJob) => {
     setSelectedJob(job);
     setIsModalOpen(true);
+  };
+
+  // Handle apply now click
+  const handleApplyNow = (job: SavedJob) => {
+    setApplyJob(job);
+    setIsApplyModalOpen(true);
+  };
+
+  // Handle apply success from modal
+  const handleApplySuccess = () => {
+    // Close the details modal and open the apply modal
+    setIsModalOpen(false);
+    setSelectedJob(null);
+    if (selectedJob) {
+      handleApplyNow(selectedJob);
+    }
   };
 
   // Fetch saved jobs on component mount
@@ -277,9 +395,12 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
                         <FaEye className="mr-1 h-3 w-3" />
                         View Details
                       </button>
-                      <button className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                      {/* <button 
+                        onClick={() => handleApplyNow(job)}
+                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      >
                         Apply Now
-                      </button>
+                      </button> */}
                       <button 
                         onClick={() => handleRemoveJob(job.id)}
                         className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -306,6 +427,22 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
           }}
           onSaveJob={handleSaveJob}
           onUnsaveJob={handleUnsaveJob}
+          onApplySuccess={handleApplySuccess}
+        />
+      )}
+
+      {/* Apply Modal */}
+      {applyJob && isApplyModalOpen && (
+        <ApplyModal
+          job={applyJob as any}
+          onClose={() => {
+            setIsApplyModalOpen(false);
+            setApplyJob(null);
+            setApplyError(null);
+          }}
+          onApply={handleApply}
+          isSubmitting={isSubmitting}
+          error={applyError}
         />
       )}
     </div>

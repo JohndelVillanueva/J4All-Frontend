@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { FaBriefcase, FaChevronLeft, FaChevronRight, FaComments, FaUserFriends } from "react-icons/fa";
 import { JobListing } from "../types/types";
-import CompanyLogo from "./CompanyLogo";
+// import CompanyLogo from "./CompanyLogo";
 import JobDescriptionModal from "./JobDescriptionModal";
 import ApplyModal from "./ApplyModal";
 import MessageModal from "./MessageModal";
-import { useAuth } from "../../contexts/AuthContext";
+// import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../components/ToastContainer";
 import { handleJobApplicationError } from "../../src/utils/errorHandler";
 import UserAvatar from '../UserAvatar';
-import { useChat } from "../../contexts/ChatContext";
+// import { useChat } from "../../contexts/ChatContext";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 
@@ -75,9 +75,9 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess, onJobSta
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const { showToast } = useToast();
-  const { openConversation } = useChat();
+  // const { openConversation } = useChat();
   // Use dynamic userId for avatar (default to employer_user_id)
   const avatarUserId = job.employer_user_id; // You can change this to any userId you want to display
   const { photoUrl, firstName, lastName } = useUserAvatarInfo(avatarUserId);
@@ -164,31 +164,31 @@ const JobListItem: React.FC<JobListItemProps> = ({ job, onApplySuccess, onJobSta
     }
   };
 
-  const handleMessageClick = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.log("No token, not logged in");
-      return;
-    }
-    const response = await fetch("/api/messages/conversations", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        participant2_id: job.employer_user_id
-      })
-    });
-    if (!response.ok) {
-      console.log("Failed to create/get conversation");
-      return;
-    }
-    const data = await response.json();
-    const conversationId = data.data.id;
-    console.log("Opening conversation:", conversationId);
-    openConversation(conversationId);
-  };
+  // const handleMessageClick = async () => {
+  //   const token = localStorage.getItem("token");
+  //   if (!token) {
+  //     console.log("No token, not logged in");
+  //     return;
+  //   }
+  //   const response = await fetch("/api/messages/conversations", {
+  //     method: "POST",
+  //     headers: {
+  //       "Authorization": `Bearer ${token}`,
+  //       "Content-Type": "application/json"
+  //     },
+  //     body: JSON.stringify({
+  //       participant2_id: job.employer_user_id
+  //     })
+  //   });
+  //   if (!response.ok) {
+  //     console.log("Failed to create/get conversation");
+  //     return;
+  //   }
+  //   const data = await response.json();
+  //   const conversationId = data.data.id;
+  //   console.log("Opening conversation:", conversationId);
+  //   openConversation(conversationId);
+  // };
 
   return (
     <>

@@ -248,17 +248,10 @@ const CreatePositionModal = ({
     }));
   };
 
-  const handleSkillChange = (index: number, field: string, value: any) => {
-    if (field === "skill_name") {
-      value = String(value);
-    }
-
-    setFormData((prev) => {
-      const updatedSkills = [...prev.required_skills];
-      updatedSkills[index] = { ...updatedSkills[index], [field]: value };
-      return { ...prev, required_skills: updatedSkills };
-    });
-  };
+  // TODO: Implement skill editing functionality in the UI
+// This function will be used when we add the ability to edit skill properties
+// such as importance_level, is_required, or category after skills are added
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 
   const handleChange = (
     e: React.ChangeEvent<

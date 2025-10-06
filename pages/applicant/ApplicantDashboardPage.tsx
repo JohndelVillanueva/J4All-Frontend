@@ -22,7 +22,7 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 
 // Define WorkMode type for job work modes
-type WorkMode = "Onsite" | "Remote" | "Hybrid";
+// type WorkMode = "Onsite" | "Remote" | "Hybrid";
 
 // ErrorBoundary component definition (keep exactly as is)
 class ErrorBoundary extends React.Component<
@@ -85,8 +85,8 @@ const JobSeekerDashboard = () => {
   const [isLoadingApplications, setIsLoadingApplications] = useState(true);
   const [jobError, setJobError] = useState<string | null>(null);
   const [applicationsError, setApplicationsError] = useState<string | null>(null);
-  const [isLoadingUser, setIsLoadingUser] = useState(true);
-  const [userError, setUserError] = useState<string | null>(null);
+  const [, setIsLoadingUser] = useState(true);
+  const [, setUserError] = useState<string | null>(null);
   const [showHeader, setShowHeader] = useState(true);
 
   console.log('JobSeekerDashboard user:', user);
@@ -240,7 +240,7 @@ const JobSeekerDashboard = () => {
           importance_level: skill.importance_level
         })) || [],
         status: userApplications.includes(job.id) ? "applied" : "new",
-        match: calculateMatchPercentage([]),
+        
         work_mode: ["Onsite", "Remote", "Hybrid"].includes(job.work_mode)
           ? job.work_mode
           : "Onsite",
@@ -276,10 +276,10 @@ const JobSeekerDashboard = () => {
   };
 
   // Helper function to calculate match percentage (keep exactly as is)
-  const calculateMatchPercentage = (skills: any[]) => {
-    // In a real app, you'd compare with user's skills
-    return Math.floor(Math.random() * 30) + 70; // Random between 70-100%
-  };
+  // const calculateMatchPercentage = (skills: any[]) => {
+  //   // In a real app, you'd compare with user's skills
+  //   return Math.floor(Math.random() * 30) + 70; // Random between 70-100%
+  // };
 
   // Function to handle job status updates
   const handleJobStatusUpdate = (jobId: string, newStatus: "new" | "applied" | "saved") => {

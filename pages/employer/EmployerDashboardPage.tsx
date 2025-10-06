@@ -3,24 +3,16 @@ import {
   FaBriefcase,
   FaUserTie,
   FaChartLine,
-  FaEnvelope,
   FaSearch,
   FaFilter,
   FaCalendarAlt,
-  FaCheckCircle,
-  FaTimesCircle,
-  FaClock,
   FaUserFriends,
   FaSort,
-  FaPowerOff,
 } from "react-icons/fa";
-import DynamicHeader from "../../components/JobSeekerDashboard/DynamicHeader";
+// import DynamicHeader from "../../components/JobSeekerDashboard/DynamicHeader";
 import { useNavigate } from "react-router-dom";
 import {
   UserData,
-  JobListing,
-  Application,
-  StatItem,
   Applicant,
 } from "../../components/types/types";
 import CreatePositionModal from "../../components/EmployerDashboard/CreatePositionModal";

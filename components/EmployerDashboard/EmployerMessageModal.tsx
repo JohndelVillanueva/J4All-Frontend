@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { FaTimes, FaPaperPlane, FaUserCircle } from "react-icons/fa";
-import { messageService } from "../../src/services/messageService";
+import { FaPaperPlane, FaUserCircle } from "react-icons/fa";
+// import { messageService } from "../../src/services/messageService";
 import { useToast } from "../ToastContainer";
 import { handleApiError } from "../../src/utils/errorHandler";
 

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { FaTimes, FaPaperclip } from "react-icons/fa";
 import { JobListing } from "../types/types";
 import { useToast } from "../ToastContainer";
-import { handleJobApplicationError } from "../../src/utils/errorHandler";
+// import { handleJobApplicationError } from "../../src/utils/errorHandler";
 
 interface ApplyModalProps {
   job: JobListing;
@@ -17,11 +17,11 @@ const ApplyModal: React.FC<ApplyModalProps> = ({
     onClose, 
     onApply, 
     isSubmitting = false,
-    error = null
+    // error = null
 }) => {
     const [resume, setResume] = useState<File | null>(null);
     const [coverLetter, setCoverLetter] = useState("");
-    const [fileError, setFileError] = useState<string | null>(null);
+    const [, setFileError] = useState<string | null>(null);
     const { showToast } = useToast();
     // console.log('ApplyModal job:', job);
 

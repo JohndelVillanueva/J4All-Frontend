@@ -1,6 +1,6 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { FaUser, FaLock, FaEye, FaEyeSlash, FaAccessibleIcon, FaGlobeAmericas, FaQuestionCircle, FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FaUser, FaLock, FaEye, FaEyeSlash, FaAccessibleIcon, FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,7 +22,7 @@ interface SignUpFormData {
   confirmPassword: string;
   userType: UserType;
   agreeToTerms: true;
-  pwdIdNumber?: string; // Add this line
+  pwdIdNumber?: string;
 }
 
 // Validation schema
@@ -43,7 +43,7 @@ const signUpSchema = z.object({
   agreeToTerms: z.literal(true, {
     errorMap: () => ({ message: 'You must agree to the terms and conditions' }),
   }),
-  pwdIdNumber: z.string().optional(), // Add this line
+  pwdIdNumber: z.string().optional(),
 }).refine((data) => data.password_hash === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -57,42 +57,42 @@ const signUpSchema = z.object({
   path: ['pwdIdNumber'],
 });
 
-// Accessibility focus trap hook (same as in login page)
-const useFocusTrap = () => {
-  const ref = useRef<HTMLDivElement>(null);
+// Accessibility focus trap hook
+// const useFocusTrap = () => {
+//   const ref = useRef<HTMLDivElement>(null);
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Tab' && ref.current) {
-      const focusableElements = ref.current.querySelectorAll(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
+//   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+//     if (e.key === 'Tab' && ref.current) {
+//       const focusableElements = ref.current.querySelectorAll(
+//         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+//       );
 
-      if (focusableElements.length === 0) return;
+//       if (focusableElements.length === 0) return;
 
-      const firstElement = focusableElements[0] as HTMLElement;
-      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+//       const firstElement = focusableElements[0] as HTMLElement;
+//       const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
 
-      if (e.shiftKey && document.activeElement === firstElement) {
-        lastElement.focus();
-        e.preventDefault();
-      } else if (!e.shiftKey && document.activeElement === lastElement) {
-        firstElement.focus();
-        e.preventDefault();
-      }
-    }
-  }, []);
+//       if (e.shiftKey && document.activeElement === firstElement) {
+//         lastElement.focus();
+//         e.preventDefault();
+//       } else if (!e.shiftKey && document.activeElement === lastElement) {
+//         firstElement.focus();
+//         e.preventDefault();
+//       }
+//     }
+//   }, []);
 
-  React.useEffect(() => {
-    const currentRef = ref.current;
-    currentRef?.addEventListener('keydown', handleKeyDown);
+//   React.useEffect(() => {
+//     const currentRef = ref.current;
+//     currentRef?.addEventListener('keydown', handleKeyDown);
 
-    return () => {
-      currentRef?.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [handleKeyDown]);
+//     return () => {
+//       currentRef?.removeEventListener('keydown', handleKeyDown);
+//     };
+//   }, [handleKeyDown]);
 
-  return ref;
-};
+//   return ref;
+// };
 
 const UserTypeButton: React.FC<{
   type: UserType;
@@ -136,29 +136,27 @@ const SignUpPage: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showHelpTooltip, setShowHelpTooltip] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const formRef = useFocusTrap();
-  const [step, setStep] = useState(1); // <-- Add step state
+  // const formRef = useFocusTrap();
+  const [step, setStep] = useState(1);
 
   const {
     register,
     handleSubmit,
     setValue,
     watch,
-    formState: { errors, isValid },
+    formState: { errors },
   } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
       userType: 'general',
       agreeToTerms: true,
     },
-    mode: 'onChange', // Validate on change for better UX
+    mode: 'onChange',
   });
 
   const userType = watch('userType');
-  const password_hash = watch('password_hash');
 
   const onSubmit: SubmitHandler<SignUpFormData> = async (data) => {
     setIsSubmitting(true);
@@ -167,7 +165,6 @@ const SignUpPage: React.FC = () => {
     try {
       let response;
       if (photoFile) {
-        // Use FormData if photo is present
         const formData = new FormData();
         formData.append('username', data.email);
         formData.append('email', data.email);
@@ -187,7 +184,6 @@ const SignUpPage: React.FC = () => {
           credentials: 'include',
         });
       } else {
-        // Fallback to JSON if no photo
         const payload: any = {
           username: data.email,
           email: data.email,
@@ -215,7 +211,6 @@ const SignUpPage: React.FC = () => {
       console.log('Raw response:', responseText);
 
       if (!response.ok) {
-        // Try to parse error response if exists
         let errorData = { error: 'Unknown server error' };
         try {
           errorData = responseText ? JSON.parse(responseText) : errorData;
@@ -223,7 +218,6 @@ const SignUpPage: React.FC = () => {
           console.error('Failed to parse error response:', e);
         }
         
-        // Create a mock error object for the error handler
         const mockError = {
           response: {
             status: response.status,
@@ -236,11 +230,9 @@ const SignUpPage: React.FC = () => {
         return;
       }
 
-      // Handle successful response
       const responseData = responseText ? JSON.parse(responseText) : {};
       console.log('Registration successful:', responseData);
 
-      // All user types now require email verification
       showToast({
         type: 'success',
         title: 'Account Created Successfully!',
@@ -249,7 +241,6 @@ const SignUpPage: React.FC = () => {
         autoHideDelay: 5000
       });
 
-      // Navigate to verification page for all user types
       navigate('/verify-email', {
         state: { 
           fromRegistration: true,
@@ -269,8 +260,8 @@ const SignUpPage: React.FC = () => {
     }
   };
 
-  // Background animation (same as login page)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  // Background animation
+  const [, setMousePosition] = useState({ x: 0, y: 0 });
   
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {

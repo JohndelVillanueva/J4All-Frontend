@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   FaChartLine,
-  FaBriefcase,
-  FaEnvelope,
-  FaExternalLinkAlt,
+  FaBriefcase
 } from "react-icons/fa";
 import { Application, JobListing, StatItem } from "../types/types";
 import JobDescriptionModal from "./JobDescriptionModal";
@@ -223,7 +221,7 @@ const JobListingsSection: React.FC<{
   onJobStatusUpdate?: (jobId: string, newStatus: "new" | "applied" | "saved") => void;
   onViewDetails?: (job: JobListing) => void;
   onApply?: (job: JobListing) => void;
-}> = ({ title, jobs, className, onJobStatusUpdate, onViewDetails, onApply }) => (
+}> = ({ title, jobs, className, onViewDetails, onApply }) => (
   <div className={`bg-white shadow overflow-hidden sm:rounded-lg ${className}`}>
     <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
       <h3 className="text-lg leading-6 font-medium text-gray-900">{title}</h3>

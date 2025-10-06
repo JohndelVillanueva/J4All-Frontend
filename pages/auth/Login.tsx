@@ -180,7 +180,7 @@ const LoginPage: React.FC = () => {
   };
 
   // Background animation
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [, setMousePosition] = useState({ x: 0, y: 0 });
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({

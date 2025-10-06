@@ -1,5 +1,5 @@
 import React from "react";
-import { FaTimes, FaSearch, FaUserCircle, FaEllipsisV, FaPlus } from "react-icons/fa";
+import { FaTimes, FaSearch, FaUserCircle, FaEllipsisV } from "react-icons/fa";
 import UserAvatar from "./UserAvatar";
 import { getFullPhotoUrl } from "../components/utils/photo";
 
@@ -38,7 +38,6 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   isSidebarOpen, 
   toggleSidebar, 
   conversations,
-  onNewConversation,
   onConversationClick
 }) => {
   return (

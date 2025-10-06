@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaTimes, FaUser, FaEnvelope, FaPhone, FaBriefcase, FaGraduationCap, FaMapMarkerAlt, FaDollarSign, FaStar, FaCalendarAlt, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaTimes, FaUser, FaEnvelope, FaPhone, FaBriefcase, FaGraduationCap, FaMapMarkerAlt, FaStar, FaEye, FaEyeSlash } from "react-icons/fa";
 import UserAvatar from "../../components/UserAvatar";
 import { useToast } from "../../components/ToastContainer";
 import { handleApiError } from "../../src/utils/errorHandler";
@@ -117,11 +117,11 @@ const ApplicantProfileModal: React.FC<ApplicantProfileModalProps> = ({
     return photoPath.startsWith('http') ? photoPath : `${API_BASE_URL}${photoPath}`;
   };
 
-  const getSkillLevelText = (level: number | null) => {
-    if (!level) return 'Not specified';
-    const levels = ['Beginner', 'Elementary', 'Intermediate', 'Advanced', 'Expert'];
-    return levels[Math.min(level - 1, levels.length - 1)];
-  };
+  // const getSkillLevelText = (level: number | null) => {
+  //   if (!level) return 'Not specified';
+  //   const levels = ['Beginner', 'Elementary', 'Intermediate', 'Advanced', 'Expert'];
+  //   return levels[Math.min(level - 1, levels.length - 1)];
+  // };
 
   if (!isOpen) return null;
 

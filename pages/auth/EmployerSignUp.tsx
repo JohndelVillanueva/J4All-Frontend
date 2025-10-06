@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FaUser, FaCamera } from "react-icons/fa";
+import { FaUser } from "react-icons/fa";
 // import { FormData } from "../../components/types/types";
 import {
   FaLock,
@@ -28,7 +28,7 @@ export default function EmployerSignupForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [showSuccess] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [step, setStep] = useState(1);
@@ -65,7 +65,7 @@ export default function EmployerSignupForm() {
   const passwordValue = watch("password");
 
   // Background animation
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [, setMousePosition] = useState({ x: 0, y: 0 });
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({

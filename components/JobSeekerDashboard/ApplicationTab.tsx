@@ -1,5 +1,5 @@
 import React from "react";
-import { FaEnvelope, FaExternalLinkAlt } from "react-icons/fa";
+// import { FaEnvelope, FaExternalLinkAlt } from "react-icons/fa";
 import { Application, JobListing } from "../types/types";
 import ErrorBoundary from "./ErrorBoundary"; // Import the ErrorBoundary component
 import UserAvatar from '../UserAvatar';
@@ -7,54 +7,54 @@ import JobDescriptionModal from "./JobDescriptionModal";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 // Dynamic hook to fetch user info and photo by userId (copied from JobListItem)
-function useUserAvatarInfo(userId?: number) {
-  const [photoUrl, setPhotoUrl] = React.useState<string | null>(null);
-  const [firstName, setFirstName] = React.useState<string>('');
-  const [lastName, setLastName] = React.useState<string>('');
+// function useUserAvatarInfo(userId?: number) {
+//   const [photoUrl, setPhotoUrl] = React.useState<string | null>(null);
+//   const [firstName, setFirstName] = React.useState<string>('');
+//   const [lastName, setLastName] = React.useState<string>('');
 
-  React.useEffect(() => {
-    if (!userId) return;
-    const fetchInfo = async () => {
-      try {
-        // Fetch user info
-        const userRes = await fetch(`/api/users/${userId}`);
-        if (userRes.ok) {
-          const userData = await userRes.json();
-          setFirstName(userData?.data?.first_name || '');
-          setLastName(userData?.data?.last_name || '');
-        }
-        // Fetch user photo
-        const photoRes = await fetch(`/api/photos/${userId}`);
-        if (photoRes.ok) {
-          const photoData = await photoRes.json();
-          setPhotoUrl(photoData?.data?.photo_url || null);
-        } else {
-          setPhotoUrl(null);
-        }
-      } catch (e) {
-        setPhotoUrl(null);
-      }
-    };
-    fetchInfo();
-  }, [userId]);
+//   React.useEffect(() => {
+//     if (!userId) return;
+//     const fetchInfo = async () => {
+//       try {
+//         // Fetch user info
+//         const userRes = await fetch(`/api/users/${userId}`);
+//         if (userRes.ok) {
+//           const userData = await userRes.json();
+//           setFirstName(userData?.data?.first_name || '');
+//           setLastName(userData?.data?.last_name || '');
+//         }
+//         // Fetch user photo
+//         const photoRes = await fetch(`/api/photos/${userId}`);
+//         if (photoRes.ok) {
+//           const photoData = await photoRes.json();
+//           setPhotoUrl(photoData?.data?.photo_url || null);
+//         } else {
+//           setPhotoUrl(null);
+//         }
+//       } catch (e) {
+//         setPhotoUrl(null);
+//       }
+//     };
+//     fetchInfo();
+//   }, [userId]);
 
-  return { photoUrl, firstName, lastName };
-}
+//   return { photoUrl, firstName, lastName };
+// }
 
 interface ApplicationsTabProps {
   applications: Application[];
   jobListings: JobListing[];
 }
 
-const getFullImageUrl = (path: string | undefined | null) => {
-  if (!path) return undefined;
-  if (path.startsWith('http')) return path;
-  // If you need a base URL, set it here, e.g. const baseUrl = 'http://localhost:3001';
-  // For now, just return the path as-is:
-  return path;
-};
+// const getFullImageUrl = (path: string | undefined | null) => {
+//   if (!path) return undefined;
+//   if (path.startsWith('http')) return path;
+//   // If you need a base URL, set it here, e.g. const baseUrl = 'http://localhost:3001';
+//   // For now, just return the path as-is:
+//   return path;
+// };
 
-const ApplicationListItem: React.FC<{ app: Application; job: JobListing; onViewJob: (job: JobListing) => void }> = ({ app, job, onViewJob }) => {
+const ApplicationListItem: React.FC<{ app: Application; job: JobListing; onViewJob: (job: JobListing) => void }> = ({ app, job }) => {
   const safeJob: JobListing = job;
 
   // Ensure updates exists before mapping
@@ -207,6 +207,53 @@ const ApplicationsTab: React.FC<ApplicationsTabProps> = ({ applications, jobList
     setSelectedJob(job);
   };
 
+  const defaultJobListing: JobListing = {
+    id: "0",
+    title: "Position no longer available",
+    company: "Unknown Company",
+    logo_path: null,
+    location: "",
+    salary: "",
+    type: "",
+    posted: "",
+    skills: [],
+    status: "new",
+    match: 0,
+    work_mode: "Remote",
+    job_description: "",
+    job_requirements: "",
+    employer_id: 0,
+    employer_user_id: 0,
+    hrName: "",
+    hrPhoto: null,
+  };
+
+  // Helper function to convert any job-like object to a proper JobListing
+  const toJobListing = (job: any): JobListing => {
+    if (!job) return defaultJobListing;
+    
+    return {
+      id: String(job.id || defaultJobListing.id),
+      title: job.title || defaultJobListing.title,
+      company: job.company || defaultJobListing.company,
+      logo_path: job.logo_path || job.logo || defaultJobListing.logo_path,
+      location: job.location || defaultJobListing.location,
+      salary: job.salary || defaultJobListing.salary,
+      type: job.type || defaultJobListing.type,
+      posted: job.posted || defaultJobListing.posted,
+      skills: job.skills || defaultJobListing.skills,
+      status: job.status || defaultJobListing.status,
+      match: job.match || defaultJobListing.match,
+      work_mode: job.work_mode || job.workMode || defaultJobListing.work_mode,
+      job_description: job.job_description || defaultJobListing.job_description,
+      job_requirements: job.job_requirements || defaultJobListing.job_requirements,
+      employer_id: job.employer_id || defaultJobListing.employer_id,
+      employer_user_id: job.employer_user_id || defaultJobListing.employer_user_id,
+      hrName: job.hrName || defaultJobListing.hrName,
+      hrPhoto: job.hrPhoto || defaultJobListing.hrPhoto,
+    };
+  };
+
   return (
     <div>
       <h2 className="text-xl font-semibold text-gray-900 mb-6">Your Applications</h2>
@@ -224,26 +271,9 @@ const ApplicationsTab: React.FC<ApplicationsTabProps> = ({ applications, jobList
           ) : (
             <ul className="divide-y divide-gray-200">
               {validApplications.map((app) => {
-                const job: JobListing = app.job || jobListings.find((j) => String(j.id) === String(app.jobId)) || {
-                  id: "0",
-                  title: "Position no longer available",
-                  company: "Unknown Company",
-                  location: "",
-                  salary: "",
-                  type: "",
-                  posted: "",
-                  skills: [],
-                  status: "new",
-                  match: 0,
-                  work_mode: "Remote",
-                  job_description: "",
-                  job_requirements: "",
-                  employer_id: 0,
-                  employer_user_id: 0,
-                  logo_path: "",
-                  hrName: "",
-                  hrPhoto: "",
-                } as JobListing;
+                const foundJob = jobListings.find((j) => String(j.id) === String(app.jobId));
+                const job: JobListing = app.job ? toJobListing(app.job) : foundJob ? toJobListing(foundJob) : defaultJobListing;
+                
                 return (
                   <ErrorBoundary 
                     key={app.id}

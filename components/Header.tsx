@@ -1,13 +1,9 @@
 import React from "react";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import {
-  FaHome,
   FaInfoCircle,
   FaComments,
-  FaChevronDown,
-  FaTachometerAlt,
-  FaCog,
-  FaUserShield,
   FaUserCircle,
   FaSignOutAlt,
   FaUserEdit,
@@ -29,8 +25,8 @@ import ApplicationDetailsModal from "../pages/applicant/ApplicationDetailsModal"
 import { getFullPhotoUrl } from './utils/photo';
 import { ChatContext } from "../contexts/ChatContext";
 import EditJobSeekerAccountModal from '../pages/profile/EditJobSeekerAccountModal';
-import { Link } from 'react-router-dom';
-import { FaUser, FaIdBadge, FaUserGraduate, FaBuilding } from 'react-icons/fa';
+// import { Link } from 'react-router-dom';
+// import { FaUser, FaIdBadge, FaUserGraduate, FaBuilding } from 'react-icons/fa';
 import JobSeekerProfileModal from '../pages/profile/JobSeekerProfileModal';
 import EmployerProfileModal from '../pages/profile/EmployerProfileModal';
 import EditEmployerAccountModal from '../pages/profile/EditEmployerAccountModal';
@@ -44,12 +40,13 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const location = useLocation();
+  const [, setIsDropdownOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isInfoSidebarOpen, setIsInfoSidebarOpen] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isMessageSidebarOpen, setIsMessageSidebarOpen] = useState(false);
-  const [selectedConversationId, setSelectedConversationId] = useState<number | null>(null);
+  const [, setSelectedConversationId] = useState<number | null>(null);
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
   const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(null);
   const [editAccountOpen, setEditAccountOpen] = useState(false);
@@ -69,6 +66,11 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
   // Real notifications data
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+
+    // Don't render header if user is not authenticated OR if on login page
+  if (!user || location.pathname === '/login' || location.pathname === '/') {
+    return null;
+  }
 
   // Fetch notifications
   const fetchNotifications = useCallback(async () => {
@@ -115,7 +117,7 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
   const [conversations, setConversations] = useState<any[]>([]);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
-  const [conversationsLoaded, setConversationsLoaded] = useState(false);
+  const [, setConversationsLoaded] = useState(false);
 
   // Fetch conversations
   const fetchConversations = useCallback(async () => {
@@ -245,14 +247,14 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
     });
   }, []);
 
-  const handleMessageViewBack = useCallback(() => {
-    setSelectedConversationId(null);
-  }, []);
+  // const handleMessageViewBack = useCallback(() => {
+  //   setSelectedConversationId(null);
+  // }, []);
 
-  const handleMessageViewClose = useCallback(() => {
-    setSelectedConversationId(null);
-    setIsMessageSidebarOpen(false);
-  }, []);
+  // const handleMessageViewClose = useCallback(() => {
+  //   setSelectedConversationId(null);
+  //   setIsMessageSidebarOpen(false);
+  // }, []);
 
   const handleImageError = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -333,17 +335,17 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
     };
   }, [closeAllDropdowns]);
 
-  const mainMenuItems = useMemo<MenuItem[]>(
-    () => [
-      {
-        icon: <FaTachometerAlt />,
-        label: "Dashboard",
-        path: getDashboardPath(user?.user_type || "general"),
-      },
-      // { icon: <FaUserShield />, label: "Admin Portal", path: "/admin" },
-    ],
-    [user?.user_type]
-  );
+  // const mainMenuItems = useMemo<MenuItem[]>(
+  //   () => [
+  //     {
+  //       icon: <FaTachometerAlt />,
+  //       label: "Dashboard",
+  //       path: getDashboardPath(user?.user_type || "general"),
+  //     },
+  //     // { icon: <FaUserShield />, label: "Admin Portal", path: "/admin" },
+  //   ],
+  //   [user?.user_type]
+  // );
 
   const profileMenuItems = useMemo<MenuItem[]>(
     () => [
@@ -410,17 +412,17 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
     ]
   );
 
-  const toggleDropdown = useCallback(() => {
-    setIsDropdownOpen((prev) => {
-      if (!prev) {
-        setIsProfileDropdownOpen(false);
-        setIsInfoSidebarOpen(false);
-        setIsNotificationOpen(false);
-        setIsMessageSidebarOpen(false);
-      }
-      return !prev;
-    });
-  }, []);
+  // const toggleDropdown = useCallback(() => {
+  //   setIsDropdownOpen((prev) => {
+  //     if (!prev) {
+  //       setIsProfileDropdownOpen(false);
+  //       setIsInfoSidebarOpen(false);
+  //       setIsNotificationOpen(false);
+  //       setIsMessageSidebarOpen(false);
+  //     }
+  //     return !prev;
+  //   });
+  // }, []);
 
   const toggleProfileDropdown = useCallback(() => {
     setIsProfileDropdownOpen((prev) => {
@@ -465,8 +467,8 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
     return parsed;
   });
 
-  const initialLoadRef = useRef(true);
-  const hasSyncedRef = useRef(false);
+  // const initialLoadRef = useRef(true);
+  // const hasSyncedRef = useRef(false);
 
   // Debug effect to log state changes
   useEffect(() => {
