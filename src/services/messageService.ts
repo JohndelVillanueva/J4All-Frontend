@@ -1,9 +1,7 @@
 import axios from 'axios';
 
 // Use environment variable with fallback for development
-const API_BASE_URL = window.location.hostname === 'j4pwds.com' 
-  ? 'http://j4pwds.com/api' 
-  : 'http://localhost:3111/api';
+const API_BASE_URL = 'http://j4pwds.com/api';
 
 console.log('API Base URL:', API_BASE_URL); // Debug log
 
@@ -85,13 +83,20 @@ export const messageService = {
   // Get all conversations for the current user
   async getConversations(): Promise<Conversation[]> {
     try {
-      console.log("🔗 Making API call to:", `${API_BASE_URL}/messages/conversations`);
+      console.log('🔗 Making API call to:', `${API_BASE_URL}/messages/conversations`);
+      console.log('🔑 Auth token exists:', !!localStorage.getItem('token'));
+      
       const response = await apiClient.get('/messages/conversations');
-      console.log("📡 API Response status:", response.status);
-      console.log("📡 API Response data:", response.data);
+      console.log('📡 API Response status:', response.status);
+      console.log('📦 API Response data:', response.data);
+      
       return response.data.data;
-    } catch (error) {
-      console.error('❌ Error fetching conversations:', error);
+    } catch (error: any) {
+      console.error('❌ Error fetching conversations:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
       throw error;
     }
   },
