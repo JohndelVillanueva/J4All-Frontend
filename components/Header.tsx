@@ -36,7 +36,7 @@ const DEFAULT_PROFILE_IMAGE =
 
 // Helper function for API URLs
 const getApiBaseUrl = () => {
-  return import.meta.env.API_BASE_URL || 'https://j4pwds.com';
+  return import.meta.env.API_BASE_URL || 'https://j4pwds.com/api';
 };
 
 // Add prop type
@@ -555,7 +555,7 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
       try {
         const token = localStorage.getItem('token');
         // FIXED: Use correct API URL for production
-        const res = await fetch(`${getApiBaseUrl()}/api/photos/${user.id}`, {
+        const res = await fetch(`${getApiBaseUrl()}/photos/${user.id}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
