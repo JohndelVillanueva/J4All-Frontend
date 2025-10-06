@@ -34,6 +34,11 @@ import EditEmployerAccountModal from '../pages/profile/EditEmployerAccountModal'
 const DEFAULT_PROFILE_IMAGE =
   "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJDNi40NzcgMiAyIDYuNDc3IDIgMTJzNC40NzcgMTAgMTAgMTAgMTAtNC40NzcgMTAtMTBTMTcuNTIzIDIgMTIgMnptMCAyYzQuNDE4IDAgOCAzLjU4MiA4IDhzLTMuNTgyIDgtOCA4LTgtMy41ODItOC04IDMuNTgyLTggOC04eiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==";
 
+// Helper function for API URLs
+const getApiBaseUrl = () => {
+  return import.meta.env.VITE_API_BASE_URL || 'https://j4pwds.com';
+};
+
 // Add prop type
 interface HeaderProps {
   onEmployerEditAccount?: () => void;
@@ -161,7 +166,7 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
   useEffect(() => {
     fetchConversations();
     fetchUnreadMessageCount();
-  }, [fetchConversations, fetchUnreadMessageCount]);1
+  }, [fetchConversations, fetchUnreadMessageCount]);
   // Sample messages data
   const messages = useMemo(
     () => [
@@ -538,7 +543,7 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
   // Add state for user photo
   const [userPhotoUrl, setUserPhotoUrl] = useState<string | null>(null);
 
-  // Fetch user photo on mount or when user changes
+  // Fetch user photo on mount or when user changes - FIXED: Uses correct API URL for production
   useEffect(() => {
     console.log('Header user object:', user); // Debug log
     const fetchUserPhoto = async () => {
@@ -549,7 +554,8 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
       console.log('Calling fetchUserPhoto for user id:', user.id); // Debug log
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`/api/photos/${user.id}`, {
+        // FIXED: Use correct API URL for production
+        const res = await fetch(`${getApiBaseUrl()}/api/photos/${user.id}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
