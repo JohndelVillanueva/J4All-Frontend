@@ -34,25 +34,6 @@ import EditEmployerAccountModal from '../pages/profile/EditEmployerAccountModal'
 const DEFAULT_PROFILE_IMAGE =
   "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJDNi40NzcgMiAyIDYuNDc3IDIgMTJzNC40NzcgMTAgMTAgMTAgMTAtNC40NzcgMTAtMTBTMTcuNTIzIDIgMTIgMnptMCAyYzQuNDE4IDAgOCAzLjU4MiA4IDhzLTMuNTgyIDgtOCA4LTgtMy41ODItOC04IDMuNTgyLTggOC04eiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==";
 
-// Helper function for API URLs
-const getApiBaseUrl = () => {
-  return import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/api` : 'https://j4pwds.com/api';
-};
-
-// Helper function to convert API conversation to sidebar format
-const convertConversation = (apiConv: any) => ({
-  id: apiConv.id,
-  participant: apiConv.other_user.first_name && apiConv.other_user.last_name 
-    ? `${apiConv.other_user.first_name} ${apiConv.other_user.last_name}`
-    : apiConv.other_user.username,
-  lastMessage: apiConv.last_message?.content || 'No messages yet',
-  time: new Date(apiConv.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-  unreadCount: apiConv.unread_count,
-  photo: apiConv.other_user.photo,
-  first_name: apiConv.other_user.first_name,
-  last_name: apiConv.other_user.last_name
-});
-
 // Add prop type
 interface HeaderProps {
   onEmployerEditAccount?: () => void;
@@ -140,33 +121,31 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
 
   // Fetch conversations
   const fetchConversations = useCallback(async () => {
-  try {
-    console.log("🔄 Starting to fetch conversations...");
-    // setIsLoading(true); // Set loading to true when starting
-    
-    const data = await messageService.getConversations();
-    console.log("📦 Raw API response:", data);
-    
-    if (data && data.length > 0) {
-      // Use the convertConversation function for proper transformation
-      const transformedConversations = data.map(convertConversation);
-      console.log("🔄 Transformed conversations:", transformedConversations);
-      
+    try {
+      const data = await messageService.getConversations();
+      // Transform service data to match component expectations
+      const transformedConversations = data.map(conversation => ({
+        id: conversation.id,
+        participant: conversation.other_user
+          ? (conversation.other_user.first_name && conversation.other_user.last_name
+              ? `${conversation.other_user.first_name} ${conversation.other_user.last_name}`
+              : conversation.other_user.username)
+          : "Unknown",
+        lastMessage: conversation.last_message?.content || 'No messages yet',
+        time: conversation.last_message
+          ? new Date(conversation.last_message.created_at).toLocaleTimeString()
+          : new Date(conversation.updated_at).toLocaleTimeString(),
+        unreadCount: conversation.unread_count || 0,
+        photo: conversation.other_user ? conversation.other_user.photo || null : null,
+        first_name: conversation.other_user ? conversation.other_user.first_name : null,
+        last_name: conversation.other_user ? conversation.other_user.last_name : null,
+      }));
       setConversations(transformedConversations);
       setConversationsLoaded(true);
-      console.log("✅ Successfully set conversations state");
-    } else {
-      console.log("📭 API returned empty data");
-      setConversations([]);
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
     }
-  } catch (error) {
-    console.error('❌ Error fetching conversations:', error);
-    console.log("🚨 API call failed - will show mock data");
-    setConversations([]); // Empty array triggers mock data
-  } finally {
-    // setIsLoading(false);
-  }
-}, []);
+  }, []);
 
   // Fetch unread message count
   const fetchUnreadMessageCount = useCallback(async () => {
@@ -182,7 +161,7 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
   useEffect(() => {
     fetchConversations();
     fetchUnreadMessageCount();
-  }, [fetchConversations, fetchUnreadMessageCount]);
+  }, [fetchConversations, fetchUnreadMessageCount]);1
   // Sample messages data
   const messages = useMemo(
     () => [
@@ -559,7 +538,7 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
   // Add state for user photo
   const [userPhotoUrl, setUserPhotoUrl] = useState<string | null>(null);
 
-  // Fetch user photo on mount or when user changes - FIXED: Uses correct API URL for production
+  // Fetch user photo on mount or when user changes
   useEffect(() => {
     console.log('Header user object:', user); // Debug log
     const fetchUserPhoto = async () => {
@@ -570,8 +549,7 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
       console.log('Calling fetchUserPhoto for user id:', user.id); // Debug log
       try {
         const token = localStorage.getItem('token');
-        // FIXED: Use correct API URL for production
-        const res = await fetch(`${getApiBaseUrl()}/photos/${user.id}`, {
+        const res = await fetch(`/api/photos/${user.id}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },

@@ -1,10 +1,6 @@
 import axios from 'axios';
 
-// TEMPORARY FIX - HARDCODE YOUR PRODUCTION URL
-// Use environment variable for base URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/api` : 'http://localhost:3111/api';
-
-console.log('🚨 PRODUCTION API URL:', API_BASE_URL);
+const API_BASE_URL = 'http://localhost:3111/api';
 
 // Get auth token from localStorage
 const getAuthToken = () => {
@@ -27,20 +23,6 @@ apiClient.interceptors.request.use((config) => {
   }
   return config;
 });
-
-// Add response interceptor for better error handling
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('API Error:', error.response?.data || error.message);
-    if (error.response?.status === 401) {
-      // Token expired or invalid
-      localStorage.removeItem('token');
-      window.location.reload();
-    }
-    return Promise.reject(error);
-  }
-);
 
 export interface User {
   id: number;
@@ -84,20 +66,10 @@ export const messageService = {
   // Get all conversations for the current user
   async getConversations(): Promise<Conversation[]> {
     try {
-      console.log('🔗 Making API call to:', `${API_BASE_URL}/messages/conversations`);
-      console.log('🔑 Auth token exists:', !!localStorage.getItem('token'));
-      
       const response = await apiClient.get('/messages/conversations');
-      console.log('📡 API Response status:', response.status);
-      console.log('📦 API Response data:', response.data);
-      
       return response.data.data;
-    } catch (error: any) {
-      console.error('❌ Error fetching conversations:', {
-        message: error.message,
-        status: error.response?.status,
-        data: error.response?.data
-      });
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
       throw error;
     }
   },
@@ -167,4 +139,4 @@ export const messageService = {
       throw error;
     }
   },
-};
+}; 
