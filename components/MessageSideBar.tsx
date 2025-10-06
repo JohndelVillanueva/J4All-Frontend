@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { FaTimes, FaSearch, FaUserCircle, FaEllipsisV } from "react-icons/fa";
 import UserAvatar from "./UserAvatar";
 import { getFullPhotoUrl } from "../components/utils/photo";
@@ -38,24 +38,64 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   isSidebarOpen, 
   toggleSidebar, 
   conversations,
-  onConversationClick,
-  // Include all props for debugging
-  messages,
-  currentUser,
-  onNewConversation
+  onConversationClick
 }) => {
-  // Enhanced debug logging
+  const [localConversations, setLocalConversations] = useState<Conversation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Debug logging
   React.useEffect(() => {
     console.log("=== MESSAGE SIDEBAR DEBUG ===");
     console.log("isSidebarOpen:", isSidebarOpen);
-    console.log("conversations array:", conversations);
+    console.log("conversations from props:", conversations);
     console.log("conversations length:", conversations?.length);
-    console.log("conversations type:", typeof conversations);
-    console.log("Is array?", Array.isArray(conversations));
-    console.log("First conversation:", conversations?.[0]);
-    console.log("onConversationClick:", onConversationClick);
     console.log("=== END DEBUG ===");
-  }, [isSidebarOpen, conversations, onConversationClick]);
+  }, [isSidebarOpen, conversations]);
+
+  // Use mock data if no conversations from props (for testing)
+  useEffect(() => {
+    if (conversations && conversations.length > 0) {
+      setLocalConversations(conversations);
+      setIsLoading(false);
+    } else {
+      // Temporary mock data for testing UI
+      const mockConversations: Conversation[] = [
+        {
+          id: 1,
+          participant: "John Doe",
+          lastMessage: "Hey, how are you doing?",
+          time: "2:30 PM",
+          unreadCount: 2,
+          first_name: "John",
+          last_name: "Doe"
+        },
+        {
+          id: 2,
+          participant: "Jane Smith",
+          lastMessage: "Thanks for your help!",
+          time: "1:15 PM",
+          unreadCount: 0,
+          first_name: "Jane",
+          last_name: "Smith"
+        },
+        {
+          id: 3,
+          participant: "Mike Johnson",
+          lastMessage: "See you tomorrow",
+          time: "12:45 PM",
+          unreadCount: 1,
+          first_name: "Mike",
+          last_name: "Johnson"
+        }
+      ];
+      
+      setTimeout(() => {
+        setLocalConversations(mockConversations);
+        setIsLoading(false);
+        console.log("Using mock conversations data");
+      }, 1000);
+    }
+  }, [conversations]);
 
   // Handle conversation click with error handling
   const handleConversationClick = (conversationId: number) => {
@@ -68,10 +108,7 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
   };
 
   // Calculate total unread count safely
-  const totalUnreadCount = conversations?.reduce((total, conv) => total + (conv.unreadCount || 0), 0) || 0;
-
-  // Check what we're actually rendering
-  console.log("RENDER - conversations to display:", conversations);
+  const totalUnreadCount = localConversations?.reduce((total, conv) => total + (conv.unreadCount || 0), 0) || 0;
 
   return (
     <div 
@@ -79,10 +116,6 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
       className={`fixed top-0 right-0 h-full w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out z-40 ${
         isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
       }`}
-      style={{ 
-        border: isSidebarOpen ? '2px solid red' : 'none',
-        background: isSidebarOpen ? 'white' : 'transparent'
-      }}
     >
       <div className="h-full flex flex-col border-l border-gray-200">
         {/* Main Header */}
@@ -115,77 +148,67 @@ const MessageSidebar: React.FC<MessageSidebarProps> = ({
               {totalUnreadCount} unread
             </span>
           </div>
-          {/* Enhanced Debug info */}
           <div className="text-xs text-gray-500 mt-1">
-            {conversations?.length || 0} conversations loaded | 
-            Type: {Array.isArray(conversations) ? 'Array' : typeof conversations}
+            {isLoading ? "Loading..." : `${localConversations.length} conversations loaded`}
+            {conversations?.length === 0 && " (Using mock data - API issue)"}
           </div>
         </div>
 
         {/* Conversations List */}
         <div className="flex-1 overflow-y-auto">
-          {!conversations ? (
-            <div className="flex flex-col items-center justify-center h-32 text-red-500">
-              <p className="text-sm">conversations is NULL or UNDEFINED</p>
-              <p className="text-xs mt-1">Check parent component data passing</p>
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center h-32 text-gray-500">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mb-2"></div>
+              <p className="text-sm">Loading conversations...</p>
             </div>
-          ) : !Array.isArray(conversations) ? (
-            <div className="flex flex-col items-center justify-center h-32 text-red-500">
-              <p className="text-sm">conversations is NOT an array</p>
-              <p className="text-xs mt-1">Type: {typeof conversations}</p>
-            </div>
-          ) : conversations.length === 0 ? (
+          ) : localConversations.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-32 text-gray-500">
               <p className="text-sm">No conversations found</p>
               <p className="text-xs mt-1">Start a new conversation to see it here</p>
+              <div className="text-xs mt-2 p-2 bg-yellow-50 rounded text-center">
+                API Connection Issue<br/>
+                Check browser console for details
+              </div>
             </div>
           ) : (
-            conversations.map(conversation => {
-              console.log("Rendering conversation:", conversation);
-              return (
-                <div 
-                  key={conversation.id} 
-                  className="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => handleConversationClick(conversation.id)}
-                >
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 mr-3">
-                      <UserAvatar
-                        photoUrl={getFullPhotoUrl(conversation.photo ?? undefined)}
-                        firstName={conversation.first_name}
-                        lastName={conversation.last_name}
-                        size="md"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {conversation.participant || 'Unknown User'}
-                        </p>
-                        <p className="text-xs text-gray-500 whitespace-nowrap ml-2">
-                          {conversation.time || 'Unknown time'}
-                        </p>
-                      </div>
-                      <div className="flex justify-between items-center mt-1">
-                        <p className="text-sm text-gray-500 truncate flex-1 mr-2">
-                          {conversation.lastMessage || 'No messages yet'}
-                        </p>
-                        {conversation.unreadCount > 0 && (
-                          <span className="inline-flex items-center justify-center h-5 w-5 bg-blue-500 text-white text-xs rounded-full flex-shrink-0">
-                            {conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+            localConversations.map(conversation => (
+              <div 
+                key={conversation.id} 
+                className="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
+                onClick={() => handleConversationClick(conversation.id)}
+              >
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 mr-3">
+                    <UserAvatar
+                      photoUrl={getFullPhotoUrl(conversation.photo ?? undefined)}
+                      firstName={conversation.first_name}
+                      lastName={conversation.last_name}
+                      size="md"
+                    />
                   </div>
-                  {/* Enhanced Debug info */}
-                  <div className="text-xs text-gray-400 mt-1">
-                    ID: {conversation.id} | Unread: {conversation.unreadCount || 0} | 
-                    Participant: {conversation.participant || 'none'}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start">
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {conversation.participant || 'Unknown User'}
+                      </p>
+                      <p className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                        {conversation.time || 'Unknown time'}
+                      </p>
+                    </div>
+                    <div className="flex justify-between items-center mt-1">
+                      <p className="text-sm text-gray-500 truncate flex-1 mr-2">
+                        {conversation.lastMessage || 'No messages yet'}
+                      </p>
+                      {conversation.unreadCount > 0 && (
+                        <span className="inline-flex items-center justify-center h-5 w-5 bg-blue-500 text-white text-xs rounded-full flex-shrink-0">
+                          {conversation.unreadCount > 9 ? '9+' : conversation.unreadCount}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              );
-            })
+              </div>
+            ))
           )}
         </div>
       </div>
