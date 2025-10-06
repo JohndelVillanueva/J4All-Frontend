@@ -36,7 +36,7 @@ const DEFAULT_PROFILE_IMAGE =
 
 // Helper function for API URLs
 const getApiBaseUrl = () => {
-  return import.meta.env.API_BASE_URL || 'https://j4pwds.com/api';
+  return import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/api` : 'https://j4pwds.com/api';
 };
 
 // Helper function to convert API conversation to sidebar format
@@ -142,29 +142,28 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
   const fetchConversations = useCallback(async () => {
   try {
     console.log("🔄 Starting to fetch conversations...");
-    // setIsLoading(true); // Set loading to true when starting
+    console.log("API Base URL:", getApiBaseUrl());
     
     const data = await messageService.getConversations();
     console.log("📦 Raw API response:", data);
     
     if (data && data.length > 0) {
-      // Use the convertConversation function for proper transformation
       const transformedConversations = data.map(convertConversation);
       console.log("🔄 Transformed conversations:", transformedConversations);
-      
       setConversations(transformedConversations);
       setConversationsLoaded(true);
-      console.log("✅ Successfully set conversations state");
     } else {
       console.log("📭 API returned empty data");
       setConversations([]);
     }
   } catch (error) {
     console.error('❌ Error fetching conversations:', error);
-    console.log("🚨 API call failed - will show mock data");
-    setConversations([]); // Empty array triggers mock data
-  } finally {
-    // setIsLoading(false);
+    // Log more details about the error
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+    setConversations([]);
   }
 }, []);
 
