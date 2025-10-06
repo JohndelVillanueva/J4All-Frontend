@@ -21,19 +21,19 @@ interface ApiConversation {
   updated_at: string;
 }
 
-// Helper function to convert API conversation to sidebar format
-const convertConversation = (apiConv: ApiConversation) => ({
-  id: apiConv.id,
-  participant: apiConv.other_user.first_name && apiConv.other_user.last_name 
-    ? `${apiConv.other_user.first_name} ${apiConv.other_user.last_name}`
-    : apiConv.other_user.username,
-  lastMessage: apiConv.last_message?.content || 'No messages yet',
-  time: new Date(apiConv.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-  unreadCount: apiConv.unread_count,
-  photo: apiConv.other_user.photo,
-  first_name: apiConv.other_user.first_name,
-  last_name: apiConv.other_user.last_name
-});
+// // Helper function to convert API conversation to sidebar format
+// const convertConversation = (apiConv: ApiConversation) => ({
+//   id: apiConv.id,
+//   participant: apiConv.other_user.first_name && apiConv.other_user.last_name 
+//     ? `${apiConv.other_user.first_name} ${apiConv.other_user.last_name}`
+//     : apiConv.other_user.username,
+//   lastMessage: apiConv.last_message?.content || 'No messages yet',
+//   time: new Date(apiConv.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+//   unreadCount: apiConv.unread_count,
+//   photo: apiConv.other_user.photo,
+//   first_name: apiConv.other_user.first_name,
+//   last_name: apiConv.other_user.last_name
+// });
 
 interface Conversation {
   id: number;

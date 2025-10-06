@@ -142,7 +142,7 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
   const fetchConversations = useCallback(async () => {
   try {
     console.log("🔄 Starting to fetch conversations...");
-    setIsLoading(true); // Set loading to true when starting
+    // setIsLoading(true); // Set loading to true when starting
     
     const data = await messageService.getConversations();
     console.log("📦 Raw API response:", data);
@@ -164,7 +164,7 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
     console.log("🚨 API call failed - will show mock data");
     setConversations([]); // Empty array triggers mock data
   } finally {
-    setIsLoading(false);
+    // setIsLoading(false);
   }
 }, []);
 
