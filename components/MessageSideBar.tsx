@@ -4,22 +4,22 @@ import UserAvatar from "./UserAvatar";
 import { getFullPhotoUrl } from "../components/utils/photo";
 
 // API Conversation Interface
-interface ApiConversation {
-  id: number;
-  other_user: {
-    id: number;
-    username: string;
-    first_name: string | null;
-    last_name: string | null;
-    photo: string | null;
-  };
-  last_message: {
-    content: string;
-    created_at: string;
-  } | null;
-  unread_count: number;
-  updated_at: string;
-}
+// interface ApiConversation {
+//   id: number;
+//   other_user: {
+//     id: number;
+//     username: string;
+//     first_name: string | null;
+//     last_name: string | null;
+//     photo: string | null;
+//   };
+//   last_message: {
+//     content: string;
+//     created_at: string;
+//   } | null;
+//   unread_count: number;
+//   updated_at: string;
+// }
 
 // // Helper function to convert API conversation to sidebar format
 // const convertConversation = (apiConv: ApiConversation) => ({
