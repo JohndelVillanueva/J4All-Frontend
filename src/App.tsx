@@ -2,7 +2,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import Layout from "../layouts/Layout";
 import Login from "../pages/auth/Login";
-import SignUpPage from "../pages/auth/SignUp";
+// import SignUpPage from "../pages/auth/SignUp";
+import SignUpPage from "../pages/auth/Signup";
 import EmployerSignUpForm from "../pages/auth/EmployerSignUp";
 import EmailVerification from "../pages/auth/EmailVerification";
 import { AuthProvider } from "../contexts/AuthContext";
@@ -47,14 +48,6 @@ export default function App() {
                     </Suspense>
                   }
                 />
-                {/* <Route
-                  path="/PWDDashboard"
-                  element={
-                    <Suspense fallback={<LoadingScreen />}>
-                      <PWDDashboard />
-                    </Suspense>
-                  }
-                /> */}
                 <Route
                   path="/EmployerDashboard"
                   element={
