@@ -2,14 +2,16 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3111';
 
+console.log('Notification Service API Base URL:', API_BASE_URL); // Debug log
+
 // Get auth token from localStorage
 const getAuthToken = () => {
   return localStorage.getItem('token');
 };
 
-// Create axios instance with auth header
+// Create axios instance with auth header - ADD /api to baseURL!
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: `${API_BASE_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -112,34 +114,36 @@ export const notificationService = {
   },
 };
 
+// FIXED: Use apiClient instead of raw axios
 export const getUnreadNotifications = async (token: string) => {
-	const res = await axios.get('/api/notifications/unread-count', {
-		headers: { Authorization: `Bearer ${token}` },
-	});
-	return res.data;
+  const res = await apiClient.get('/notifications/unread-count', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
 };
 
+// Admin functions also use apiClient
 export const getAdminStats = async () => {
-	const res = await apiClient.get('/admin/stats');
-	return res.data;
+  const res = await apiClient.get('/admin/stats');
+  return res.data;
 };
 
 export const getAdminUsers = async (params?: { type?: 'all' | 'general' | 'pwd'; page?: number; pageSize?: number; }) => {
-	const res = await apiClient.get('/admin/users', { params });
-	return res.data;
+  const res = await apiClient.get('/admin/users', { params });
+  return res.data;
 };
 
 export const getAdminEmployers = async (params?: { page?: number; pageSize?: number; }) => {
-	const res = await apiClient.get('/admin/employers', { params });
-	return res.data;
+  const res = await apiClient.get('/admin/employers', { params });
+  return res.data;
 };
 
 export const getAdminAnalytics = async () => {
-	const res = await apiClient.get('/admin/analytics');
-	return res.data;
+  const res = await apiClient.get('/admin/analytics');
+  return res.data;
 };
 
 export const getAdminActivities = async (params?: { limit?: number; days?: number }) => {
-	const res = await apiClient.get('/admin/activities', { params });
-	return res.data;
-}; 
+  const res = await apiClient.get('/admin/activities', { params });
+  return res.data;
+};
