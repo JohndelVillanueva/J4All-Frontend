@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3111/api';
+// Use environment variable for API URL
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3111';
 
 // Get auth token from localStorage
 const getAuthToken = () => {
@@ -9,7 +10,7 @@ const getAuthToken = () => {
 
 // Create axios instance with auth header
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: `${API_BASE_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -139,4 +140,4 @@ export const messageService = {
       throw error;
     }
   },
-}; 
+};
