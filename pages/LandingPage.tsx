@@ -26,7 +26,14 @@ const LandingPage = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('/api/stats');
+        // Use environment variable for API base URL
+        const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3111';
+        const response = await fetch(`${apiUrl}/api/stats`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
         
         if (data.success) {
