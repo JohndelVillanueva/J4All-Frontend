@@ -27,8 +27,8 @@ const LandingPage = () => {
     const fetchStats = async () => {
       try {
         // Use environment variable for API base URL
-        const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://j4pwds.com';
-        const response = await fetch(`${apiUrl}/stats`);
+        const apiUrl = import.meta.env.VITE_API_BASE_URL || 'https://j4pwds.com';
+        const response = await fetch(`${apiUrl}/api/stats`);
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
