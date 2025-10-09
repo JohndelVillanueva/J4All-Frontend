@@ -21,6 +21,7 @@ const ApplicantDashboard = lazy(
 const AdminDashboard = lazy(() => import("../routing/admin/AdminDashboard"));
 const EmployerDashboard = lazy(() => import("../routing/employer/EmployerDashboard"));
 const StatisticsPage = lazy(() => import("../pages/admin/StatisticsPage"));
+const LandingPage = lazy(() => import("../pages/LandingPage"));
 
 
 export default function App() {
@@ -31,7 +32,7 @@ export default function App() {
           <Router>
             <Layout>
               <Routes>
-                <Route path="/" element={<Login />} />
+                <Route path="/" element={<LandingPage />} />
                 <Route path="/SignUpPage" element={<SignUpPage />} />
                 <Route path="/EmployerSignUpForm" element={<EmployerSignUpForm />} />
                 <Route path="/verify-email" element={<EmailVerification />} />
