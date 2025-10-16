@@ -7,7 +7,7 @@ import EditEmployerAccountModal from '../pages/profile/EditEmployerAccountModal'
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const { user, loading } = useAuth();
-  const hideHeaderPages = ['/', '/Login', '/SignUpPage', '/EmployerSignUpForm']; // Add paths where header should be hidden
+  const hideHeaderPages = ['/', '/Login', '/SignUpPage', '/EmployerSignUpForm', '/verify-email']; // Add paths where header should be hidden
   const [editEmployerAccountOpen, setEditEmployerAccountOpen] = React.useState(false);
 
   const shouldHideHeader = hideHeaderPages.includes(location.pathname) || !user;
