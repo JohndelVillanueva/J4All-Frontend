@@ -57,43 +57,6 @@ const signUpSchema = z.object({
   path: ['pwdIdNumber'],
 });
 
-// Accessibility focus trap hook
-// const useFocusTrap = () => {
-//   const ref = useRef<HTMLDivElement>(null);
-
-//   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-//     if (e.key === 'Tab' && ref.current) {
-//       const focusableElements = ref.current.querySelectorAll(
-//         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-//       );
-
-//       if (focusableElements.length === 0) return;
-
-//       const firstElement = focusableElements[0] as HTMLElement;
-//       const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
-
-//       if (e.shiftKey && document.activeElement === firstElement) {
-//         lastElement.focus();
-//         e.preventDefault();
-//       } else if (!e.shiftKey && document.activeElement === lastElement) {
-//         firstElement.focus();
-//         e.preventDefault();
-//       }
-//     }
-//   }, []);
-
-//   React.useEffect(() => {
-//     const currentRef = ref.current;
-//     currentRef?.addEventListener('keydown', handleKeyDown);
-
-//     return () => {
-//       currentRef?.removeEventListener('keydown', handleKeyDown);
-//     };
-//   }, [handleKeyDown]);
-
-//   return ref;
-// };
-
 const UserTypeButton: React.FC<{
   type: UserType;
   currentType: UserType;
@@ -138,7 +101,6 @@ const SignUpPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  // const formRef = useFocusTrap();
   const [step, setStep] = useState(1);
 
   const {
@@ -146,6 +108,7 @@ const SignUpPage: React.FC = () => {
     handleSubmit,
     setValue,
     watch,
+    trigger,
     formState: { errors },
   } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
@@ -484,13 +447,35 @@ const SignUpPage: React.FC = () => {
                               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                                 <FaPhone className="w-3 h-3" />
                               </div>
+                              <div className="absolute inset-y-0 left-0 pl-9 flex items-center pointer-events-none text-gray-700 font-medium text-sm">
+                                +63
+                              </div>
                               <input
                                 type="tel"
                                 autoComplete="tel"
-                                className={`block w-full pl-9 pr-3 py-2 border ${errors.phone ? 'border-red-300' : 'border-gray-200'} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors text-sm`}
-                                placeholder="(+63) 912-345-6789"
+                                maxLength={10}
+                                className={`block w-full pl-[4.5rem] pr-3 py-2 border ${errors.phone ? 'border-red-300' : 'border-gray-200'} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors text-sm`}
+                                placeholder="9123456789"
                                 aria-invalid={!!errors.phone}
-                                {...register('phone')}
+                                {...register('phone', {
+                                  onChange: (e) => {
+                                    let value = e.target.value;
+                                    // Remove any non-digit characters
+                                    value = value.replace(/[^\d]/g, '');
+                                    // Ensure it doesn't start with +63 (we show it as prefix)
+                                    if (value.startsWith('+63')) {
+                                      value = value.substring(3);
+                                    }
+                                    if (value.startsWith('63')) {
+                                      value = value.substring(2);
+                                    }
+                                    // Limit to 10 digits
+                                    if (value.length > 10) {
+                                      value = value.substring(0, 10);
+                                    }
+                                    e.target.value = value;
+                                  }
+                                })}
                               />
                             </div>
                             {errors.phone && (
@@ -542,7 +527,16 @@ const SignUpPage: React.FC = () => {
                         <motion.button 
                           type="button" 
                           className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold shadow hover:from-indigo-600 hover:to-purple-600 transition text-sm"
-                          onClick={() => setStep(2)}
+                          onClick={async () => {
+                            const fieldsToValidate = userType === 'pwd' 
+                              ? ['firstName', 'lastName', 'email', 'phone', 'address', 'pwdIdNumber']
+                              : ['firstName', 'lastName', 'email', 'phone', 'address'];
+                            
+                            const isValid = await trigger(fieldsToValidate as any);
+                            if (isValid) {
+                              setStep(2);
+                            }
+                          }}
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                         >

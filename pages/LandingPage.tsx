@@ -126,7 +126,7 @@ const LandingPage = () => {
               <a href="#about" className="text-gray-700 hover:text-indigo-600 transition-colors font-medium">About</a>
               <a href="#contact" className="text-gray-700 hover:text-indigo-600 transition-colors font-medium">Contact</a>
               <motion.a
-                href="/Login"
+                href="/login"
                 className="px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

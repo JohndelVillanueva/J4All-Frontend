@@ -59,6 +59,7 @@ export default function EmployerSignupForm() {
     handleSubmit,
     setError,
     watch,
+    trigger,
     formState: { errors },
   } = useForm<FormData>();
 
@@ -369,7 +370,13 @@ const onSubmit = async (data: FormData) => {
                         <label className="block text-xs font-medium text-black">Email</label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaUser className="w-3 h-3" /></div>
-                          <input type="email" className={`block w-full pl-9 pr-3 py-2 border ${errors.email ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors text-sm`} placeholder="your@email.com" {...register("email", { required: "Email is required" })} />
+                          <input type="email" className={`block w-full pl-9 pr-3 py-2 border ${errors.email ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors text-sm`} placeholder="your@email.com" {...register("email", { 
+                            required: "Email is required",
+                            pattern: {
+                              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                              message: "Please enter a valid email address"
+                            }
+                          })} />
                         </div>
                         {errors.email && (<p className="text-xs text-red-500">{errors.email.message}</p>)}
                       </div>
@@ -406,7 +413,12 @@ const onSubmit = async (data: FormData) => {
                         <motion.button 
                           type="button" 
                           className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold shadow hover:from-indigo-600 hover:to-purple-600 transition text-sm"
-                          onClick={() => setStep(2)}
+                          onClick={async () => {
+                            const isValid = await trigger(['email', 'username', 'password', 'confirmPassword']);
+                            if (isValid) {
+                              setStep(2);
+                            }
+                          }}
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                         >
@@ -509,7 +521,12 @@ const onSubmit = async (data: FormData) => {
                         <motion.button 
                           type="button" 
                           className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold shadow hover:from-indigo-600 hover:to-purple-600 transition text-sm"
-                          onClick={() => setStep(3)}
+                          onClick={async () => {
+                            const isValid = await trigger(['companyName', 'contactPerson', 'industry', 'companySize', 'websiteUrl', 'foundedYear']);
+                            if (isValid) {
+                              setStep(3);
+                            }
+                          }}
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                         >
@@ -555,7 +572,39 @@ const onSubmit = async (data: FormData) => {
                           <label className="block text-xs font-medium text-black">Phone Number</label>
                           <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400"><FaPhone className="w-3 h-3" /></div>
-                            <input type="text" className={`block w-full pl-9 pr-3 py-2 border ${errors.phone ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors text-sm`} placeholder="+1 (555) 123-4567" {...register("phone", { required: "Phone number is required", pattern: { value: /^[+]?[(]?[0-9]{1,4}[)]?[-\s./0-9]*$/, message: "Please enter a valid phone number" } })} />
+                            <div className="absolute inset-y-0 left-0 pl-9 flex items-center pointer-events-none text-gray-700 font-medium text-sm">
+                              +63
+                            </div>
+                            <input 
+                              type="tel" 
+                              maxLength={10}
+                              className={`block w-full pl-[4.5rem] pr-3 py-2 border ${errors.phone ? "border-red-300" : "border-gray-200"} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors text-sm`} 
+                              placeholder="9123456789" 
+                              {...register("phone", { 
+                                required: "Phone number is required",
+                                pattern: { 
+                                  value: /^[0-9]{10}$/, 
+                                  message: "Please enter exactly 10 digits" 
+                                },
+                                onChange: (e) => {
+                                  let value = e.target.value;
+                                  // Remove any non-digit characters
+                                  value = value.replace(/[^\d]/g, '');
+                                  // Ensure it doesn't start with +63 (we show it as prefix)
+                                  if (value.startsWith('+63')) {
+                                    value = value.substring(3);
+                                  }
+                                  if (value.startsWith('63')) {
+                                    value = value.substring(2);
+                                  }
+                                  // Limit to 10 digits
+                                  if (value.length > 10) {
+                                    value = value.substring(0, 10);
+                                  }
+                                  e.target.value = value;
+                                }
+                              })} 
+                            />
                           </div>
                           {errors.phone && (<p className="text-xs text-red-500">{errors.phone.message}</p>)}
                         </div>
