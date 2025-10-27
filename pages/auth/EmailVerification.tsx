@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import { FaEnvelope, FaCheckCircle, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
+import { FaEnvelope, FaCheckCircle, FaExclamationTriangle, FaSpinner, FaClock } from 'react-icons/fa';
 import { useToast } from '../../components/ToastContainer';
 
 const EmailVerification: React.FC = () => {
@@ -10,14 +10,14 @@ const EmailVerification: React.FC = () => {
   
   const [isVerifying, setIsVerifying] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const [verificationStatus, setVerificationStatus] = useState<'pending' | 'success' | 'error' | 'expired'>('pending');
+  const [verificationStatus, setVerificationStatus] = useState<'pending' | 'success' | 'error' | 'expired' | 'pending_approval'>('pending');
   const [errorMessage, setErrorMessage] = useState('');
   const [email, setEmail] = useState('');
+  const [requiresApproval, setRequiresApproval] = useState(false);
   const location = useLocation();
 
   const token = searchParams.get('token');
 
-  // Get email from navigation state or URL params
   useEffect(() => {
     if (location.state?.email) {
       setEmail(location.state.email);
@@ -46,13 +46,18 @@ const EmailVerification: React.FC = () => {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setVerificationStatus('success');
+          if (data.requiresApproval) {
+    setVerificationStatus('pending_approval');
+    setRequiresApproval(true);
+  } else {
+    setVerificationStatus('success');
+  }
         showToast({
           type: 'success',
           title: 'Email Verified!',
-          message: 'Your account has been verified successfully. You can now log in.',
+          message: data.message,
           autoHide: true,
-          autoHideDelay: 5000
+          autoHideDelay: 6000
         });
       } else {
         setVerificationStatus('error');
@@ -155,7 +160,7 @@ const EmailVerification: React.FC = () => {
             </div>
           )}
 
-          {verificationStatus === 'success' && (
+          {verificationStatus === 'success' && !requiresApproval && (
             <div className="text-center">
               <FaCheckCircle className="mx-auto h-12 w-12 text-green-600" />
               <h3 className="mt-4 text-lg font-medium text-gray-900">
@@ -170,6 +175,39 @@ const EmailVerification: React.FC = () => {
                   className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   Go to Login
+                </button>
+              </div>
+            </div>
+          )}
+
+          {verificationStatus === 'pending_approval' && (
+            <div className="text-center">
+              <FaClock className="mx-auto h-12 w-12 text-yellow-600" />
+              <h3 className="mt-4 text-lg font-medium text-gray-900">
+                Email Verified - Pending Approval
+              </h3>
+              <div className="mt-2 text-sm text-gray-600 space-y-2">
+                <p>
+                  Your email has been verified successfully!
+                </p>
+                <p>
+                  Your employer account is currently under review by our administrators. 
+                  You will receive an email notification once your account is approved.
+                </p>
+                <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                  <p className="text-sm text-yellow-800">
+                    <strong>What happens next?</strong>
+                    <br />
+                    Our team will review your company information and contact you within 1-2 business days.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-6">
+                <button
+                  onClick={handleLoginRedirect}
+                  className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Back to Login
                 </button>
               </div>
             </div>

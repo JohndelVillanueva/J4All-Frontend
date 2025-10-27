@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAdminStats, getAdminUsers, getAdminEmployers, getAdminActivities } from '../../src/services/notificationService';
+import { FaCheckCircle, FaSpinner, FaBuilding, FaEnvelope, FaPhone, FaGlobe, FaCalendar, FaUsers } from 'react-icons/fa';
+import { useToast } from '../../components/ToastContainer'; // Import the toast hook
 
 type LabelType = 
   | 'PWD' 
@@ -8,21 +10,27 @@ type LabelType =
   | 'Admin' 
   | 'Company';
 
-type TableMode = 'users' | 'pwd' | 'employers';
+type TableMode = 'users' | 'pwd' | 'employers' | 'pending-employers';
 
 type Activity = { type: string; title: string; description: string; timestamp: string; status?: string };
 
-const StatCard = ({ title, value, subtitle, color, onClick }: { title: string; value: number | string; subtitle?: string; color: string; onClick?: () => void }) => {
+const StatCard = ({ title, value, subtitle, color, onClick, badge }: { title: string; value: number | string; subtitle?: string; color: string; onClick?: () => void; badge?: number }) => {
 	const colorMap: Record<string, string> = {
 		blue: 'from-blue-500 to-indigo-500',
 		green: 'from-green-500 to-emerald-500',
 		purple: 'from-purple-500 to-fuchsia-500',
 		orange: 'from-orange-500 to-amber-500',
 		indigo: 'from-indigo-500 to-violet-500',
+		yellow: 'from-yellow-500 to-amber-500',
 	};
 	return (
 		<div onClick={onClick} className={`group relative rounded-xl border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden`}>
 			<div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${colorMap[color] || colorMap.blue}`} />
+			{badge && badge > 0 && (
+				<div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
+					{badge}
+				</div>
+			)}
 			<div className="p-5">
 				<div className="flex items-center justify-between">
 					<h3 className="text-sm font-medium text-gray-600">{title}</h3>
@@ -35,12 +43,13 @@ const StatCard = ({ title, value, subtitle, color, onClick }: { title: string; v
 	);
 };
 
-const Modal: React.FC<{ open: boolean; title: string; onClose: () => void; children: React.ReactNode }> = ({ open, title, onClose, children }) => {
+const Modal: React.FC<{ open: boolean; title: string; onClose: () => void; children: React.ReactNode; size?: 'default' | 'large' }> = ({ open, title, onClose, children, size = 'default' }) => {
 	if (!open) return null;
+	const sizeClass = size === 'large' ? 'max-w-7xl' : 'max-w-5xl';
 	return (
 		<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
 			<div className="absolute inset-0 bg-black/30" onClick={onClose} />
-			<div className="relative z-10 w-full max-w-5xl rounded-xl bg-white shadow-xl">
+			<div className={`relative z-10 w-full ${sizeClass} rounded-xl bg-white shadow-xl`}>
 				<div className="flex items-center justify-between border-b px-5 py-3">
 					<h3 className="text-lg font-semibold">{title}</h3>
 					<button className="text-gray-500 hover:text-gray-700" onClick={onClose}>✕</button>
@@ -55,6 +64,7 @@ const Modal: React.FC<{ open: boolean; title: string; onClose: () => void; child
 
 const AdminWelcomePage = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast(); // Add toast hook
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [stats, setStats] = useState<{ totals: { users: number; employers: number }, breakdown: { jobseekers: number; general: number; pwd: number } } | null>(null);
@@ -69,11 +79,17 @@ const AdminWelcomePage = () => {
 	const [tableLoading, setTableLoading] = useState(false);
 	const [tableError, setTableError] = useState<string | null>(null);
 
+	// Pending employers state
+	const [pendingEmployers, setPendingEmployers] = useState<any[]>([]);
+	const [pendingCount, setPendingCount] = useState(0);
+	const [processingId, setProcessingId] = useState<number | null>(null);
+	const [selectedEmployer, setSelectedEmployer] = useState<any | null>(null);
+
 	// Activities and interactions
 	const [activities, setActivities] = useState<Activity[]>([]);
 	const [activityPage, setActivityPage] = useState(1);
 	const [activityTotal, setActivityTotal] = useState(0);
-	const activityPageSize = 20; // default 20
+	const activityPageSize = 20;
 	const [interactions, setInteractions] = useState<Array<{ aId: number; bId: number; aName: string; bName: string; totalMessages: number; lastMessageAt: string }>>([]);
 	const [interactionsOpen, setInteractionsOpen] = useState(false);
 
@@ -91,6 +107,90 @@ const AdminWelcomePage = () => {
 		setTableOpen(true);
 	};
 
+	// Fetch pending employers
+	const fetchPendingEmployers = async () => {
+		try {
+			const token = localStorage.getItem('token');
+			const response = await fetch('/api/admin/pending-employers', {
+				headers: {
+					'Authorization': `Bearer ${token}`
+				}
+			});
+
+			const data = await response.json();
+			if (data.success) {
+				setPendingEmployers(data.data);
+				setPendingCount(data.data.length);
+			} else {
+				showToast({
+					type: 'error',
+					message: 'Failed to fetch pending employers',
+					autoHide: true,
+					autoHideDelay: 3000
+				});
+			}
+		} catch (error) {
+			console.error('Error fetching pending employers:', error);
+			showToast({
+				type: 'error',
+				message: 'Error fetching pending employers',
+				autoHide: true,
+				autoHideDelay: 3000
+			});
+		}
+	};
+
+	// Approve employer with toast notifications
+	const approveEmployer = async (employerId: number) => {
+		setProcessingId(employerId);
+		try {
+			const token = localStorage.getItem('token');
+			const response = await fetch('/api/admin/approve-employer', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${token}`
+				},
+				body: JSON.stringify({ employerId })
+			});
+
+			const data = await response.json();
+			if (data.success) {
+				// Remove from pending list
+				setPendingEmployers(prev => prev.filter(emp => emp.id !== employerId));
+				setPendingCount(prev => prev - 1);
+				
+				// Show success toast
+				showToast({
+					type: 'success',
+					message: 'Employer approved successfully! Approval email has been sent.',
+					autoHide: true,
+					autoHideDelay: 5000
+				});
+			} else {
+				// Show error toast
+				showToast({
+					type: 'error',
+					message: `Failed to approve employer: ${data.error || 'Unknown error'}`,
+					autoHide: true,
+					autoHideDelay: 5000
+				});
+			}
+		} catch (error) {
+			console.error('Error approving employer:', error);
+			// Show error toast
+			showToast({
+				type: 'error',
+				message: 'Network error: Failed to approve employer',
+				autoHide: true,
+				autoHideDelay: 5000
+			});
+		} finally {
+			setProcessingId(null);
+			setSelectedEmployer(null);
+		}
+	};
+
 	useEffect(() => {
 		getAdminStats()
 			.then((res) => {
@@ -98,20 +198,48 @@ const AdminWelcomePage = () => {
 					setStats(res.data);
 				} else {
 					setError('Failed to load stats');
+					showToast({
+						type: 'error',
+						message: 'Failed to load dashboard statistics',
+						autoHide: true,
+						autoHideDelay: 3000
+					});
 				}
 			})
-			.catch(() => setError('Failed to load stats'))
+			.catch(() => {
+				setError('Failed to load stats');
+				showToast({
+					type: 'error',
+					message: 'Failed to load dashboard statistics',
+					autoHide: true,
+					autoHideDelay: 3000
+				});
+			})
 			.finally(() => setLoading(false));
+
+		// Fetch pending employers
+		fetchPendingEmployers();
+
+		// Refresh pending count every 30 seconds
+		const interval = setInterval(fetchPendingEmployers, 30000);
+		return () => clearInterval(interval);
 	}, []);
 
 	const loadActivities = (pageNum: number) => {
-		getAdminActivities({ days: 90, /* limit not used with pagination */ page: pageNum as any, pageSize: activityPageSize as any } as any)
+		getAdminActivities({ days: 90, page: pageNum as any, pageSize: activityPageSize as any } as any)
 			.then((res) => {
 				if (res?.success) {
 					setActivities(res.data.activities);
 					setActivityTotal(res.data.total);
 				}
-			}).catch(() => {});
+			}).catch(() => {
+				showToast({
+					type: 'error',
+					message: 'Failed to load activities',
+					autoHide: true,
+					autoHideDelay: 3000
+				});
+			});
 	};
 
 	useEffect(() => {
@@ -119,12 +247,18 @@ const AdminWelcomePage = () => {
 	}, [activityPage]);
 
 	useEffect(() => {
-		// Initial interactions load
 		getAdminActivities({ days: 90 } as any).then((res) => {
 			if (res?.success) {
 				setInteractions(res.data.interactions.map((i: any) => ({ ...i, lastMessageAt: i.lastMessageAt })));
 			}
-		}).catch(() => {});
+		}).catch(() => {
+			showToast({
+				type: 'error',
+				message: 'Failed to load interactions',
+				autoHide: true,
+				autoHideDelay: 3000
+			});
+		});
 	}, []);
 
 	useEffect(() => {
@@ -133,38 +267,213 @@ const AdminWelcomePage = () => {
 		setTableError(null);
 		const load = async () => {
 			try {
+				if (tableMode === 'pending-employers') {
+					// Load pending employers in modal
+					setRows(pendingEmployers);
+					setTotal(pendingEmployers.length);
+					setTableLoading(false);
+					return;
+				}
+				
 				if (tableMode === 'employers') {
 					const res = await getAdminEmployers({ page, pageSize });
 					if (res?.success) {
 						setRows(res.data.records);
 						setTotal(res.data.total);
-					} else setTableError('Failed to load employers');
+					} else {
+						setTableError('Failed to load employers');
+						showToast({
+							type: 'error',
+							message: 'Failed to load employers data',
+							autoHide: true,
+							autoHideDelay: 3000
+						});
+					}
 				} else if (tableMode === 'users') {
 					const res = await getAdminUsers({ type: 'all', page, pageSize });
 					if (res?.success) {
 						setRows(res.data.records);
 						setTotal(res.data.total);
-					} else setTableError('Failed to load users');
+					} else {
+						setTableError('Failed to load users');
+						showToast({
+							type: 'error',
+							message: 'Failed to load users data',
+							autoHide: true,
+							autoHideDelay: 3000
+						});
+					}
 				} else if (tableMode === 'pwd') {
 					const res = await getAdminUsers({ type: 'pwd', page, pageSize });
 					if (res?.success) {
 						setRows(res.data.records);
 						setTotal(res.data.total);
-					} else setTableError('Failed to load PWDs');
+					} else {
+						setTableError('Failed to load PWDs');
+						showToast({
+							type: 'error',
+							message: 'Failed to load PWD users data',
+							autoHide: true,
+							autoHideDelay: 3000
+						});
+					}
 				}
 			} catch (e) {
 				setTableError('Failed to load data');
+				showToast({
+					type: 'error',
+					message: 'Failed to load table data',
+					autoHide: true,
+					autoHideDelay: 3000
+				});
 			} finally {
 				setTableLoading(false);
 			}
 		};
 		load();
-	}, [tableOpen, tableMode, page, pageSize]);
+	}, [tableOpen, tableMode, page, pageSize, pendingEmployers]);
 
 	const renderTable = () => {
 		if (tableLoading) return <div className="text-sm text-gray-600">Loading...</div>;
 		if (tableError) return <div className="text-sm text-red-600">{tableError}</div>;
 		if (!rows.length) return <div className="text-sm text-gray-600">No data</div>;
+
+		// Pending Employers detailed view
+		if (tableMode === 'pending-employers') {
+			return (
+				<div className="space-y-6">
+					{rows.map((employer) => (
+						<div key={employer.id} className="bg-gray-50 rounded-lg p-6 border border-gray-200">
+							<div className="flex items-start justify-between mb-4">
+								<div className="flex items-center">
+									{employer.employer?.logo_path ? (
+										<img 
+											src={employer.employer.logo_path} 
+											alt={employer.employer.company_name}
+											className="h-16 w-16 rounded-lg object-cover border-2 border-gray-200"
+										/>
+									) : (
+										<div className="h-16 w-16 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+											<FaBuilding className="h-8 w-8 text-white" />
+										</div>
+									)}
+									<div className="ml-4">
+										<h3 className="text-xl font-bold text-gray-900">
+											{employer.employer?.company_name}
+										</h3>
+										<p className="text-sm text-gray-600">
+											Registered on {new Date(employer.created_at).toLocaleDateString()}
+										</p>
+									</div>
+								</div>
+							</div>
+
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+								<div className="flex items-center text-gray-700">
+									<FaEnvelope className="mr-2 text-blue-600" />
+									<div>
+										<p className="text-xs text-gray-500">Email</p>
+										<p className="font-medium text-sm">{employer.email}</p>
+									</div>
+								</div>
+
+								<div className="flex items-center text-gray-700">
+									<FaPhone className="mr-2 text-green-600" />
+									<div>
+										<p className="text-xs text-gray-500">Phone</p>
+										<p className="font-medium text-sm">{employer.phone_number || 'Not provided'}</p>
+									</div>
+								</div>
+
+								<div className="flex items-center text-gray-700">
+									<FaUsers className="mr-2 text-purple-600" />
+									<div>
+										<p className="text-xs text-gray-500">Contact Person</p>
+										<p className="font-medium text-sm">{employer.employer?.contact_person}</p>
+									</div>
+								</div>
+
+								<div className="flex items-center text-gray-700">
+									<FaBuilding className="mr-2 text-indigo-600" />
+									<div>
+										<p className="text-xs text-gray-500">Industry</p>
+										<p className="font-medium text-sm">{employer.employer?.industry}</p>
+									</div>
+								</div>
+
+								<div className="flex items-center text-gray-700">
+									<FaUsers className="mr-2 text-orange-600" />
+									<div>
+										<p className="text-xs text-gray-500">Company Size</p>
+										<p className="font-medium text-sm">{employer.employer?.company_size} employees</p>
+									</div>
+								</div>
+
+								<div className="flex items-center text-gray-700">
+									<FaCalendar className="mr-2 text-red-600" />
+									<div>
+										<p className="text-xs text-gray-500">Founded Year</p>
+										<p className="font-medium text-sm">{employer.employer?.founded_year}</p>
+									</div>
+								</div>
+							</div>
+
+							{employer.employer?.website_url && (
+								<div className="flex items-center text-gray-700 mb-4">
+									<FaGlobe className="mr-2 text-blue-600" />
+									<div>
+										<p className="text-xs text-gray-500">Website</p>
+										<a 
+											href={employer.employer.website_url} 
+											target="_blank" 
+											rel="noopener noreferrer"
+											className="font-medium text-sm text-blue-600 hover:underline"
+										>
+											{employer.employer.website_url}
+										</a>
+									</div>
+								</div>
+							)}
+
+							{employer.employer?.address && (
+								<div className="mb-4">
+									<p className="text-xs text-gray-500 mb-1">Address</p>
+									<p className="text-gray-700 text-sm">{employer.employer.address}</p>
+								</div>
+							)}
+
+							<div className="flex items-center space-x-2 mb-4">
+								<span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+									<FaCheckCircle className="mr-1" />
+									Email Verified
+								</span>
+								<span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+									Pending Admin Approval
+								</span>
+							</div>
+
+							<button
+								onClick={() => setSelectedEmployer(employer)}
+								className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+								disabled={processingId === employer.id}
+							>
+								{processingId === employer.id ? (
+									<>
+										<FaSpinner className="animate-spin -ml-1 mr-2 h-4 w-4" />
+										Processing...
+									</>
+								) : (
+									<>
+										<FaCheckCircle className="-ml-1 mr-2 h-4 w-4" />
+										Approve Account
+									</>
+								)}
+							</button>
+						</div>
+					))}
+				</div>
+			);
+		}
 
 		if (tableMode === 'employers') {
 			return (
@@ -199,7 +508,6 @@ const AdminWelcomePage = () => {
 			);
 		}
 
-		// Users table (general/pwd)
 		return (
 			<div className="overflow-x-auto">
 				<table className="min-w-full text-sm">
@@ -246,7 +554,7 @@ const AdminWelcomePage = () => {
             </div>
 
 				{/* KPI Row */}
-				<div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+				<div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
 					<StatCard
 						title="Users"
 						value={loading ? '—' : (stats?.totals.users ?? 0)}
@@ -260,6 +568,14 @@ const AdminWelcomePage = () => {
 						subtitle={stats ? `${stats.breakdown.general + stats.breakdown.pwd} non-employer users` : undefined}
 						color="orange"
 						onClick={() => openUsersTable('employers')}
+					/>
+					<StatCard
+						title="Pending Approvals"
+						value={pendingCount}
+						subtitle="Awaiting review"
+						color="yellow"
+						badge={pendingCount}
+						onClick={() => openUsersTable('pending-employers')}
 					/>
 					<StatCard
 						title="PWD"
@@ -347,19 +663,59 @@ const AdminWelcomePage = () => {
 		</Modal>
 
 		{/* Users/Employers Table Modal */}
-		<Modal open={tableOpen} title={
-			tableMode === 'employers' ? 'Employers' :
-			tableMode === 'pwd' ? 'PWD Users' : 'All Users'
-		} onClose={() => setTableOpen(false)}>
+		<Modal 
+			open={tableOpen} 
+			title={
+				tableMode === 'employers' ? 'Employers' :
+				tableMode === 'pwd' ? 'PWD Users' : 
+				tableMode === 'pending-employers' ? 'Pending Employer Approvals' :
+				'All Users'
+			} 
+			onClose={() => setTableOpen(false)}
+			size={tableMode === 'pending-employers' ? 'large' : 'default'}
+		>
 			{renderTable()}
-			<div className="mt-4 flex items-center justify-between">
-				<button className="px-3 py-1 rounded border text-sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Previous</button>
-				<div className="text-xs text-gray-600">Page {page} of {totalPages}</div>
-				<button className="px-3 py-1 rounded border text-sm" disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Next</button>
-			</div>
+			{tableMode !== 'pending-employers' && (
+				<div className="mt-4 flex items-center justify-between">
+					<button className="px-3 py-1 rounded border text-sm" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Previous</button>
+					<div className="text-xs text-gray-600">Page {page} of {totalPages}</div>
+					<button className="px-3 py-1 rounded border text-sm" disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Next</button>
+				</div>
+			)}
 		</Modal>
+
+		{/* Approval Confirmation Modal */}
+		{selectedEmployer && (
+			<div className="fixed inset-0 z-50 flex items-center justify-center bg-blur bg-opacity-40 backdrop-blur-sm">
+				<div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
+					<h3 className="text-lg font-medium text-gray-900 mb-4">
+						Confirm Approval
+					</h3>
+					<p className="text-sm text-gray-600 mb-6">
+						Are you sure you want to approve <strong>{selectedEmployer.employer?.company_name}</strong>? 
+						This will activate their account and send them a notification email.
+					</p>
+					<div className="flex space-x-3">
+						<button
+							onClick={() => approveEmployer(selectedEmployer.id)}
+							className="flex-1 inline-flex justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+							disabled={processingId === selectedEmployer.id}
+						>
+							{processingId === selectedEmployer.id ? 'Processing...' : 'Yes, Approve'}
+						</button>
+						<button
+							onClick={() => setSelectedEmployer(null)}
+							className="flex-1 inline-flex justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+							disabled={processingId === selectedEmployer.id}
+						>
+							Cancel
+						</button>
+					</div>
+				</div>
+			</div>
+		)}
     </div>
   );
 };
 
-export default AdminWelcomePage; 
+export default AdminWelcomePage;

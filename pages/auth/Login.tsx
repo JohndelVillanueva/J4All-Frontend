@@ -6,6 +6,7 @@ import {
   FaEye,
   FaEyeSlash,
   FaQuestionCircle,
+  FaClock,
 } from "react-icons/fa";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,7 +16,6 @@ import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../components/ToastContainer";
 import { handleLoginError } from "../../src/utils/errorHandler";
-
 
 // Type definitions
 export interface User {
@@ -49,7 +49,7 @@ const LoginPage: React.FC = () => {
   const [showHelpTooltip, setShowHelpTooltip] = useState(false);
   const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  
+  const [showPendingApprovalModal, setShowPendingApprovalModal] = useState(false);
 
   // Form handling
   const {
@@ -96,25 +96,29 @@ const LoginPage: React.FC = () => {
   const onSubmit: SubmitHandler<LoginFormData> = async (data) => {
     setIsSubmitting(true);
     setLoginError(null);
-  
+
     try {
-      const response = await axios.post("/api/login", {
-        email: data.email,
-        password: data.password,
-      }, {
-        headers: {
-          'Content-Type': 'application/json'
+      const response = await axios.post(
+        "/api/login",
+        {
+          email: data.email,
+          password: data.password,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
-      });
-  
+      );
+
       if (response.data.success) {
         // Store authentication data
         localStorage.setItem("token", response.data.token);
         localStorage.setItem("user", JSON.stringify(response.data.user));
-        
+
         // Store user data in context
         login(response.data.user);
-  
+
         // Store credentials if "Remember Me" is checked
         if (data.rememberMe) {
           localStorage.setItem("rememberedEmail", data.email);
@@ -123,7 +127,15 @@ const LoginPage: React.FC = () => {
           localStorage.removeItem("rememberedEmail");
           localStorage.removeItem("rememberedPassword");
         }
-  
+
+        showToast({
+          type: "success",
+          title: "Login Successful",
+          message: "Welcome back!",
+          autoHide: true,
+          autoHideDelay: 3000,
+        });
+
         // Wait for context to update before navigating
         setTimeout(() => {
           // Enhanced redirect logic
@@ -133,11 +145,12 @@ const LoginPage: React.FC = () => {
             indigenous: "/ApplicantDashboard",
             employer: "/EmployerDashboard",
             admin: "/AdminDashboard",
-            general: "/AdminDashboard"
+            general: "/AdminDashboard",
           };
-          const redirectPath = userType in redirectPaths ? redirectPaths[userType] : "/";
+          const redirectPath =
+            userType in redirectPaths ? redirectPaths[userType] : "/";
           navigate(redirectPath);
-        }, 100); // 100ms delay to ensure context updates
+        }, 100);
       } else {
         const errorInfo = handleLoginError({ response: { data: response.data } });
         showToast(errorInfo);
@@ -145,30 +158,71 @@ const LoginPage: React.FC = () => {
       }
     } catch (error: any) {
       console.error("Login error:", error);
-      
-      // Check if account needs verification
-      if (error.response?.data?.code === 'ACCOUNT_NOT_VERIFIED') {
-        showToast({
-          type: 'warning',
-          title: 'Account Not Verified',
-          message: 'Please verify your email address before logging in.',
-          autoHide: true,
-          autoHideDelay: 5000
-        });
-        
-        // Navigate to verification page
-        navigate('/verify-email', {
-          state: { 
-            email: data.email,
-            message: 'Please verify your email to activate your account.' 
-          }
-        });
-        return;
+
+      // Handle different error codes
+      const errorCode = error.response?.data?.code;
+      const errorMessage = error.response?.data?.message || error.response?.data?.error;
+
+      switch (errorCode) {
+        case "EMAIL_NOT_VERIFIED":
+          showToast({
+            type: "warning",
+            title: "Email Not Verified",
+            message: errorMessage || "Please verify your email address before logging in.",
+            autoHide: false,
+          });
+          // Navigate to verification page
+          navigate("/verify-email", {
+            state: {
+              email: data.email,
+              fromLogin: true,
+              message: "Please verify your email to activate your account.",
+            },
+          });
+          break;
+
+        case "PENDING_ADMIN_APPROVAL":
+          setShowPendingApprovalModal(true);
+          showToast({
+            type: "info",
+            title: "Account Pending Approval",
+            message: errorMessage || "Your employer account is awaiting administrator approval.",
+            autoHide: false,
+          });
+          break;
+
+        case "ACCOUNT_NOT_VERIFIED":
+          showToast({
+            type: "warning",
+            title: "Account Not Verified",
+            message: errorMessage || "Please verify your email address before logging in.",
+            autoHide: false,
+          });
+          navigate("/verify-email", {
+            state: {
+              email: data.email,
+              fromLogin: true,
+              message: "Please verify your email to activate your account.",
+            },
+          });
+          break;
+
+        case "ACCOUNT_INACTIVE":
+          showToast({
+            type: "error",
+            title: "Account Inactive",
+            message: errorMessage || "Your account has been deactivated. Please contact support.",
+            autoHide: false,
+          });
+          setLoginError(errorMessage || "Your account has been deactivated. Please contact support for assistance.");
+          break;
+
+        default:
+          const errorInfo = handleLoginError(error);
+          showToast(errorInfo);
+          setLoginError(errorMessage || "Invalid credentials. Please try again.");
       }
-      
-      const errorInfo = handleLoginError(error);
-      showToast(errorInfo);
-      
+
       // Specific handling for 401 errors
       if (error.response?.status === 401) {
         localStorage.removeItem("token");
@@ -197,7 +251,6 @@ const LoginPage: React.FC = () => {
       {/* Rich background gradient and floating shapes */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-200" />
-        {/* Floating blurred circles */}
         <div className="absolute top-[-80px] left-[-80px] w-96 h-96 bg-indigo-300 opacity-30 rounded-full blur-3xl animate-float-slow" />
         <div className="absolute bottom-[-100px] right-[-100px] w-[32rem] h-[32rem] bg-purple-300 opacity-30 rounded-full blur-3xl animate-float-slower" />
         <div className="absolute top-1/2 left-[-120px] w-80 h-80 bg-blue-200 opacity-20 rounded-full blur-2xl animate-float" />
@@ -229,6 +282,74 @@ const LoginPage: React.FC = () => {
         )}
       </AnimatePresence>
 
+      {/* Pending Approval Modal */}
+      <AnimatePresence>
+        {showPendingApprovalModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-100 flex items-center justify-center bg-blur bg-opacity-100 backdrop-blur-sm"
+            onClick={() => setShowPendingApprovalModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="text-center">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100 mb-4">
+                  <FaClock className="h-6 w-6 text-yellow-600" />
+                </div>
+
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Account Pending Approval
+                </h3>
+
+                <div className="mt-2 text-sm text-gray-600 space-y-2">
+                  <p>
+                    Your employer account is currently being reviewed by our
+                    administrators.
+                  </p>
+                  <p>
+                    This process typically takes 1-2 business days. You'll receive
+                    an email notification once your account is approved.
+                  </p>
+                  <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md text-left">
+                    <p className="text-sm text-blue-800">
+                      <strong>What's being reviewed?</strong>
+                      <br />
+                      • Company information verification
+                      <br />
+                      • Contact details validation
+                      <br />
+                      • Business legitimacy check
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <button
+                    onClick={() => setShowPendingApprovalModal(false)}
+                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    Understood
+                  </button>
+                </div>
+
+                <div className="mt-3">
+                  <p className="text-xs text-gray-500">
+                    Need help? Contact us at support@j4pwds.com
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Main content */}
       <div className="container mx-auto px-4 py-12 flex flex-col md:flex-row items-center justify-center min-h-screen relative z-10">
         {/* Left side - Branding/Illustration */}
@@ -253,7 +374,8 @@ const LoginPage: React.FC = () => {
             Welcome to your inclusive community
           </h2>
           <p className="text-gray-600 mb-8 leading-relaxed text-center">
-            Connect with opportunities and resources tailored to your needs. Our platform is designed to be accessible for everyone.
+            Connect with opportunities and resources tailored to your needs. Our
+            platform is designed to be accessible for everyone.
           </p>
           <div className="space-y-4 w-full max-w-xs mx-auto">
             {[
@@ -281,7 +403,10 @@ const LoginPage: React.FC = () => {
           transition={{ duration: 0.7, delay: 0.2, ease: "easeOut" }}
           className="w-full md:w-1/2 lg:w-2/5 max-w-md z-10"
         >
-          <div className="rounded-2xl shadow-2xl border border-gray-100 p-8 relative overflow-hidden backdrop-blur-xl bg-white/70 dark:bg-gray-900/60" style={{ boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)' }}>
+          <div
+            className="rounded-2xl shadow-2xl border border-gray-100 p-8 relative overflow-hidden backdrop-blur-xl bg-white/70 dark:bg-gray-900/60"
+            style={{ boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.18)" }}
+          >
             {/* Decorative element */}
             <motion.div
               className="absolute -top-20 -right-20 w-40 h-40 bg-indigo-100 rounded-full filter blur-3xl opacity-20"
@@ -335,7 +460,7 @@ const LoginPage: React.FC = () => {
                   className="p-3 bg-red-50 border border-red-100 text-red-600 rounded-lg text-sm flex items-center gap-2"
                 >
                   <svg
-                    className="h-4 w-4"
+                    className="h-4 w-4 flex-shrink-0"
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -468,7 +593,14 @@ const LoginPage: React.FC = () => {
                     ? "bg-indigo-400 cursor-not-allowed"
                     : "bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 shadow-lg"
                 } focus:outline-none focus:ring-2 focus:ring-indigo-200 transition-all`}
-                whileHover={!isSubmitting ? { scale: 1.03, boxShadow: '0 8px 24px rgba(99,102,241,0.15)' } : {}}
+                whileHover={
+                  !isSubmitting
+                    ? {
+                        scale: 1.03,
+                        boxShadow: "0 8px 24px rgba(99,102,241,0.15)",
+                      }
+                    : {}
+                }
                 whileTap={!isSubmitting ? { scale: 0.98 } : {}}
               >
                 {isSubmitting ? (
