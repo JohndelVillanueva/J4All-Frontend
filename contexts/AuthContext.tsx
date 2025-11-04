@@ -68,9 +68,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Then clear state
     setUser(null);
-    setLoading(false); // Ensure loading is false after logout
+    setLoading(false); 
     
     console.log('Logout completed - localStorage cleared');
+    
+    window.location.href = '/login';
   };
 
   const value = {
@@ -101,4 +103,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}; 
+};
