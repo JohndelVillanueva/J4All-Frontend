@@ -4,7 +4,6 @@ import {
   FaBriefcase,
   FaStar,
   FaSyncAlt,
-  FaUser,
   FaEnvelope,
   FaPhone,
   FaMapMarkerAlt,
@@ -52,41 +51,41 @@ function useEmployerAvatarInfo(userId?: number) {
 }
 
 // Hook to fetch employer profile data
-function useEmployerProfile(employerId?: number) {
-  const [employerProfile, setEmployerProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+// function useEmployerProfile(employerId?: number) {
+//   const [employerProfile, setEmployerProfile] = useState<any>(null);
+//   const [loading, setLoading] = useState(false);
 
-  React.useEffect(() => {
-    if (!employerId) return;
+//   React.useEffect(() => {
+//     if (!employerId) return;
     
-    const fetchEmployerProfile = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem("token");
-        if (!token) return;
+//     const fetchEmployerProfile = async () => {
+//       try {
+//         setLoading(true);
+//         const token = localStorage.getItem("token");
+//         if (!token) return;
 
-        const response = await fetch(`/api/employers/${employerId}`, {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
+//         const response = await fetch(`/api/employers/${employerId}`, {
+//           headers: {
+//             "Authorization": `Bearer ${token}`
+//           }
+//         });
 
-        if (response.ok) {
-          const data = await response.json();
-          setEmployerProfile(data.data);
-        }
-      } catch (error) {
-        console.error("Error fetching employer profile:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+//         if (response.ok) {
+//           const data = await response.json();
+//           setEmployerProfile(data.data);
+//         }
+//       } catch (error) {
+//         console.error("Error fetching employer profile:", error);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
 
-    fetchEmployerProfile();
-  }, [employerId]);
+//     fetchEmployerProfile();
+//   }, [employerId]);
 
-  return { employerProfile, loading };
-}
+//   return { employerProfile, loading };
+// }
 
 interface DashboardTabProps {
   stats: StatItem[];
