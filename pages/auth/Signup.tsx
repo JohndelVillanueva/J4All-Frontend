@@ -48,12 +48,10 @@ const signUpSchema = z.object({
   message: "Passwords don't match",
   path: ["confirmPassword"],
 }).refine((data) => {
-  if (data.userType === 'pwd') {
-    return !!data.pwdIdNumber && data.pwdIdNumber.trim().length > 0;
-  }
-  return true;
+  // Only PWD users can register, so pwdIdNumber is always required
+  return !!data.pwdIdNumber && data.pwdIdNumber.trim().length > 0;
 }, {
-  message: 'PWD ID Number is required for PWD users',
+  message: 'PWD ID Number is required for registration',
   path: ['pwdIdNumber'],
 });
 
@@ -113,7 +111,7 @@ const SignUpPage: React.FC = () => {
   } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      userType: 'general',
+      userType: 'pwd', // Set default to 'pwd' since only PWD can register
       agreeToTerms: true,
     },
     mode: 'onChange',
@@ -137,7 +135,8 @@ const SignUpPage: React.FC = () => {
         formData.append('last_name', data.lastName);
         formData.append('phone_number', data.phone);
         formData.append('address', data.address);
-        if (data.userType === 'pwd' && data.pwdIdNumber) {
+        // PWD ID Number is now always required since only PWD can register
+        if (data.pwdIdNumber) {
           formData.append('pwd_id_number', data.pwdIdNumber);
         }
         formData.append('photo', photoFile);
@@ -157,7 +156,8 @@ const SignUpPage: React.FC = () => {
           phone_number: data.phone,
           address: data.address,
         };
-        if (data.userType === 'pwd' && data.pwdIdNumber) {
+        // PWD ID Number is now always required since only PWD can register
+        if (data.pwdIdNumber) {
           payload.pwd_id_number = data.pwdIdNumber;
         }
         response = await fetch('/api/create', {
@@ -372,8 +372,18 @@ const SignUpPage: React.FC = () => {
                           <legend className="block text-xs font-medium text-black mb-2">
                             I am a:
                           </legend>
-                          <div className="grid grid-cols-2 gap-2">
-                            {(['general', 'pwd'] as UserType[]).map((type) => (
+                          <div className="grid grid-cols-1 gap-2">
+                            {/* Commented out general user option - only PWD can register */}
+                            {/* {(['general', 'pwd'] as UserType[]).map((type) => (
+                              <UserTypeButton
+                                key={type}
+                                type={type}
+                                currentType={userType}
+                                onChange={(t) => setValue('userType', t)}
+                              />
+                            ))} */}
+                            {/* Only show PWD option */}
+                            {(['pwd'] as UserType[]).map((type) => (
                               <UserTypeButton
                                 key={type}
                                 type={type}
@@ -382,6 +392,9 @@ const SignUpPage: React.FC = () => {
                               />
                             ))}
                           </div>
+                          <p className="text-xs text-gray-600 italic">
+                            Currently, only Persons with Disabilities can register for accounts.
+                          </p>
                         </fieldset>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -505,22 +518,20 @@ const SignUpPage: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* PWD ID Number */}
-                        {userType === 'pwd' && (
-                          <div className="space-y-1">
-                            <label className="block text-xs font-medium text-black">PWD ID Number</label>
-                            <input
-                              type="text"
-                              className={`block w-full px-3 py-2 border ${errors.pwdIdNumber ? 'border-red-300' : 'border-gray-200'} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors text-sm`}
-                              placeholder="Enter your PWD ID Number"
-                              aria-invalid={!!errors.pwdIdNumber}
-                              {...register('pwdIdNumber')}
-                            />
-                            {errors.pwdIdNumber && (
-                              <p className="text-xs text-red-500">{errors.pwdIdNumber.message}</p>
-                            )}
-                          </div>
-                        )}
+                        {/* PWD ID Number - Now always required since only PWD can register */}
+                        <div className="space-y-1">
+                          <label className="block text-xs font-medium text-black">PWD ID Number *</label>
+                          <input
+                            type="text"
+                            className={`block w-full px-3 py-2 border ${errors.pwdIdNumber ? 'border-red-300' : 'border-gray-200'} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors text-sm`}
+                            placeholder="Enter your PWD ID Number"
+                            aria-invalid={!!errors.pwdIdNumber}
+                            {...register('pwdIdNumber')}
+                          />
+                          {errors.pwdIdNumber && (
+                            <p className="text-xs text-red-500">{errors.pwdIdNumber.message}</p>
+                          )}
+                        </div>
                       </div>
 
                       <div className="flex justify-end pt-3">
@@ -528,9 +539,8 @@ const SignUpPage: React.FC = () => {
                           type="button" 
                           className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold shadow hover:from-indigo-600 hover:to-purple-600 transition text-sm"
                           onClick={async () => {
-                            const fieldsToValidate = userType === 'pwd' 
-                              ? ['firstName', 'lastName', 'email', 'phone', 'address', 'pwdIdNumber']
-                              : ['firstName', 'lastName', 'email', 'phone', 'address'];
+                            // Since only PWD can register, always include pwdIdNumber in validation
+                            const fieldsToValidate = ['firstName', 'lastName', 'email', 'phone', 'address', 'pwdIdNumber'];
                             
                             const isValid = await trigger(fieldsToValidate as any);
                             if (isValid) {
