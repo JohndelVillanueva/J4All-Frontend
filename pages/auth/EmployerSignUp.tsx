@@ -4,6 +4,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaUser } from "react-icons/fa";
+// import { FormData } from "../../components/types/types";
 import {
   FaLock,
   FaEye,
@@ -20,97 +21,6 @@ import {
 import { useToast } from "../../components/ToastContainer";
 import { handleRegistrationError } from "../../src/utils/errorHandler";
 
-// ==================== IMAGE COMPRESSION UTILITY ====================
-/**
- * Compress an image file before upload
- * @param file - The image file to compress
- * @param maxSizeMB - Maximum size in MB (default: 1MB)
- * @param maxWidthOrHeight - Maximum width or height in pixels (default: 1920)
- * @returns Compressed file
- */
-const compressImage = async (
-  file: File,
-  maxSizeMB: number = 1,
-  maxWidthOrHeight: number = 1920
-): Promise<File> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-
-        // Calculate new dimensions
-        if (width > height) {
-          if (width > maxWidthOrHeight) {
-            height = (height * maxWidthOrHeight) / width;
-            width = maxWidthOrHeight;
-          }
-        } else {
-          if (height > maxWidthOrHeight) {
-            width = (width * maxWidthOrHeight) / height;
-            height = maxWidthOrHeight;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
-
-        // Start with quality 0.9 and reduce if needed
-        let quality = 0.9;
-        const tryCompress = () => {
-          canvas.toBlob(
-            (blob) => {
-              if (!blob) {
-                reject(new Error('Canvas to Blob conversion failed'));
-                return;
-              }
-
-              // Check if size is acceptable
-              const sizeMB = blob.size / 1024 / 1024;
-              
-              if (sizeMB <= maxSizeMB || quality <= 0.5) {
-                // Create a new File from the blob
-                const compressedFile = new File([blob], file.name, {
-                  type: 'image/jpeg',
-                  lastModified: Date.now(),
-                });
-                resolve(compressedFile);
-              } else {
-                // Reduce quality and try again
-                quality -= 0.1;
-                tryCompress();
-              }
-            },
-            'image/jpeg',
-            quality
-          );
-        };
-
-        tryCompress();
-      };
-
-      img.onerror = () => {
-        reject(new Error('Failed to load image'));
-      };
-    };
-
-    reader.onerror = () => {
-      reject(new Error('Failed to read file'));
-    };
-  });
-};
-
-// ==================== COMPONENT ====================
 export default function EmployerSignupForm() {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -122,7 +32,6 @@ export default function EmployerSignupForm() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [step, setStep] = useState(1);
-  const [uploadProgress, setUploadProgress] = useState(0);
 
   interface FormData {
     email: string;
@@ -142,6 +51,7 @@ export default function EmployerSignupForm() {
     agreeToTerms: boolean;
     userType: "EMPLOYER";
     logo_path?: FileList;
+    // photo?: FileList; // Not needed, handled by state
   }
 
   const {
@@ -176,209 +86,133 @@ export default function EmployerSignupForm() {
     };
   }, []);
 
-  const onSubmit = async (data: FormData) => {
-    setIsSubmitting(true);
-    setFormError(null);
-    setUploadProgress(0);
+const onSubmit = async (data: FormData) => {
+  setIsSubmitting(true);
+  setFormError(null);
 
-    try {
-      const formData = new FormData();
+  try {
+    const formData = new FormData();
 
-      // 1. Create the complete payload object that matches your schema
-      const payload = {
-        user: {
-          username: data.username,
-          email: data.email.toLowerCase(),
-          password: data.password,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          phone: data.phone,
-          userType: "EMPLOYER" as const
-        },
-        employer: {
-          companyName: data.companyName,
-          contactPerson: data.contactPerson,
-          industry: data.industry,
-          companySize: data.companySize,
-          websiteUrl: data.websiteUrl,
-          foundedYear: Number(data.foundedYear),
-          address: data.address
-        },
-        confirmPassword: data.confirmPassword,
-        agreeToTerms: data.agreeToTerms
-      };
+    // 1. Create the complete payload object that matches your schema
+    const payload = {
+      user: {
+        username: data.username,
+        email: data.email.toLowerCase(),
+        password: data.password,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone,
+        userType: "EMPLOYER" as const
+      },
+      employer: {
+        companyName: data.companyName,
+        contactPerson: data.contactPerson,
+        industry: data.industry,
+        companySize: data.companySize,
+        websiteUrl: data.websiteUrl,
+        foundedYear: Number(data.foundedYear),
+        address: data.address
+      },
+      confirmPassword: data.confirmPassword,
+      agreeToTerms: data.agreeToTerms
+    };
 
-      // 2. Append the JSON string of the complete payload
-      formData.append('data', JSON.stringify(payload));
+    // 2. Append the JSON string of the complete payload
+    formData.append('data', JSON.stringify(payload));
 
-      // 3. Compress and append the logo file separately if exists
-      if (data.logo_path && data.logo_path[0]) {
-        try {
-          const originalSize = (data.logo_path[0].size / 1024).toFixed(2);
-          console.log(`Original logo size: ${originalSize}KB`);
-          
-          const compressedLogo = await compressImage(data.logo_path[0], 1, 1920);
-          const compressedSize = (compressedLogo.size / 1024).toFixed(2);
-          
-          console.log(`Logo compressed from ${originalSize}KB to ${compressedSize}KB`);
-          formData.append('logo', compressedLogo);
-        } catch (error) {
-          console.error('Logo compression failed:', error);
-          showToast({
-            type: 'warning',
-            title: 'Compression Warning',
-            message: 'Logo compression failed, using original file.',
-            autoHide: true,
-            autoHideDelay: 3000
-          });
-          formData.append('logo', data.logo_path[0]);
-        }
+    // 3. Append the logo file separately if exists
+    if (data.logo_path && data.logo_path[0]) {
+      formData.append('logo', data.logo_path[0]);
+    }
+
+    // 4. Append the photo file if it exists
+    if (photoFile) {
+      formData.append('photo', photoFile);
+    }
+
+    // Debug: Log the complete form data before sending
+    console.log('Final FormData being sent:');
+    for (const [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
+
+    const response = await axios.post("/api/createEmployer", formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Accept': 'application/json'
       }
+    });
 
-      // 4. Compress and append the photo file if it exists
-      if (photoFile) {
-        try {
-          const originalSize = (photoFile.size / 1024).toFixed(2);
-          console.log(`Original photo size: ${originalSize}KB`);
-          
-          const compressedPhoto = await compressImage(photoFile, 0.5, 800);
-          const compressedSize = (compressedPhoto.size / 1024).toFixed(2);
-          
-          console.log(`Photo compressed from ${originalSize}KB to ${compressedSize}KB`);
-          formData.append('photo', compressedPhoto);
-        } catch (error) {
-          console.error('Photo compression failed:', error);
-          showToast({
-            type: 'warning',
-            title: 'Compression Warning',
-            message: 'Photo compression failed, using original file.',
-            autoHide: true,
-            autoHideDelay: 3000
-          });
-          formData.append('photo', photoFile);
-        }
-      }
-
-      // Debug: Log the complete form data before sending
-      console.log('Final FormData being sent:');
-      for (const [key, value] of formData.entries()) {
-        if (value instanceof File) {
-          console.log(key, `File: ${value.name} (${(value.size / 1024).toFixed(2)}KB)`);
-        } else {
-          console.log(key, value);
-        }
-      }
-
-      const response = await axios.post("/api/createEmployer", formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Accept': 'application/json'
-        },
-        timeout: 60000, // 60 seconds timeout
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
-          setUploadProgress(percentCompleted);
-          console.log(`Upload progress: ${percentCompleted}%`);
-        }
+    if (response.status === 200 || response.status === 201) {
+      showToast({
+        type: 'success',
+        title: 'Account Created Successfully!',
+        message: 'Please check your email to verify your account before logging in.',
+        autoHide: true,
+        autoHideDelay: 5000
       });
 
-      if (response.status === 200 || response.status === 201) {
-        showToast({
-          type: 'success',
-          title: 'Account Created Successfully!',
-          message: 'Please check your email to verify your account before logging in.',
-          autoHide: true,
-          autoHideDelay: 5000
+      // Navigate to verification page for employers too
+      setTimeout(() => {
+        navigate('/verify-email', {
+          state: { 
+            fromRegistration: true,
+            email: data.email,
+            message: 'Please verify your email to activate your employer account.' 
+          },
+          replace: true
         });
+      }, 2000);
+    }
+  } catch (error: any) {
+    console.error("Full error:", error);
+    
+    const errorInfo = handleRegistrationError(error);
+    showToast(errorInfo);
+    
+    // Also set form errors for field-specific validation
+    const responseData = error?.response?.data;
+    if (responseData?.errors?.fieldErrors) {
+      const { user, employer, ...rootErrors } = responseData.errors.fieldErrors;
 
-        // Navigate to verification page for employers too
-        setTimeout(() => {
-          navigate('/verify-email', {
-            state: { 
-              fromRegistration: true,
-              email: data.email,
-              message: 'Please verify your email to activate your employer account.' 
-            },
-            replace: true
-          });
-        }, 2000);
-      }
-    } catch (error: any) {
-      console.error("Full error:", error);
-      
-      // Handle 413 error specifically
-      if (error.response?.status === 413) {
-        showToast({
-          type: 'error',
-          title: 'Files Too Large',
-          message: 'The uploaded files are too large. Please use smaller images (recommended: under 1MB each).',
-          autoHide: true,
-          autoHideDelay: 5000
-        });
-        setFormError('The uploaded files are too large. Please use smaller images.');
-        return;
-      }
-
-      // Handle timeout errors
-      if (error.code === 'ECONNABORTED') {
-        showToast({
-          type: 'error',
-          title: 'Upload Timeout',
-          message: 'The upload took too long. Please check your connection and try again.',
-          autoHide: true,
-          autoHideDelay: 5000
-        });
-        setFormError('Upload timeout. Please try again.');
-        return;
-      }
-      
-      const errorInfo = handleRegistrationError(error);
-      showToast(errorInfo);
-      
-      // Also set form errors for field-specific validation
-      const responseData = error?.response?.data;
-      if (responseData?.errors?.fieldErrors) {
-        const { user, employer, ...rootErrors } = responseData.errors.fieldErrors;
-
-        // Handle user field errors
-        if (user) {
-          for (const [field, messages] of Object.entries(user)) {
-            if (Array.isArray(messages) && messages.length > 0) {
-              setError(`user.${field}` as any, {
-                type: "server",
-                message: messages[0]
-              });
-            }
-          }
-        }
-
-        // Handle employer field errors
-        if (employer) {
-          for (const [field, messages] of Object.entries(employer)) {
-            if (Array.isArray(messages) && messages.length > 0) {
-              setError(`employer.${field}` as any, {
-                type: "server",
-                message: messages[0]
-              });
-            }
-          }
-        }
-
-        // Handle root level errors (confirmPassword, agreeToTerms)
-        for (const [field, messages] of Object.entries(rootErrors)) {
+      // Handle user field errors
+      if (user) {
+        for (const [field, messages] of Object.entries(user)) {
           if (Array.isArray(messages) && messages.length > 0) {
-            setError(field as keyof FormData, {
+            setError(`user.${field}` as any, {
               type: "server",
               message: messages[0]
             });
           }
         }
       }
-    } finally {
-      setIsSubmitting(false);
-      setUploadProgress(0);
+
+      // Handle employer field errors
+      if (employer) {
+        for (const [field, messages] of Object.entries(employer)) {
+          if (Array.isArray(messages) && messages.length > 0) {
+            setError(`employer.${field}` as any, {
+              type: "server",
+              message: messages[0]
+            });
+          }
+        }
+      }
+
+      // Handle root level errors (confirmPassword, agreeToTerms)
+      for (const [field, messages] of Object.entries(rootErrors)) {
+        if (Array.isArray(messages) && messages.length > 0) {
+          setError(field as keyof FormData, {
+            type: "server",
+            message: messages[0]
+          });
+        }
+      }
     }
-  };
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
@@ -414,27 +248,6 @@ export default function EmployerSignupForm() {
         </motion.div>
       )}
 
-      {/* Upload Progress Indicator */}
-      {isSubmitting && uploadProgress > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50"
-        >
-          <div className="bg-white px-6 py-3 rounded-xl shadow-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-48 bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-indigo-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
-                ></div>
-              </div>
-              <span className="text-sm font-medium text-gray-700">{uploadProgress}%</span>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
       {/* Main content */}
       <div className="container mx-auto px-2 py-8 flex flex-col md:flex-row items-center justify-center min-h-screen relative z-10">
         {/* Left side - Branding */}
@@ -464,6 +277,7 @@ export default function EmployerSignupForm() {
           </p>
 
           <div className="space-y-1"> 
+            {/* 4 - 1 */}
             {[
               "Access to a diverse talent pool",
               "Streamlined hiring process",
@@ -692,7 +506,6 @@ export default function EmployerSignupForm() {
                         <div className="space-y-1">
                           <label className="block text-xs font-medium text-black">Company Logo</label>
                           <input type="file" accept="image/*" className="block w-full text-xs text-gray-700 file:mr-2 file:py-1 file:px-3 file:border file:rounded-lg file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors" {...register("logo_path")} />
-                          <p className="text-xs text-gray-500">Recommended: Under 1MB, JPG or PNG format</p>
                         </div>
                       </div>
                       <div className="flex justify-between pt-3">
@@ -775,13 +588,16 @@ export default function EmployerSignupForm() {
                                 },
                                 onChange: (e) => {
                                   let value = e.target.value;
+                                  // Remove any non-digit characters
                                   value = value.replace(/[^\d]/g, '');
+                                  // Ensure it doesn't start with +63 (we show it as prefix)
                                   if (value.startsWith('+63')) {
                                     value = value.substring(3);
                                   }
                                   if (value.startsWith('63')) {
                                     value = value.substring(2);
                                   }
+                                  // Limit to 10 digits
                                   if (value.length > 10) {
                                     value = value.substring(0, 10);
                                   }
@@ -817,7 +633,7 @@ export default function EmployerSignupForm() {
                               }
                             }} className="block w-full text-xs text-gray-700 file:mr-2 file:py-1 file:px-3 file:border file:rounded-lg file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors" />
                           </div>
-                          <p className="text-xs text-black/80 text-center">Upload a professional photo for your profile (optional, under 500KB recommended)</p>
+                          <p className="text-xs text-black/80 text-center">Upload a professional photo for your profile (optional)</p>
                         </div>
                         {/* Photo Preview */}
                         {photoPreview && (
