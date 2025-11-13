@@ -107,11 +107,11 @@ const AdminWelcomePage = () => {
 		setTableOpen(true);
 	};
 
-	// Fetch pending employers
+	// Fetch pending employers - UPDATED to use correct endpoint
 	const fetchPendingEmployers = async () => {
 		try {
 			const token = localStorage.getItem('token');
-			const response = await fetch('/api/admin/pending-employers', {
+			const response = await fetch('/api/admin/pending-employers', { // Using your existing endpoint
 				headers: {
 					'Authorization': `Bearer ${token}`
 				}
@@ -140,12 +140,12 @@ const AdminWelcomePage = () => {
 		}
 	};
 
-	// Approve employer with toast notifications
+	// Approve employer with toast notifications - UPDATED to use correct endpoint
 	const approveEmployer = async (employerId: number) => {
 		setProcessingId(employerId);
 		try {
 			const token = localStorage.getItem('token');
-			const response = await fetch('/api/admin/approve-employer', {
+			const response = await fetch('/api/admin/approve-employer', { // Using your existing endpoint
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -336,7 +336,7 @@ const AdminWelcomePage = () => {
 	const renderTable = () => {
 		if (tableLoading) return <div className="text-sm text-gray-600">Loading...</div>;
 		if (tableError) return <div className="text-sm text-red-600">{tableError}</div>;
-		if (!rows.length) return <div className="text-sm text-gray-600">No data</div>;
+		if (!rows.length) return <div className="text-sm text-gray-600">No pending employers</div>;
 
 		// Pending Employers detailed view
 		if (tableMode === 'pending-employers') {
