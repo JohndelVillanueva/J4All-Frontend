@@ -393,8 +393,9 @@ const SignUpPage: React.FC = () => {
                             I am a:
                           </legend>
                           <div className="grid grid-cols-1 gap-2">
-                            {/* Show both options but default to PWD */}
-                            {(['general', 'pwd'] as UserType[]).map((type) => (
+                            {/* Only PWD registration available - General user option commented out */}
+                            {/* {(['general', 'pwd'] as UserType[]).map((type) => ( */}
+                            {(['pwd'] as UserType[]).map((type) => (
                               <UserTypeButton
                                 key={type}
                                 type={type}
@@ -404,9 +405,10 @@ const SignUpPage: React.FC = () => {
                             ))}
                           </div>
                           <p className="text-xs text-gray-600 italic">
-                            {userType === 'pwd' 
+                            {/* {userType === 'pwd' 
                               ? "PWD ID Number is required for Persons with Disabilities."
-                              : "General users can register without PWD ID."}
+                              : "General users can register without PWD ID."} */}
+                            PWD ID Number is required for registration.
                           </p>
                         </fieldset>
 
