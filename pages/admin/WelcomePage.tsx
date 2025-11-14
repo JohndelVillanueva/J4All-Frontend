@@ -126,9 +126,9 @@ const AdminWelcomePage = () => {
     breakdown: { jobseekers: number; general: number; pwd: number };
   } | null>(null);
 
+  // Get base URL from environment variables
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3111';
 
-  //.env
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3111';   
   // Modal/table state
   const [tableOpen, setTableOpen] = useState(false);
   const [tableMode, setTableMode] = useState<TableMode>("users");
@@ -506,15 +506,15 @@ const AdminWelcomePage = () => {
                         src={
                           profilePhoto.startsWith("http")
                             ? profilePhoto
-                            : `http://localhost:3111${profilePhoto}`
+                            : `${API_BASE_URL}${profilePhoto}`
                         }
                         alt="Profile"
                         className="w-24 h-24 rounded-full object-cover border-2 border-indigo-200 cursor-pointer hover:opacity-80 transition"
                         onClick={() =>
                           setImagePreview(
-							profilePhoto.startsWith("http")
-							? profilePhoto
-							: `${API_BASE_URL}${profilePhoto}`
+                            profilePhoto.startsWith("http")
+                            ? profilePhoto
+                            : `${API_BASE_URL}${profilePhoto}`
                           )
                         }
                         onError={(e) => {
@@ -547,12 +547,9 @@ const AdminWelcomePage = () => {
                   {verificationDocs.length > 0 ? (
                     <div className="grid grid-cols-3 gap-3">
                       {verificationDocs.map((doc: any, idx: number) => {
-                        // const fullPath = doc.photo_path.startsWith("http")
-                        //   ? doc.photo_path
-                        //   : `http://localhost:3111${doc.photo_path}`;
-						const fullPath = doc.photo_path.startsWith("http")
-						? doc.photo_path
-						: `${API_BASE_URL}${doc.photo_path}`;
+                        const fullPath = doc.photo_path.startsWith("http")
+                          ? doc.photo_path
+                          : `${API_BASE_URL}${doc.photo_path}`;
                         const isPDF = doc.photo_path
                           .toLowerCase()
                           .endsWith(".pdf");
