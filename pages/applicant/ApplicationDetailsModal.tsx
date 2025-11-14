@@ -32,9 +32,12 @@ const DEFAULT_PROFILE_IMAGE =
 const getFullPhotoUrl = (url?: string | null) => {
   if (!url) return null;
   if (url.startsWith('http')) return url;
-  // Remove leading slash if present to avoid double slashes
-  const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
-  return `${API_BASE_URL}/api/${cleanUrl}`;
+  
+  // Ensure URL starts with /
+  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+  
+  // Don't add /api/ prefix for uploads
+  return `${API_BASE_URL}${cleanUrl}`;
 };
 
 const ApplicationDetailsModal: React.FC<ApplicationDetailsModalProps> = ({ applicationId, isOpen, onClose }) => {
