@@ -122,7 +122,7 @@ const SignUpPage: React.FC = () => {
   });
 
   const userType = watch('userType');
-  const pwdIdNumber = watch('pwdIdNumber');
+  // const pwdIdNumber = watch('pwdIdNumber');
 
   const onSubmit: SubmitHandler<SignUpFormData> = async (data) => {
     setIsSubmitting(true);
