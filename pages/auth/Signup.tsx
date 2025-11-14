@@ -25,7 +25,7 @@ interface SignUpFormData {
   pwdIdNumber?: string;
 }
 
-// Validation schema
+// Fixed validation schema
 const signUpSchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(50, 'First name is too long'),
   lastName: z.string().min(1, 'Last name is required').max(50, 'Last name is too long'),
@@ -47,11 +47,15 @@ const signUpSchema = z.object({
 }).refine((data) => data.password_hash === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
-}).refine((data) => {
-  // Only PWD users can register, so pwdIdNumber is always required
-  return !!data.pwdIdNumber && data.pwdIdNumber.trim().length > 0;
+})
+// Fixed conditional validation for PWD ID Number
+.refine((data) => {
+  if (data.userType === 'pwd') {
+    return !!data.pwdIdNumber && data.pwdIdNumber.trim().length > 0;
+  }
+  return true; // Not required for general users
 }, {
-  message: 'PWD ID Number is required for registration',
+  message: 'PWD ID Number is required for PWD registration',
   path: ['pwdIdNumber'],
 });
 
@@ -118,6 +122,7 @@ const SignUpPage: React.FC = () => {
   });
 
   const userType = watch('userType');
+  const pwdIdNumber = watch('pwdIdNumber');
 
   const onSubmit: SubmitHandler<SignUpFormData> = async (data) => {
     setIsSubmitting(true);
@@ -135,8 +140,8 @@ const SignUpPage: React.FC = () => {
         formData.append('last_name', data.lastName);
         formData.append('phone_number', data.phone);
         formData.append('address', data.address);
-        // PWD ID Number is now always required since only PWD can register
-        if (data.pwdIdNumber) {
+        // Only append PWD ID if it exists and user is PWD
+        if (data.userType === 'pwd' && data.pwdIdNumber) {
           formData.append('pwd_id_number', data.pwdIdNumber);
         }
         formData.append('photo', photoFile);
@@ -156,8 +161,8 @@ const SignUpPage: React.FC = () => {
           phone_number: data.phone,
           address: data.address,
         };
-        // PWD ID Number is now always required since only PWD can register
-        if (data.pwdIdNumber) {
+        // Only append PWD ID if it exists and user is PWD
+        if (data.userType === 'pwd' && data.pwdIdNumber) {
           payload.pwd_id_number = data.pwdIdNumber;
         }
         response = await fetch('/api/create', {
@@ -245,6 +250,21 @@ const SignUpPage: React.FC = () => {
       document.body.style.overflow = originalOverflow;
     };
   }, []);
+
+  // Update the step validation to conditionally check PWD ID
+  const handleNextStep = async () => {
+    const baseFields = ['firstName', 'lastName', 'email', 'phone', 'address'];
+    
+    // Only include pwdIdNumber in validation if user is PWD
+    const fieldsToValidate = userType === 'pwd' 
+      ? [...baseFields, 'pwdIdNumber'] 
+      : baseFields;
+
+    const isValid = await trigger(fieldsToValidate as any);
+    if (isValid) {
+      setStep(2);
+    }
+  };
 
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
@@ -373,17 +393,8 @@ const SignUpPage: React.FC = () => {
                             I am a:
                           </legend>
                           <div className="grid grid-cols-1 gap-2">
-                            {/* Commented out general user option - only PWD can register */}
-                            {/* {(['general', 'pwd'] as UserType[]).map((type) => (
-                              <UserTypeButton
-                                key={type}
-                                type={type}
-                                currentType={userType}
-                                onChange={(t) => setValue('userType', t)}
-                              />
-                            ))} */}
-                            {/* Only show PWD option */}
-                            {(['pwd'] as UserType[]).map((type) => (
+                            {/* Show both options but default to PWD */}
+                            {(['general', 'pwd'] as UserType[]).map((type) => (
                               <UserTypeButton
                                 key={type}
                                 type={type}
@@ -393,7 +404,9 @@ const SignUpPage: React.FC = () => {
                             ))}
                           </div>
                           <p className="text-xs text-gray-600 italic">
-                            Currently, only Persons with Disabilities can register for accounts.
+                            {userType === 'pwd' 
+                              ? "PWD ID Number is required for Persons with Disabilities."
+                              : "General users can register without PWD ID."}
                           </p>
                         </fieldset>
 
@@ -518,35 +531,29 @@ const SignUpPage: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* PWD ID Number - Now always required since only PWD can register */}
-                        <div className="space-y-1">
-                          <label className="block text-xs font-medium text-black">PWD ID Number *</label>
-                          <input
-                            type="text"
-                            className={`block w-full px-3 py-2 border ${errors.pwdIdNumber ? 'border-red-300' : 'border-gray-200'} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors text-sm`}
-                            placeholder="Enter your PWD ID Number"
-                            aria-invalid={!!errors.pwdIdNumber}
-                            {...register('pwdIdNumber')}
-                          />
-                          {errors.pwdIdNumber && (
-                            <p className="text-xs text-red-500">{errors.pwdIdNumber.message}</p>
-                          )}
-                        </div>
+                        {/* PWD ID Number - Conditionally required */}
+                        {userType === 'pwd' && (
+                          <div className="space-y-1">
+                            <label className="block text-xs font-medium text-black">PWD ID Number *</label>
+                            <input
+                              type="text"
+                              className={`block w-full px-3 py-2 border ${errors.pwdIdNumber ? 'border-red-300' : 'border-gray-200'} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors text-sm`}
+                              placeholder="Enter your PWD ID Number"
+                              aria-invalid={!!errors.pwdIdNumber}
+                              {...register('pwdIdNumber')}
+                            />
+                            {errors.pwdIdNumber && (
+                              <p className="text-xs text-red-500">{errors.pwdIdNumber.message}</p>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex justify-end pt-3">
                         <motion.button 
                           type="button" 
                           className="px-4 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold shadow hover:from-indigo-600 hover:to-purple-600 transition text-sm"
-                          onClick={async () => {
-                            // Since only PWD can register, always include pwdIdNumber in validation
-                            const fieldsToValidate = ['firstName', 'lastName', 'email', 'phone', 'address', 'pwdIdNumber'];
-                            
-                            const isValid = await trigger(fieldsToValidate as any);
-                            if (isValid) {
-                              setStep(2);
-                            }
-                          }}
+                          onClick={handleNextStep}
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                         >

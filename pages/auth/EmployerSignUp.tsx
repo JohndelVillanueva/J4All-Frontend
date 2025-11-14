@@ -17,6 +17,9 @@ export default function EmployerSignupForm() {
   const [formError, setFormError] = useState<string | null>(null);
   const [step, setStep] = useState(1);
 
+  // Get base URL from environment variables
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3111';
+
   // Toast notification state
   const [toast, setToast] = useState<{
     show: boolean;
@@ -226,7 +229,7 @@ export default function EmployerSignupForm() {
       });
       formData.append('verificationDocsCount', verificationDocs.length.toString());
 
-      const response = await axios.post("/api/createEmployer", formData, {
+      const response = await axios.post(`${API_BASE_URL}/api/createEmployer`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Accept': 'application/json'
