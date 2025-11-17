@@ -15,7 +15,17 @@ import {
 	Line,
 } from 'recharts';
 
-const COLORS = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4'];
+// Consistent color scheme across all charts
+const USER_COLORS = {
+	admin: '#10B981',     // Green (admin and general are the same)
+	general: '#10B981',   // Green (same as admin)
+	employer: '#3B82F6',  // Blue
+	jobseeker: '#EF4444', // Red (pwd and jobseeker are the same)
+	pwd: '#EF4444',       // Red (same as jobseeker)
+	total: '#8B5CF6',     // Purple (for total line)
+};
+
+const COLORS = ['#3B82F6', '#EF4444', '#10B981', '#8B5CF6', '#F59E0B', '#06B6D4'];
 
 const StatisticsPage = () => {
 	const [loading, setLoading] = useState(true);
@@ -39,6 +49,15 @@ const StatisticsPage = () => {
 			.finally(() => setLoading(false));
 	}, []);
 
+	// Helper function to get color based on user type
+	const getColorForUserType = (type: string) => {
+		const normalizedType = type.toLowerCase();
+		if (normalizedType.includes('admin') || normalizedType.includes('general')) return USER_COLORS.admin;
+		if (normalizedType.includes('employer')) return USER_COLORS.employer;
+		if (normalizedType.includes('pwd') || normalizedType.includes('jobseeker')) return USER_COLORS.jobseeker;
+		return COLORS[0];
+	};
+
 	return (
 		<div className="mx-auto px-6 py-8">
 			<div className="mb-6">
@@ -60,10 +79,10 @@ const StatisticsPage = () => {
 									<YAxis allowDecimals={false} />
 									<Tooltip />
 									<Legend />
-									<Line type="monotone" dataKey="total" stroke="#6366F1" strokeWidth={2} />
-									<Line type="monotone" dataKey="employer" stroke="#10B981" strokeWidth={2} />
-									<Line type="monotone" dataKey="general" stroke="#F59E0B" strokeWidth={2} />
-									<Line type="monotone" dataKey="pwd" stroke="#EF4444" strokeWidth={2} />
+									<Line type="monotone" dataKey="total" stroke={USER_COLORS.total} strokeWidth={2} />
+									<Line type="monotone" dataKey="general" stroke={USER_COLORS.general} strokeWidth={2} />
+									<Line type="monotone" dataKey="employer" stroke={USER_COLORS.employer} strokeWidth={2} />
+									<Line type="monotone" dataKey="pwd" stroke={USER_COLORS.pwd} strokeWidth={2} />
 								</LineChart>
 							</ResponsiveContainer>
 						</div>
@@ -75,9 +94,9 @@ const StatisticsPage = () => {
 							<ResponsiveContainer width="100%" height="100%">
 								<PieChart>
 									<Pie data={usersDistribution} dataKey="count" nameKey="type" outerRadius={100} fill="#8884d8" label>
-										{usersDistribution.map((_, index) => (
-    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-))}
+										{usersDistribution.map((entry, index) => (
+											<Cell key={`cell-${index}`} fill={getColorForUserType(entry.type)} />
+										))}
 									</Pie>
 									<Tooltip />
 									<Legend />
@@ -106,4 +125,4 @@ const StatisticsPage = () => {
 	);
 };
 
-export default StatisticsPage; 
+export default StatisticsPage;
