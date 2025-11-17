@@ -4,56 +4,9 @@ import { JobListing } from "../types/types";
 import { FaBriefcase, FaTrash, FaEye, FaBuilding } from "react-icons/fa";
 import JobDescriptionModal from "./JobDescriptionModal";
 import ApplyModal from "./ApplyModal";
-import UserAvatar from '../UserAvatar';
 import { useToast } from "../ToastContainer";
 import { handleApiError, handleJobApplicationError } from "../../src/utils/errorHandler";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-// Helper hook to fetch employer photo and name
-function useEmployerAvatarInfo(userId?: number) {
-  const [photoUrl, setPhotoUrl] = React.useState<string | null>(null);
-  const [firstName, setFirstName] = React.useState<string>('');
-  const [lastName, setLastName] = React.useState<string>('');
-
-  React.useEffect(() => {
-    if (!userId) return;
-    const fetchInfo = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          console.log('No token available for fetching employer info');
-          return;
-        }
-        
-        const userRes = await fetch(`/api/users/${userId}`, {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
-        if (userRes.ok) {
-          const userData = await userRes.json();
-          setFirstName(userData?.data?.first_name || '');
-          setLastName(userData?.data?.last_name || '');
-        }
-        const photoRes = await fetch(`/api/photos/${userId}`, {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
-        if (photoRes.ok) {
-          const photoData = await photoRes.json();
-          setPhotoUrl(photoData?.data?.photo_url || null);
-        }
-      } catch (e) {
-        console.error('Error fetching employer avatar info:', e);
-        setPhotoUrl(null);
-      }
-    };
-    fetchInfo();
-  }, [userId]);
-
-  return { photoUrl, firstName, lastName };
-}
 
 interface SavedJob {
   id: number;
