@@ -75,7 +75,7 @@ const StatisticsPage = () => {
 							<ResponsiveContainer width="100%" height="100%">
 								<PieChart>
 									<Pie data={usersDistribution} dataKey="count" nameKey="type" outerRadius={100} fill="#8884d8" label>
-										{usersDistribution.map((entry, index) => (
+										{usersDistribution.map(( index) => (
     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
 ))}
 									</Pie>

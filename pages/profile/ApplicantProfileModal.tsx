@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaTimes, FaUser, FaEnvelope, FaPhone, FaBriefcase, FaGraduationCap, FaMapMarkerAlt, FaStar, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaTimes, FaUser, FaEnvelope, FaPhone, FaBriefcase, FaGraduationCap, FaMapMarkerAlt, FaStar } from "react-icons/fa";
 import UserAvatar from "../../components/UserAvatar";
 import { useToast } from "../../components/ToastContainer";
 import { handleApiError } from "../../src/utils/errorHandler";
@@ -56,7 +56,7 @@ const ApplicantProfileModal: React.FC<ApplicantProfileModalProps> = ({
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showResume, setShowResume] = useState(false);
+  // const [showResume, setShowResume] = useState(false);
   const { showToast } = useToast();
 
   useEffect(() => {
