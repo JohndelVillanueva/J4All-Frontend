@@ -268,7 +268,7 @@ const ApplicantProfileModal: React.FC<ApplicantProfileModalProps> = ({
                         <span className="text-gray-600 block mb-1">Desired Salary:</span>
                         <span className="font-medium">
                           {profileData.jobSeeker.desired_salary 
-                            ? `$${profileData.jobSeeker.desired_salary.toLocaleString()}`
+                            ? `₱${profileData.jobSeeker.desired_salary.toLocaleString()}`
                             : 'Not specified'
                           }
                         </span>
