@@ -83,11 +83,12 @@ const JobSeekerDashboard = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [isLoadingJobs, setIsLoadingJobs] = useState(true);
   const [isLoadingApplications, setIsLoadingApplications] = useState(true);
-  const [jobError, setJobError] = useState<string | null>(null);
-  const [applicationsError, setApplicationsError] = useState<string | null>(null);
   const [, setIsLoadingUser] = useState(true);
   const [, setUserError] = useState<string | null>(null);
   const [showHeader, setShowHeader] = useState(true);
+  const [jobError, setJobError] = useState<string | null>(null);
+  const [applicationsError, setApplicationsError] = useState<string | null>(null);
+  const [savedJobsCount, setSavedJobsCount] = useState(0);
 
   console.log('JobSeekerDashboard user:', user);
 
@@ -108,6 +109,7 @@ const JobSeekerDashboard = () => {
     if (user && (user.user_type === "pwd" || user.user_type === "indigenous" || user.user_type === "general")) {
       fetchUserData();
       fetchApplications();
+      fetchSavedJobs();
     }
   }, [user]);
 
@@ -123,6 +125,31 @@ const JobSeekerDashboard = () => {
     const timer = setTimeout(() => setShowHeader(false), 3000);
     return () => clearTimeout(timer);
   }, []);
+
+  // Fetch saved jobs from backend
+  const fetchSavedJobs = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Authentication required");
+      
+      const response = await fetch("/api/saved-jobs", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch saved jobs");
+      }
+      
+      const data = await response.json();
+      console.log('Fetched saved jobs:', data);
+      setSavedJobsCount(data.data?.length || 0);
+    } catch (error) {
+      console.error("Saved jobs fetch error:", error);
+      setSavedJobsCount(0);
+    }
+  };
 
   // Fetch applications from backend
   const fetchApplications = async () => {
@@ -165,7 +192,7 @@ const JobSeekerDashboard = () => {
     { name: "Applications Sent", value: applications.length, change: "", trend: "up" },
     // { name: "Interview Rate", value: "25%", change: "", trend: "up" },
     // { name: "Profile Views", value: 24, change: "", trend: "up" },
-    { name: "Saved Jobs", value: 5, change: "", trend: "up" },
+    { name: "Saved Jobs", value: savedJobsCount, change: "", trend: "up" },
   ];
 
   // Enhanced fetch functions with better error handling
