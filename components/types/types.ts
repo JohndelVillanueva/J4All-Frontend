@@ -46,6 +46,7 @@ export type UserData = {
 
 export type EmployerInfo = {
   id: string;
+   logo_path?: string;
     name: string;
   logo?: string | null;
   description?: string;
@@ -60,6 +61,7 @@ export type Company = {
 
 export type JobListing = {
   id: string;
+  jobType?: string;
   title: string;
   company: string | Company;
   logo_path?: string | null;

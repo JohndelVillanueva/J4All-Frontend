@@ -29,18 +29,33 @@ function useEmployerAvatarInfo(userId?: number) {
     if (!userId) return;
     const fetchInfo = async () => {
       try {
-        const userRes = await fetch(`/api/users/${userId}`);
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.log('No token available for fetching employer info');
+          return;
+        }
+        
+        const userRes = await fetch(`/api/users/${userId}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
         if (userRes.ok) {
           const userData = await userRes.json();
           setFirstName(userData?.data?.first_name || '');
           setLastName(userData?.data?.last_name || '');
         }
-        const photoRes = await fetch(`/api/photos/${userId}`);
+        const photoRes = await fetch(`/api/photos/${userId}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
         if (photoRes.ok) {
           const photoData = await photoRes.json();
           setPhotoUrl(photoData?.data?.photo_url || null);
         }
       } catch (e) {
+        console.error('Error fetching employer avatar info:', e);
         setPhotoUrl(null);
       }
     };
@@ -156,16 +171,44 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
       }
 
       const data = await response.json();
+      console.log('=== RAW API RESPONSE ===');
+      console.log('Full data:', data);
+      console.log('First job item:', data.data?.[0]);
+      console.log('First job object:', data.data?.[0]?.job);
+      console.log('Employer info:', data.data?.[0]?.job?.employer);
+      console.log('========================');
       
       if (data.success && data.data) {
         const recommendedJobsWithStatus = data.data.map((item: any) => {
           const jobStatus = getJobStatus(item.job.id.toString());
+          
+          // Try multiple possible locations for employer_user_id
+          const employerUserId = item.job.employer_user_id 
+            || item.job.employer?.user_id 
+            || item.job.user_id
+            || item.job.employer?.id
+            || item.job.created_by;
+          
+          console.log('Processing job:', {
+            jobId: item.job.id,
+            jobTitle: item.job.job_title,
+            employerUserId: employerUserId,
+            rawEmployer: item.job.employer,
+            allPossibleIds: {
+              employer_user_id: item.job.employer_user_id,
+              'employer.user_id': item.job.employer?.user_id,
+              user_id: item.job.user_id,
+              'employer.id': item.job.employer?.id,
+              created_by: item.job.created_by
+            }
+          });
+          
           return {
             ...item.job,
             matchScore: item.score,
             matchedSkills: item.matchedSkills,
             missingSkills: item.missingSkills,
-            status: jobStatus, // Use the actual application status
+            status: jobStatus,
             title: item.job.job_title,
             location: item.job.job_location,
             salary: item.job.salary_range_min && item.job.salary_range_max 
@@ -178,14 +221,24 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
               is_required: rs.is_required,
               importance_level: rs.importance_level
             })) || [],
-            // Include employer information
+            // Include employer information - CRITICAL: Add employer_user_id
+            employer_user_id: employerUserId,
+            employer_id: item.job.employer_id,
             employer: item.job.employer,
             hrFirstName: item.job.hrFirstName,
             hrLastName: item.job.hrLastName,
-            hrPhoto: item.job.hrPhoto
+            hrPhoto: item.job.hrPhoto,
+            company: item.job.company?.name || item.job.company_name || 'Unknown Company'
           };
         });
         
+        console.log('=== TRANSFORMED JOBS ===');
+        console.log('Transformed jobs with employer_user_id:', recommendedJobsWithStatus.map((j: { id: any; title: any; employer_user_id: any; }) => ({
+          id: j.id,
+          title: j.title,
+          employer_user_id: j.employer_user_id
+        })));
+        console.log('========================');
         setRecommendedJobs(recommendedJobsWithStatus);
       }
     } catch (err) {
@@ -380,6 +433,9 @@ const EmployerProfileModal: React.FC<{
   // Fetch HR/contact person info if available
   const { photoUrl, firstName, lastName } = useEmployerAvatarInfo(employer.user_id);
 
+  // Safe access to logo path - try multiple possible property names
+  const companyLogo = employer.logo_path || employer.logo || employer.company_logo;
+
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
@@ -398,12 +454,16 @@ const EmployerProfileModal: React.FC<{
         <div className="space-y-6">
           {/* Company Header */}
           <div className="flex items-start space-x-4">
-            {employer.logo_path && (
+            {companyLogo ? (
               <img
-                src={`${API_BASE_URL}${employer.logo_path}`}
+                src={`${API_BASE_URL}${companyLogo}`}
                 alt={`${employer.company_name} logo`}
                 className="w-16 h-16 rounded-lg object-cover border border-gray-200"
               />
+            ) : (
+              <div className="w-16 h-16 rounded-lg bg-blue-500 flex items-center justify-center text-white font-semibold text-xl border border-gray-200">
+                {employer.company_name?.charAt(0).toUpperCase() || 'C'}
+              </div>
             )}
             <div className="flex-1">
               <h2 className="text-2xl font-bold text-gray-900">{employer.company_name}</h2>
@@ -631,31 +691,9 @@ const RecommendedJobListItem: React.FC<{
   onViewEmployerProfile?: (job: JobListing) => void;
 }> = ({ job, onViewDetails, onApply, onViewEmployerProfile }) => {
   const companyName = typeof job.company === 'string' ? job.company : job.company?.name || 'Unknown Company';
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  const [firstName, setFirstName] = useState<string>('');
-  const [lastName, setLastName] = useState<string>('');
-
-  useEffect(() => {
-    if (!job.employer_user_id) return;
-    const fetchInfo = async () => {
-      try {
-        const userRes = await fetch(`/api/users/${job.employer_user_id}`);
-        if (userRes.ok) {
-          const userData = await userRes.json();
-          setFirstName(userData?.data?.first_name || '');
-          setLastName(userData?.data?.last_name || '');
-        }
-        const photoRes = await fetch(`/api/photos/${job.employer_user_id}`);
-        if (photoRes.ok) {
-          const photoData = await photoRes.json();
-          setPhotoUrl(photoData?.data?.photo_url || null);
-        }
-      } catch (e) {
-        setPhotoUrl(null);
-      }
-    };
-    fetchInfo();
-  }, [job.employer_user_id]);
+  
+  // Get company logo from employer data
+  const companyLogo = job.employer?.logo_path;
 
   const getMatchColor = (score: number) => {
     if (score >= 80) return "bg-green-100 text-green-800";
@@ -669,18 +707,20 @@ const RecommendedJobListItem: React.FC<{
       <div className="px-4 py-4 sm:px-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            {/* Clickable Avatar */}
-            <button
-              onClick={() => onViewEmployerProfile && onViewEmployerProfile(job)}
-              className="flex-shrink-0 hover:opacity-80 transition-opacity duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-full"
-            >
-              <UserAvatar
-                photoUrl={photoUrl ? `${API_BASE_URL}${photoUrl}` : undefined}
-                firstName={firstName}
-                lastName={lastName}
-                size="md"
-              />
-            </button>
+            {/* Company Logo Display */}
+            <div className="flex-shrink-0">
+              {companyLogo ? (
+                <img
+                  src={`${API_BASE_URL}${companyLogo}`}
+                  alt={`${companyName} logo`}
+                  className="w-12 h-12 rounded-full object-cover border border-gray-200"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold text-lg">
+                  {companyName.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
             <div className="ml-4">
               <p className="text-lg font-medium text-blue-600">{job.title}</p>
               <div className="flex items-center space-x-2">
@@ -810,7 +850,7 @@ const ApplicationsSection: React.FC<{
     <div className="bg-white overflow-hidden">
       <ul className="divide-y divide-gray-200">
         {applications.map((app) => {
-          const job = jobListings.find((j) => String(j.id) === String(app.jobId));
+          const job = jobListings.find((j: JobListing) => String(j.id) === String(app.jobId));
           return (
             <ApplicationListItem
               key={app.id}

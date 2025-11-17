@@ -1,10 +1,59 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { JobListing } from "../types/types";
-import { FaBriefcase, FaTrash, FaEye } from "react-icons/fa";
+import { FaBriefcase, FaTrash, FaEye, FaBuilding } from "react-icons/fa";
 import JobDescriptionModal from "./JobDescriptionModal";
-import ApplyModal from "./ApplyModal"; // Add this import
+import ApplyModal from "./ApplyModal";
+import UserAvatar from '../UserAvatar';
 import { useToast } from "../ToastContainer";
-import { handleApiError, handleJobApplicationError } from "../../src/utils/errorHandler"; // Add handleJobApplicationError
+import { handleApiError, handleJobApplicationError } from "../../src/utils/errorHandler";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+// Helper hook to fetch employer photo and name
+function useEmployerAvatarInfo(userId?: number) {
+  const [photoUrl, setPhotoUrl] = React.useState<string | null>(null);
+  const [firstName, setFirstName] = React.useState<string>('');
+  const [lastName, setLastName] = React.useState<string>('');
+
+  React.useEffect(() => {
+    if (!userId) return;
+    const fetchInfo = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.log('No token available for fetching employer info');
+          return;
+        }
+        
+        const userRes = await fetch(`/api/users/${userId}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          setFirstName(userData?.data?.first_name || '');
+          setLastName(userData?.data?.last_name || '');
+        }
+        const photoRes = await fetch(`/api/photos/${userId}`, {
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+        if (photoRes.ok) {
+          const photoData = await photoRes.json();
+          setPhotoUrl(photoData?.data?.photo_url || null);
+        }
+      } catch (e) {
+        console.error('Error fetching employer avatar info:', e);
+        setPhotoUrl(null);
+      }
+    };
+    fetchInfo();
+  }, [userId]);
+
+  return { photoUrl, firstName, lastName };
+}
 
 interface SavedJob {
   id: number;
@@ -21,7 +70,9 @@ interface SavedJob {
   job_description?: string;
   job_requirements?: string;
   skills?: any[];
-  employer_id: number; // Changed from optional to required
+  employer_id: number;
+  employer_user_id?: number;
+  employer?: any; // Full employer object with company details
 }
 
 interface SavedJobsTabProps {
@@ -30,15 +81,16 @@ interface SavedJobsTabProps {
 }
 
 const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
+  const navigate = useNavigate();
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedJob, setSelectedJob] = useState<SavedJob | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false); // Add this state
-  const [applyJob, setApplyJob] = useState<SavedJob | null>(null); // Add this state
-  const [isSubmitting, setIsSubmitting] = useState(false); // Add this state
-  const [applyError, setApplyError] = useState<string | null>(null); // Add this state
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [applyJob, setApplyJob] = useState<SavedJob | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [applyError, setApplyError] = useState<string | null>(null);
   const { showToast } = useToast();
 
   // Fetch saved jobs from backend
@@ -60,7 +112,6 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
       if (!response.ok) {
         const errorData = await response.json();
         
-        // Create a mock error object for the error handler
         const mockError = {
           response: {
             status: response.status,
@@ -77,11 +128,37 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
 
       const data = await response.json();
       if (data.success) {
-        // Ensure each job has employer_id
-        const jobsWithEmployer = data.data.map((job: any) => ({
-          ...job,
-          employer_id: job.employer_id || job.employer?.id || 0 // Try multiple sources for employer_id
-        }));
+        // Ensure each job has employer_id, employer_user_id, employer data, and logo
+        const jobsWithEmployer = data.data.map((job: any) => {
+          // Try to get employer_user_id from multiple sources
+          const employerUserId = job.employer_user_id 
+            || job.employer?.user_id 
+            || job.user_id
+            || job.employer?.id
+            || job.created_by;
+
+          // Get company logo path
+          const companyLogo = job.employer?.logo_path 
+            || job.logo_path 
+            || job.logo 
+            || job.employer?.logo;
+
+          console.log('Saved job employer info:', {
+            jobId: job.id,
+            jobTitle: job.title,
+            employerUserId: employerUserId,
+            companyLogo: companyLogo,
+            rawEmployer: job.employer
+          });
+
+          return {
+            ...job,
+            employer_id: job.employer_id || job.employer?.id || 0,
+            employer_user_id: employerUserId,
+            employer: job.employer, // Keep the full employer object
+            logo: companyLogo
+          };
+        });
         setSavedJobs(jobsWithEmployer);
       } else {
         setSavedJobs([]);
@@ -117,7 +194,6 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
       if (!response.ok) {
         const errorData = await response.json();
         
-        // Create a mock error object for the error handler
         const mockError = {
           response: {
             status: response.status,
@@ -130,7 +206,6 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
         return;
       }
 
-      // Remove from local state
       setSavedJobs(prev => prev.filter(job => job.id !== jobId));
       showToast({
         type: 'success',
@@ -153,7 +228,6 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
     setIsSubmitting(true);
     setApplyError(null);
 
-    // Check if we have employer_id, if not try to get it from the job object
     let employerId = applyJob.employer_id;
     if (!employerId && (applyJob as any).employer_id) {
       employerId = (applyJob as any).employer_id;
@@ -222,7 +296,6 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
       setIsApplyModalOpen(false);
       setApplyJob(null);
       
-      // Remove the job from saved jobs after applying
       setSavedJobs(prev => prev.filter(job => job.id !== applyJob.id));
     } catch (err) {
       const errorInfo = handleJobApplicationError(err);
@@ -237,10 +310,8 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
     }
   };
 
-  // Handle save/unsave job from modal
   const handleSaveJob = async () => {
     // Job is already saved, so this function won't be called
-    // But we need it for the modal interface
   };
 
   const handleUnsaveJob = async (jobId: number) => {
@@ -248,21 +319,17 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
     setIsModalOpen(false);
   };
 
-  // Open job details modal
   const handleViewDetails = (job: SavedJob) => {
     setSelectedJob(job);
     setIsModalOpen(true);
   };
 
-  // Handle apply now click
   const handleApplyNow = (job: SavedJob) => {
     setApplyJob(job);
     setIsApplyModalOpen(true);
   };
 
-  // Handle apply success from modal
   const handleApplySuccess = () => {
-    // Close the details modal and open the apply modal
     setIsModalOpen(false);
     setSelectedJob(null);
     if (selectedJob) {
@@ -270,7 +337,11 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
     }
   };
 
-  // Fetch saved jobs on component mount
+  // Navigate to employer profile
+  const handleViewEmployerProfile = (employerId: number) => {
+    navigate(`/employer/${employerId}`);
+  };
+
   useEffect(() => {
     fetchSavedJobs();
   }, []);
@@ -340,84 +411,19 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
           ) : (
             <ul className="divide-y divide-gray-200">
               {savedJobs.map((job) => (
-                <li key={job.id}>
-                  <div className="px-4 py-4 sm:px-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
-                          {job.logo ? (
-                            <img
-                              src={job.logo}
-                              alt={job.company}
-                              className="h-12 w-12 rounded-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-gray-600 text-lg font-medium">
-                              {job.company.charAt(0)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="ml-4">
-                          <p className="text-lg font-medium text-blue-600">{job.title}</p>
-                          <p className="text-sm text-gray-500">
-                            {job.company} • {job.location}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="ml-2 flex-shrink-0 flex flex-col items-end">
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 mb-2">
-                          Saved
-                        </span>
-                        <span className="text-sm text-gray-500">Saved on {job.savedDate}</span>
-                      </div>
-                    </div>
-                    <div className="mt-2 sm:flex sm:justify-between">
-                      <div className="sm:flex">
-                        <p className="flex items-center text-sm text-gray-500">
-                          <FaBriefcase className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
-                          {job.salary
-                            ? job.salary.replace(/\$/g, "₱")
-                            : "₱ Negotiable"}
-                        </p>
-                        <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
-                          {job.type}
-                        </p>
-                      </div>
-                      <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
-                        <span className="text-xs text-gray-400">Posted {job.posted}</span>
-                      </div>
-                    </div>
-                    <div className="mt-3 flex space-x-3">
-                      <button 
-                        onClick={() => handleViewDetails(job)}
-                        className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      >
-                        <FaEye className="mr-1 h-3 w-3" />
-                        View Details
-                      </button>
-                      {/* <button 
-                        onClick={() => handleApplyNow(job)}
-                        className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      >
-                        Apply Now
-                      </button> */}
-                      <button 
-                        onClick={() => handleRemoveJob(job.id)}
-                        className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      >
-                        <FaTrash className="mr-1 h-3 w-3" />
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                </li>
+                <SavedJobListItem
+                  key={job.id}
+                  job={job}
+                  onViewDetails={handleViewDetails}
+                  onRemove={handleRemoveJob}
+                  onViewEmployerProfile={handleViewEmployerProfile}
+                />
               ))}
             </ul>
           )}
         </div>
       </div>
 
-      {/* Job Description Modal */}
       {selectedJob && isModalOpen && (
         <JobDescriptionModal
           job={selectedJob as any}
@@ -431,7 +437,6 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
         />
       )}
 
-      {/* Apply Modal */}
       {applyJob && isApplyModalOpen && (
         <ApplyModal
           job={applyJob as any}
@@ -446,6 +451,112 @@ const SavedJobsTab: React.FC<SavedJobsTabProps> = () => {
         />
       )}
     </div>
+  );
+};
+
+// Separate component for each saved job item
+const SavedJobListItem: React.FC<{
+  job: SavedJob;
+  onViewDetails: (job: SavedJob) => void;
+  onRemove: (jobId: number) => void;
+  onViewEmployerProfile: (employerId: number) => void;
+}> = ({ job, onViewDetails, onRemove, onViewEmployerProfile }) => {
+  // Get company logo from employer data
+  const companyLogo = job.logo || job.employer?.logo_path;
+  const companyName = job.company || job.employer?.company_name;
+
+  return (
+    <li>
+      <div className="px-4 py-4 sm:px-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            {/* Display Company Logo */}
+            <div 
+              className="flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => job.employer_user_id && onViewEmployerProfile(job.employer_user_id)}
+              title="View company profile"
+            >
+              {companyLogo ? (
+                <img
+                  src={`${API_BASE_URL}${companyLogo}`}
+                  alt={`${companyName} logo`}
+                  className="w-12 h-12 rounded-full object-cover border border-gray-200"
+                  onError={(e) => {
+                    // Fallback to company initial if image fails to load
+                    e.currentTarget.style.display = 'none';
+                    const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div 
+                className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold text-lg"
+                style={{ display: companyLogo ? 'none' : 'flex' }}
+              >
+                {companyName?.charAt(0).toUpperCase() || 'C'}
+              </div>
+            </div>
+            <div className="ml-4">
+              <p className="text-lg font-medium text-blue-600">{job.title}</p>
+              <p 
+                className="text-sm text-gray-500 hover:text-blue-600 cursor-pointer transition-colors"
+                onClick={() => job.employer_user_id && onViewEmployerProfile(job.employer_user_id)}
+                title="View company profile"
+              >
+                {companyName} • {job.location}
+              </p>
+            </div>
+          </div>
+          <div className="ml-2 flex-shrink-0 flex flex-col items-end">
+            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 mb-2">
+              Saved
+            </span>
+            <span className="text-sm text-gray-500">Saved on {job.savedDate}</span>
+          </div>
+        </div>
+        <div className="mt-2 sm:flex sm:justify-between">
+          <div className="sm:flex">
+            <p className="flex items-center text-sm text-gray-500">
+              <FaBriefcase className="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" />
+              {job.salary
+                ? job.salary.replace(/\$/g, "₱")
+                : "₱ Negotiable"}
+            </p>
+            <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
+              {job.type}
+            </p>
+          </div>
+          <div className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0">
+            <span className="text-xs text-gray-400">Posted {job.posted}</span>
+          </div>
+        </div>
+        <div className="mt-3 flex space-x-3">
+          {job.employer_user_id && (
+            <button 
+              onClick={() => onViewEmployerProfile(job.employer_user_id!)}
+              className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <FaBuilding className="mr-1 h-3 w-3" />
+              View Company
+            </button>
+          )}
+          <button 
+            onClick={() => onViewDetails(job)}
+            className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <FaEye className="mr-1 h-3 w-3" />
+            View Details
+          </button>
+          <button 
+            onClick={() => onRemove(job.id)}
+            className="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            <FaTrash className="mr-1 h-3 w-3" />
+            Remove
+          </button>
+        </div>
+      </div>
+    </li>
   );
 };
 
