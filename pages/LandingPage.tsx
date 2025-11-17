@@ -375,7 +375,7 @@ const LandingPage = () => {
             </div>
             <div>
               <h4 className="font-bold mb-4">Contact</h4>
-              <p className="text-gray-400 mb-2">j4pwdsno.reply@gmail.com</p>
+              <p className="text-gray-400 mb-2">Jpwdsa@gmail.com</p>
               <p className="text-gray-400">Calulut, City of San Fernando, Pampanga, PH</p>
             </div>
           </div>
