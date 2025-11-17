@@ -299,7 +299,7 @@ const ApplicantProfileModal: React.FC<ApplicantProfileModalProps> = ({
                   </div>
 
                   {/* Resume */}
-                  <div className="bg-white border border-gray-200 rounded-xl p-6">
+                  {/* <div className="bg-white border border-gray-200 rounded-xl p-6">
                     <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                       <FaBriefcase className="mr-2 text-blue-600" />
                       Resume
@@ -342,7 +342,7 @@ const ApplicantProfileModal: React.FC<ApplicantProfileModalProps> = ({
                         </a>
                       </div>
                     )}
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>
