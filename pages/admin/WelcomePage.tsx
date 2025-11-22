@@ -5,6 +5,9 @@ import {
   getAdminUsers,
   getAdminEmployers,
   getAdminActivities,
+  // Assuming a new service function exists for pending PWDs
+  // getAdminPendingPwds, 
+  // approvePwd,
 } from "../../src/services/notificationService";
 import {
   FaCheckCircle,
@@ -19,12 +22,14 @@ import {
   FaUserCircle,
   FaTimesCircle,
   FaExternalLinkAlt,
+  FaWheelchair, // Icon for PWDs
 } from "react-icons/fa";
 import { useToast } from "../../components/ToastContainer";
 
 type LabelType = "PWD" | "Statistic" | "Admin" | "Company";
 
-type TableMode = "users" | "pwd" | "employers" | "pending-employers";
+// Added 'pending-pwd' mode
+type TableMode = "users" | "pwd" | "employers" | "pending-employers" | "pending-pwd";
 
 type Activity = {
   type: string;
@@ -56,6 +61,7 @@ const StatCard = ({
     orange: "from-orange-500 to-amber-500",
     indigo: "from-indigo-500 to-violet-500",
     yellow: "from-yellow-500 to-amber-500",
+    red: "from-red-500 to-pink-500", // Added red for PWD pending
   };
   return (
     <div
@@ -145,6 +151,12 @@ const AdminWelcomePage = () => {
   const [processingId, setProcessingId] = useState<number | null>(null);
   const [selectedEmployer, setSelectedEmployer] = useState<any | null>(null);
 
+  // --- START: Added Pending PWD State ---
+  const [pendingPwds, setPendingPwds] = useState<any[]>([]);
+  const [pendingPwdCount, setPendingPwdCount] = useState(0);
+  const [selectedPwd, setSelectedPwd] = useState<any | null>(null);
+  // --- END: Added Pending PWD State ---
+
   // Image preview modal
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -219,6 +231,47 @@ const AdminWelcomePage = () => {
     }
   };
 
+  // --- START: Added fetchPendingPwds function ---
+  const fetchPendingPwds = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      // Assuming a new endpoint for pending PWDs
+      const response = await fetch("/api/admin/pending-pwds", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        const uniquePwds = data.data.filter(
+          (pwd: any, index: number, self: any[]) =>
+            index === self.findIndex((e: any) => e.id === pwd.id)
+        );
+
+        setPendingPwds(uniquePwds);
+        setPendingPwdCount(uniquePwds.length);
+      } else {
+        showToast({
+          type: "error",
+          message: "Failed to fetch pending PWDs",
+          autoHide: true,
+          autoHideDelay: 3000,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching pending PWDs:", error);
+      showToast({
+        type: "error",
+        message: "Error fetching pending PWDs",
+        autoHide: true,
+        autoHideDelay: 3000,
+      });
+    }
+  };
+  // --- END: Added fetchPendingPwds function ---
+
   // Approve employer
   const approveEmployer = async (employerId: number) => {
     setProcessingId(employerId);
@@ -271,6 +324,58 @@ const AdminWelcomePage = () => {
     }
   };
 
+  // --- START: Added approvePwd function ---
+  const approvePwd = async (pwdId: number) => {
+    setProcessingId(pwdId);
+    try {
+      const token = localStorage.getItem("token");
+      // Assuming a new endpoint for PWD approval
+      const response = await fetch("/api/admin/approve-pwd", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        // CORRECTION: Backend expects 'userId', not 'pwdId'
+        body: JSON.stringify({ userId: pwdId }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setPendingPwds((prev) => prev.filter((pwd) => pwd.id !== pwdId));
+        setPendingPwdCount((prev) => prev - 1);
+
+        showToast({
+          type: "success",
+          message: "PWD approved successfully! Notification email has been sent.",
+          autoHide: true,
+          autoHideDelay: 5000,
+        });
+      } else {
+        showToast({
+          type: "error",
+          message: `Failed to approve PWD: ${
+            data.error || "Unknown error"
+          }`,
+          autoHide: true,
+          autoHideDelay: 5000,
+        });
+      }
+    } catch (error) {
+      console.error("Error approving PWD:", error);
+      showToast({
+        type: "error",
+        message: "Network error: Failed to approve PWD",
+        autoHide: true,
+        autoHideDelay: 5000,
+      });
+    } finally {
+      setProcessingId(null);
+      setSelectedPwd(null);
+    }
+  };
+  // --- END: Added approvePwd function ---
+
   useEffect(() => {
     getAdminStats()
       .then((res) => {
@@ -298,8 +403,12 @@ const AdminWelcomePage = () => {
       .finally(() => setLoading(false));
 
     fetchPendingEmployers();
+    fetchPendingPwds(); // Fetch PWD pending approvals
 
-    const interval = setInterval(fetchPendingEmployers, 30000);
+    const interval = setInterval(() => {
+        fetchPendingEmployers();
+        fetchPendingPwds();
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -364,6 +473,15 @@ const AdminWelcomePage = () => {
           return;
         }
 
+        // --- START: Added logic for pending-pwd ---
+        if (tableMode === "pending-pwd") {
+          setRows(pendingPwds);
+          setTotal(pendingPwds.length);
+          setTableLoading(false);
+          return;
+        }
+        // --- END: Added logic for pending-pwd ---
+
         if (tableMode === "employers") {
           const res = await getAdminEmployers({ page, pageSize });
           if (res?.success) {
@@ -420,7 +538,7 @@ const AdminWelcomePage = () => {
       }
     };
     load();
-  }, [tableOpen, tableMode, page, pageSize, pendingEmployers]);
+  }, [tableOpen, tableMode, page, pageSize, pendingEmployers, pendingPwds]); // Added pendingPwds dependency
 
   const renderTable = () => {
     if (tableLoading)
@@ -428,10 +546,15 @@ const AdminWelcomePage = () => {
     if (tableError)
       return <div className="text-sm text-red-600">{tableError}</div>;
     if (!rows.length)
-      return <div className="text-sm text-gray-600">No pending employers</div>;
+      return (
+        <div className="text-sm text-gray-600">
+          No {tableMode === "pending-employers" ? "pending employers" : tableMode === "pending-pwd" ? "pending PWDs" : "records"}
+        </div>
+      );
 
     // Pending Employers detailed view with verification documents
     if (tableMode === "pending-employers") {
+      // ... (Existing implementation for pending-employers) ...
       return (
         <div className="space-y-6">
           {rows.map((employer) => {
@@ -446,53 +569,6 @@ const AdminWelcomePage = () => {
                 key={employer.id}
                 className="bg-gray-50 rounded-lg p-6 border border-gray-200"
               >
-                {/* <div className="flex items-start justify-between mb-4">
-									<div className="flex items-center">
-										{employer.employer?.logo_path ? (
-											<img 
-												src={employer.employer.logo_path} 
-												alt={employer.employer.company_name}
-												className="h-16 w-16 rounded-lg object-cover border-2 border-gray-200"
-											/>
-										) : (
-											<div className="h-16 w-16 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-												<FaBuilding className="h-8 w-8 text-white" />
-											</div>
-										)}
-										<div className="ml-4">
-											<h3 className="text-xl font-bold text-gray-900">
-												{employer.employer?.company_name}
-											</h3>
-											<p className="text-sm text-gray-600">
-												Registered on {new Date(employer.created_at).toLocaleDateString()}
-											</p>
-										</div>
-									</div>
-								</div>
-								<div className="flex items-start justify-between mb-4">
-									<div className="flex items-center">
-										{employer.employer?.logo_path ? (
-											<img 
-												src={employer.employer.logo_path} 
-												alt={employer.employer.company_name}
-												className="h-16 w-16 rounded-lg object-cover border-2 border-gray-200"
-											/>
-										) : (
-											<div className="h-16 w-16 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-												<FaBuilding className="h-8 w-8 text-white" />
-											</div>
-										)}
-										<div className="ml-4">
-											<h3 className="text-xl font-bold text-gray-900">
-												{employer.employer?.company_name}
-											</h3>
-											<p className="text-sm text-gray-600">
-												Registered on {new Date(employer.created_at).toLocaleDateString()}
-											</p>
-										</div>
-									</div>
-								</div> */}
-
                 {/* Profile Photo Section */}
                 <div className="mb-4 pb-4 border-b">
                   <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
@@ -738,6 +814,156 @@ const AdminWelcomePage = () => {
       );
     }
 
+    // --- START: Added Pending PWD detailed view ---
+    if (tableMode === "pending-pwd") {
+      return (
+        <div className="space-y-6">
+          {rows.map((pwd) => {
+            // PWD data fields: id, first_name, last_name, email, phone_number, created_at, pwd_id_number
+            const pwdIdPhotoPath = pwd.pwd_id_number;
+            const fullPath = pwdIdPhotoPath
+              ? pwdIdPhotoPath.startsWith("http")
+                ? pwdIdPhotoPath
+                : `${API_BASE_URL}${pwdIdPhotoPath}`
+              : null;
+
+            return (
+              <div
+                key={pwd.id}
+                className="bg-gray-50 rounded-lg p-6 border border-gray-200"
+              >
+                {/* User Name */}
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <FaUserCircle className="mr-2 text-indigo-600" />
+                    {pwd.first_name} {pwd.last_name}
+                </h3>
+
+                {/* PWD ID Verification Section */}
+                <div className="mb-4 pb-4 border-b">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
+                    <FaWheelchair className="mr-2 text-red-600" />
+                    PWD ID Document
+                  </h4>
+                  {fullPath ? (
+                    <div className="relative group w-full max-w-sm">
+                      <img
+                        src={fullPath}
+                        alt="PWD ID"
+                        className="w-full h-auto max-h-48 object-contain rounded-lg border-2 border-red-200 cursor-pointer hover:opacity-80 transition"
+                        onClick={() => setImagePreview(fullPath)}
+                        onError={(e) => {
+                          console.error("PWD ID photo load error:", fullPath);
+                          e.currentTarget.style.display = 'none';
+                          const parent = e.currentTarget.parentElement;
+                          if (parent) {
+                              parent.innerHTML = `
+                                <div class="w-full h-32 border-2 border-red-200 rounded-lg flex flex-col items-center justify-center bg-red-50">
+                                    <svg class="w-8 h-8 text-red-500 mb-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span class="text-xs text-red-600 text-center px-2">Failed to load ID photo</span>
+                                </div>
+                              `;
+                          }
+                        }}
+                      />
+                      <div className="absolute top-1 left-1 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                        PWD ID
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center text-gray-500 text-sm">
+                      <FaTimesCircle className="mr-2 text-red-500" />
+                      No PWD ID photo uploaded.
+                    </div>
+                  )}
+                </div>
+                
+                {/* Basic Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="flex items-center text-gray-700">
+                    <FaEnvelope className="mr-2 text-blue-600" />
+                    <div>
+                      <p className="text-xs text-gray-500">Email</p>
+                      <p className="font-medium text-sm">{pwd.email}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center text-gray-700">
+                    <FaPhone className="mr-2 text-green-600" />
+                    <div>
+                      <p className="text-xs text-gray-500">Phone</p>
+                      <p className="font-medium text-sm">
+                        {pwd.phone_number || "Not provided"}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center text-gray-700">
+                    <FaCalendar className="mr-2 text-orange-600" />
+                    <div>
+                      <p className="text-xs text-gray-500">Registered</p>
+                      <p className="font-medium text-sm">
+                        {new Date(pwd.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  
+                </div>
+
+                <div className="flex items-center space-x-2 mb-4">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    <FaWheelchair className="mr-1" />
+                    Pending PWD Status Approval
+                  </span>
+                  {/* Assuming email is verified before reaching this list based on previous discussion */}
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <FaCheckCircle className="mr-1" />
+                    Email Verified
+                  </span>
+                  {fullPath ? (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                      <FaFileAlt className="mr-1" />
+                      ID Uploaded
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      <FaTimesCircle className="mr-1" />
+                      ID Missing
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => setSelectedPwd(pwd)}
+                  className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+                  disabled={processingId === pwd.id || !fullPath} // Disable if ID is missing
+                >
+                  {processingId === pwd.id ? (
+                    <>
+                      <FaSpinner className="animate-spin -ml-1 mr-2 h-4 w-4" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <FaCheckCircle className="-ml-1 mr-2 h-4 w-4" />
+                      Approve PWD Status
+                    </>
+                  )}
+                </button>
+                {!fullPath && (
+                    <p className="text-center text-xs text-red-500 mt-2">
+                        Cannot approve: PWD ID Photo is missing or failed to load.
+                    </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+    // --- END: Added Pending PWD detailed view ---
+
     if (tableMode === "employers") {
       return (
         <div className="overflow-x-auto">
@@ -859,13 +1085,23 @@ const AdminWelcomePage = () => {
                 onClick={() => openUsersTable("employers")}
               />
               <StatCard
-                title="Pending Approvals"
+                title="Pending Employers"
                 value={pendingCount}
                 subtitle="Awaiting review"
                 color="yellow"
                 badge={pendingCount}
                 onClick={() => openUsersTable("pending-employers")}
               />
+              {/* --- START: Added Pending PWD Stat Card --- */}
+              <StatCard
+                title="Pending PWDs"
+                value={pendingPwdCount}
+                subtitle="Awaiting review"
+                color="red"
+                badge={pendingPwdCount}
+                onClick={() => openUsersTable("pending-pwd")}
+              />
+              {/* --- END: Added Pending PWD Stat Card --- */}
               <StatCard
                 title="PWD"
                 value={loading ? "—" : stats?.breakdown.pwd ?? 0}
@@ -1021,13 +1257,19 @@ const AdminWelcomePage = () => {
             ? "PWD Users"
             : tableMode === "pending-employers"
             ? "Pending Employer Approvals"
+            : tableMode === "pending-pwd" // Added PWD table title
+            ? "Pending PWD Approvals"
             : "All Users"
         }
         onClose={() => setTableOpen(false)}
-        size={tableMode === "pending-employers" ? "large" : "default"}
+        size={
+            tableMode === "pending-employers" || tableMode === "pending-pwd" 
+            ? "large" // Use large size for both detailed card views
+            : "default"
+        } 
       >
         {renderTable()}
-        {tableMode !== "pending-employers" && (
+        {tableMode !== "pending-employers" && tableMode !== "pending-pwd" && ( // Exclude pagination for both pending tables
           <div className="mt-4 flex items-center justify-between">
             <button
               className="px-3 py-1 rounded border text-sm"
@@ -1050,12 +1292,12 @@ const AdminWelcomePage = () => {
         )}
       </Modal>
 
-      {/* Approval Confirmation Modal */}
+      {/* Approval Confirmation Modal for Employers */}
       {selectedEmployer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-blur bg-opacity-40 backdrop-blur-sm">
           <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
             <h3 className="text-lg font-medium text-gray-900 mb-4">
-              Confirm Approval
+              Confirm Employer Approval
             </h3>
             <p className="text-sm text-gray-600 mb-6">
               Are you sure you want to approve{" "}
@@ -1065,7 +1307,7 @@ const AdminWelcomePage = () => {
             <div className="flex space-x-3">
               <button
                 onClick={() => approveEmployer(selectedEmployer.id)}
-                className="flex-1 inline-flex justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                className="flex-1 inline-flex justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
                 disabled={processingId === selectedEmployer.id}
               >
                 {processingId === selectedEmployer.id
@@ -1083,6 +1325,41 @@ const AdminWelcomePage = () => {
           </div>
         </div>
       )}
+
+      {/* --- START: Approval Confirmation Modal for PWDs --- */}
+      {selectedPwd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-blur bg-opacity-40 backdrop-blur-sm">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              Confirm PWD Approval
+            </h3>
+            <p className="text-sm text-gray-600 mb-6">
+              Are you sure you want to approve{" "}
+              <strong>{selectedPwd.first_name} {selectedPwd.last_name}</strong>? This
+              will activate their PWD status and send them a notification email.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => approvePwd(selectedPwd.id)}
+                className="flex-1 inline-flex justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+                disabled={processingId === selectedPwd.id}
+              >
+                {processingId === selectedPwd.id
+                  ? "Processing..."
+                  : "Yes, Approve"}
+              </button>
+              <button
+                onClick={() => setSelectedPwd(null)}
+                className="flex-1 inline-flex justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                disabled={processingId === selectedPwd.id}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* --- END: Approval Confirmation Modal for PWDs --- */}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaUser, FaLock, FaEye, FaEyeSlash, FaAccessibleIcon, FaEnvelope, FaPhone, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaUser, FaLock, FaEye, FaEyeSlash, FaAccessibleIcon, FaEnvelope, FaPhone, FaMapMarkerAlt, FaIdCard } from 'react-icons/fa';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,10 +22,9 @@ interface SignUpFormData {
   confirmPassword: string;
   userType: UserType;
   agreeToTerms: true;
-  pwdIdNumber?: string;
 }
 
-// Fixed validation schema
+// Updated validation schema - removed pwdIdNumber text field
 const signUpSchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(50, 'First name is too long'),
   lastName: z.string().min(1, 'Last name is required').max(50, 'Last name is too long'),
@@ -43,20 +42,9 @@ const signUpSchema = z.object({
   agreeToTerms: z.literal(true, {
     errorMap: () => ({ message: 'You must agree to the terms and conditions' }),
   }),
-  pwdIdNumber: z.string().optional(),
 }).refine((data) => data.password_hash === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
-})
-// Fixed conditional validation for PWD ID Number
-.refine((data) => {
-  if (data.userType === 'pwd') {
-    return !!data.pwdIdNumber && data.pwdIdNumber.trim().length > 0;
-  }
-  return true; // Not required for general users
-}, {
-  message: 'PWD ID Number is required for PWD registration',
-  path: ['pwdIdNumber'],
 });
 
 const UserTypeButton: React.FC<{
@@ -81,7 +69,7 @@ const UserTypeButton: React.FC<{
       onClick={() => onChange(type)}
       className={`flex items-center justify-center py-1.5 px-3 rounded-lg text-xs font-medium transition-colors ${
         isActive 
-          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-black shadow-md' 
+          ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md' 
           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
       }`}
       whileHover={{ scale: isActive ? 1 : 1.03 }}
@@ -103,6 +91,9 @@ const SignUpPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [pwdIdFile, setPwdIdFile] = useState<File | null>(null);
+  const [pwdIdPreview, setPwdIdPreview] = useState<string | null>(null);
+  const [pwdIdError, setPwdIdError] = useState<string | null>(null);
   const [step, setStep] = useState(1);
 
   const {
@@ -115,65 +106,50 @@ const SignUpPage: React.FC = () => {
   } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      userType: 'pwd', // Set default to 'pwd' since only PWD can register
+      userType: 'pwd',
       agreeToTerms: true,
     },
     mode: 'onChange',
   });
 
   const userType = watch('userType');
-  // const pwdIdNumber = watch('pwdIdNumber');
 
   const onSubmit: SubmitHandler<SignUpFormData> = async (data) => {
+    // Validate PWD ID photo for PWD users
+    if (data.userType === 'pwd' && !pwdIdFile) {
+      setPwdIdError('PWD ID photo is required for PWD registration');
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
     
     try {
-      let response;
+      const formData = new FormData();
+      formData.append('username', data.email);
+      formData.append('email', data.email);
+      formData.append('password', data.password_hash);
+      formData.append('user_type', data.userType);
+      formData.append('first_name', data.firstName);
+      formData.append('last_name', data.lastName);
+      formData.append('phone_number', data.phone);
+      formData.append('address', data.address);
+      
+      // Append profile photo if exists
       if (photoFile) {
-        const formData = new FormData();
-        formData.append('username', data.email);
-        formData.append('email', data.email);
-        formData.append('password', data.password_hash);
-        formData.append('user_type', data.userType);
-        formData.append('first_name', data.firstName);
-        formData.append('last_name', data.lastName);
-        formData.append('phone_number', data.phone);
-        formData.append('address', data.address);
-        // Only append PWD ID if it exists and user is PWD
-        if (data.userType === 'pwd' && data.pwdIdNumber) {
-          formData.append('pwd_id_number', data.pwdIdNumber);
-        }
         formData.append('photo', photoFile);
-        response = await fetch('/api/create', {
-          method: 'POST',
-          body: formData,
-          credentials: 'include',
-        });
-      } else {
-        const payload: any = {
-          username: data.email,
-          email: data.email,
-          password: data.password_hash,
-          user_type: data.userType,
-          first_name: data.firstName,
-          last_name: data.lastName,
-          phone_number: data.phone,
-          address: data.address,
-        };
-        // Only append PWD ID if it exists and user is PWD
-        if (data.userType === 'pwd' && data.pwdIdNumber) {
-          payload.pwd_id_number = data.pwdIdNumber;
-        }
-        response = await fetch('/api/create', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-          credentials: 'include',
-        });
       }
+      
+      // Append PWD ID photo if user is PWD
+      if (data.userType === 'pwd' && pwdIdFile) {
+        formData.append('pwd_id_photo', pwdIdFile);
+      }
+
+      const response = await fetch('/api/create', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
 
       const responseText = await response.text();
       console.log('Raw response:', responseText);
@@ -251,17 +227,19 @@ const SignUpPage: React.FC = () => {
     };
   }, []);
 
-  // Update the step validation to conditionally check PWD ID
+  // Updated step validation
   const handleNextStep = async () => {
     const baseFields = ['firstName', 'lastName', 'email', 'phone', 'address'];
+    const isValid = await trigger(baseFields as any);
     
-    // Only include pwdIdNumber in validation if user is PWD
-    const fieldsToValidate = userType === 'pwd' 
-      ? [...baseFields, 'pwdIdNumber'] 
-      : baseFields;
-
-    const isValid = await trigger(fieldsToValidate as any);
+    // Check PWD ID photo for PWD users
+    if (userType === 'pwd' && !pwdIdFile) {
+      setPwdIdError('PWD ID photo is required for PWD registration');
+      return;
+    }
+    
     if (isValid) {
+      setPwdIdError(null);
       setStep(2);
     }
   };
@@ -271,7 +249,6 @@ const SignUpPage: React.FC = () => {
       {/* Rich background gradient and floating shapes */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-200" />
-        {/* Floating blurred circles */}
         <div className="absolute top-[-80px] left-[-80px] w-96 h-96 bg-indigo-300 opacity-30 rounded-full blur-3xl animate-float-slow" />
         <div className="absolute bottom-[-100px] right-[-100px] w-[32rem] h-[32rem] bg-purple-300 opacity-30 rounded-full blur-3xl animate-float-slower" />
         <div className="absolute top-1/2 left-[-120px] w-80 h-80 bg-blue-200 opacity-20 rounded-full blur-2xl animate-float" />
@@ -332,7 +309,6 @@ const SignUpPage: React.FC = () => {
           className="w-full md:w-2/5 lg:w-1/3 max-w-md z-10"
         >
           <div className="rounded-2xl shadow-2xl border border-gray-100 p-6 relative overflow-hidden backdrop-blur-xl bg-white/30 dark:bg-gray-900/60" style={{ boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)' }}>
-            {/* Decorative element */}
             <div className="absolute -top-20 -right-20 w-40 h-40 bg-indigo-100 rounded-full filter blur-3xl opacity-20" />
             
             {/* Progress Bar */}
@@ -365,7 +341,6 @@ const SignUpPage: React.FC = () => {
                 <p className="text-black text-sm">Fill in your details to get started</p>
               </div>
 
-              {/* Form error */}
               {error && (
                 <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="p-2 bg-red-50 border border-red-100 text-red-600 rounded-lg text-xs flex items-center gap-2 mb-3">
                   <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
@@ -373,7 +348,6 @@ const SignUpPage: React.FC = () => {
                 </motion.div>
               )}
 
-              {/* Step Content with Animation */}
               <div className="min-h-[400px] overflow-hidden">
                 <AnimatePresence mode="wait">
                   {/* Step 1: Personal Information */}
@@ -393,8 +367,6 @@ const SignUpPage: React.FC = () => {
                             I am a:
                           </legend>
                           <div className="grid grid-cols-1 gap-2">
-                            {/* Only PWD registration available - General user option commented out */}
-                            {/* {(['general', 'pwd'] as UserType[]).map((type) => ( */}
                             {(['pwd'] as UserType[]).map((type) => (
                               <UserTypeButton
                                 key={type}
@@ -405,15 +377,11 @@ const SignUpPage: React.FC = () => {
                             ))}
                           </div>
                           <p className="text-xs text-gray-600 italic">
-                            {/* {userType === 'pwd' 
-                              ? "PWD ID Number is required for Persons with Disabilities."
-                              : "General users can register without PWD ID."} */}
-                            PWD ID Number is required for registration.
+                            PWD ID photo is required for registration.
                           </p>
                         </fieldset>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {/* First Name */}
                           <div className="space-y-1">
                             <label className="block text-xs font-medium text-black">First Name</label>
                             <input
@@ -429,7 +397,6 @@ const SignUpPage: React.FC = () => {
                             )}
                           </div>
 
-                          {/* Last Name */}
                           <div className="space-y-1">
                             <label className="block text-xs font-medium text-black">Last Name</label>
                             <input
@@ -446,7 +413,6 @@ const SignUpPage: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Email */}
                         <div className="space-y-1">
                           <label className="block text-xs font-medium text-black">Email Address</label>
                           <div className="relative">
@@ -468,7 +434,6 @@ const SignUpPage: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {/* Phone Number */}
                           <div className="space-y-1">
                             <label className="block text-xs font-medium text-black">Phone Number</label>
                             <div className="relative">
@@ -488,16 +453,13 @@ const SignUpPage: React.FC = () => {
                                 {...register('phone', {
                                   onChange: (e) => {
                                     let value = e.target.value;
-                                    // Remove any non-digit characters
                                     value = value.replace(/[^\d]/g, '');
-                                    // Ensure it doesn't start with +63 (we show it as prefix)
                                     if (value.startsWith('+63')) {
                                       value = value.substring(3);
                                     }
                                     if (value.startsWith('63')) {
                                       value = value.substring(2);
                                     }
-                                    // Limit to 10 digits
                                     if (value.length > 10) {
                                       value = value.substring(0, 10);
                                     }
@@ -511,7 +473,6 @@ const SignUpPage: React.FC = () => {
                             )}
                           </div>
 
-                          {/* Address */}
                           <div className="space-y-1">
                             <label className="block text-xs font-medium text-black">Address</label>
                             <div className="relative">
@@ -533,20 +494,57 @@ const SignUpPage: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* PWD ID Number - Conditionally required */}
+                        {/* PWD ID Photo Upload - Required for PWD users */}
                         {userType === 'pwd' && (
                           <div className="space-y-1">
-                            <label className="block text-xs font-medium text-black">PWD ID Number *</label>
+                            <label className="block text-xs font-medium text-black">
+                              <FaIdCard className="inline mr-1" />
+                              PWD ID Photo *
+                            </label>
                             <input
-                              type="text"
-                              className={`block w-full px-3 py-2 border ${errors.pwdIdNumber ? 'border-red-300' : 'border-gray-200'} rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors text-sm`}
-                              placeholder="Enter your PWD ID Number"
-                              aria-invalid={!!errors.pwdIdNumber}
-                              {...register('pwdIdNumber')}
+                              type="file"
+                              accept="image/*"
+                              className={`block w-full text-xs text-gray-700 file:mr-2 file:py-1 file:px-3 file:border file:rounded-lg file:text-xs file:font-semibold ${pwdIdError ? 'file:bg-red-50 file:text-red-700 file:border-red-300' : 'file:bg-indigo-50 file:text-indigo-700'} hover:file:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 transition-colors`}
+                              onChange={e => {
+                                const file = e.target.files?.[0] || null;
+                                setPwdIdFile(file);
+                                setPwdIdError(null);
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => setPwdIdPreview(reader.result as string);
+                                  reader.readAsDataURL(file);
+                                } else {
+                                  setPwdIdPreview(null);
+                                }
+                              }}
                             />
-                            {errors.pwdIdNumber && (
-                              <p className="text-xs text-red-500">{errors.pwdIdNumber.message}</p>
+                            {pwdIdError && (
+                              <p className="text-xs text-red-500">{pwdIdError}</p>
                             )}
+                            {pwdIdPreview && (
+                              <div className="mt-2 flex justify-center">
+                                <div className="relative">
+                                  <img
+                                    src={pwdIdPreview}
+                                    alt="PWD ID Preview"
+                                    className="w-32 h-20 rounded-lg object-cover border-2 border-indigo-200 shadow"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setPwdIdFile(null);
+                                      setPwdIdPreview(null);
+                                    }}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                            <p className="text-xs text-gray-500 mt-1">
+                              Please upload a clear photo of your PWD ID card
+                            </p>
                           </div>
                         )}
                       </div>
@@ -578,7 +576,6 @@ const SignUpPage: React.FC = () => {
                         <h3 className="text-xs font-medium text-black border-b pb-1">Account Information</h3>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {/* Password */}
                           <div className="space-y-1">
                             <label className="block text-xs font-medium text-black">Password</label>
                             <div className="relative">
@@ -611,7 +608,6 @@ const SignUpPage: React.FC = () => {
                             )}
                           </div>
 
-                          {/* Confirm Password */}
                           <div className="space-y-1">
                             <label className="block text-xs font-medium text-black">Confirm Password</label>
                             <div className="relative">
@@ -666,11 +662,23 @@ const SignUpPage: React.FC = () => {
                           />
                           {photoPreview && (
                             <div className="mt-2 flex justify-center">
-                              <img
-                                src={photoPreview}
-                                alt="Profile Preview"
-                                className="w-16 h-16 rounded-full object-cover border-2 border-white shadow"
-                              />
+                              <div className="relative">
+                                <img
+                                  src={photoPreview}
+                                  alt="Profile Preview"
+                                  className="w-16 h-16 rounded-full object-cover border-2 border-white shadow"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setPhotoFile(null);
+                                    setPhotoPreview(null);
+                                  }}
+                                  className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
+                                >
+                                  ×
+                                </button>
+                              </div>
                             </div>
                           )}
                         </div>
