@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import UserAvatar from "../../components/UserAvatar";
 import { getFullPhotoUrl } from "../../components/utils/photo";
 import { useAuth } from "../../contexts/AuthContext";
-import { FaUser, FaIdBadge, FaUserGraduate } from "react-icons/fa";
+import { FaUser, FaIdBadge, FaUserGraduate, FaCheckCircle } from "react-icons/fa";
 
 interface JobSeekerProfileModalProps {
   isOpen: boolean;
@@ -17,6 +17,7 @@ const JobSeekerProfileModal: React.FC<JobSeekerProfileModalProps> = ({ isOpen, o
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userPhotoUrl, setUserPhotoUrl] = useState<string | null>(null);
+  const [isPWDVerified, setIsPWDVerified] = useState(false);
 
   useEffect(() => {
     if (!isOpen || loading) return;
@@ -51,6 +52,13 @@ const JobSeekerProfileModal: React.FC<JobSeekerProfileModalProps> = ({ isOpen, o
         if (seekerData.success) {
           setJobSeekerData(seekerData.jobSeeker);
           console.log('JobSeeker skills:', seekerData.jobSeeker.skills);
+          
+          // Check if PWD is verified (has pwd_id_number and disability)
+          if (data.user_type === 'pwd') {
+            const hasPwdNumber = data.pwd_id_number && data.pwd_id_number.trim() !== '';
+            const hasDisability = seekerData.jobSeeker.disability && seekerData.jobSeeker.disability.trim() !== '';
+            setIsPWDVerified(hasPwdNumber && hasDisability);
+          }
         }
       } catch (err: any) {
         setError(err.message || "Error fetching data");
@@ -82,7 +90,7 @@ const JobSeekerProfileModal: React.FC<JobSeekerProfileModalProps> = ({ isOpen, o
       <div className="w-full max-w-3xl bg-white/80 rounded-2xl shadow-xl flex flex-col md:flex-row overflow-hidden relative max-h-[90vh]">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold"
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl font-bold z-10"
         >
           &times;
         </button>
@@ -96,11 +104,24 @@ const JobSeekerProfileModal: React.FC<JobSeekerProfileModalProps> = ({ isOpen, o
               size="xl"
               className="border-2 border-blue-200"
             />
+            {/* Verification Badge - Meta Style */}
+            {isPWDVerified && (
+              <div className="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-lg">
+                <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-full p-1">
+                  <FaCheckCircle className="text-white text-xl" />
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex flex-col items-center mt-4 mb-2">
-            <span className="text-xl font-semibold text-gray-600 tracking-tight">
-              {userData.first_name}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xl font-semibold text-gray-600 tracking-tight">
+                {userData.first_name}
+              </span>
+              {isPWDVerified && (
+                <FaCheckCircle className="text-blue-500 text-lg" title="PWD Verified" />
+              )}
+            </div>
             <span className="text-xl font-semibold text-gray-600 tracking-tight">
               {userData.last_name}
             </span>
@@ -108,6 +129,12 @@ const JobSeekerProfileModal: React.FC<JobSeekerProfileModalProps> = ({ isOpen, o
           <span className="text-blue-700 font-semibold text-sm mb-2 capitalize">
             {userData.user_type}
           </span>
+          {isPWDVerified && (
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full mb-2">
+              <FaCheckCircle className="text-sm" />
+              PWD Verified
+            </span>
+          )}
           <button
             className="mt-4 inline-flex items-center px-5 py-2.5 border border-blue-600 text-blue-700 font-semibold rounded-lg shadow-sm bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             onClick={onEditProfile}
@@ -191,14 +218,14 @@ const JobSeekerProfileModal: React.FC<JobSeekerProfileModalProps> = ({ isOpen, o
                   <span className="text-xl font-bold text-blue-700 tracking-wide">Job Seeker Details</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
+                  {/* <div>
                     <label className="block text-gray-600 text-sm mb-1">Resume Text</label>
                     <textarea value={jobSeekerData.resume_text || ''} readOnly className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200 min-h-[40px]" />
                   </div>
                   <div>
                     <label className="block text-gray-600 text-sm mb-1">Resume File Path</label>
                     <input type="text" value={jobSeekerData.resume_file_path || ''} readOnly className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200" />
-                  </div>
+                  </div> */}
                   <div>
                     <label className="block text-gray-600 text-sm mb-1">Education</label>
                     <input type="text" value={jobSeekerData.education || ''} readOnly className="w-full bg-gray-100 rounded-lg px-4 py-2 border border-gray-200" />
@@ -254,4 +281,4 @@ const JobSeekerProfileModal: React.FC<JobSeekerProfileModalProps> = ({ isOpen, o
   );
 };
 
-export default JobSeekerProfileModal; 
+export default JobSeekerProfileModal;

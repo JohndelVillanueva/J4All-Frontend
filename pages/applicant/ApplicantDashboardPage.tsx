@@ -13,6 +13,9 @@ import JobsTab from "../../components/JobSeekerDashboard//JobsTab";
 import ApplicationsTab from "../../components/JobSeekerDashboard/ApplicationTab";
 import SavedJobsTab from "../../components/JobSeekerDashboard/SaveJobsTab";
 import ProfileTab from "../../components/JobSeekerDashboard/ProfileTab";
+import PWDVerificationBanner from "../../components/JobSeekerDashboard/PWDVerificationBanner";
+import PWDVerifiedBadge from "../../components/JobSeekerDashboard/PWDVerifiedBadge";
+import EditJobSeekerAccountModal from "../profile/EditJobSeekerAccountModal";
 import {
   UserData,
   JobListing,
@@ -20,9 +23,6 @@ import {
   StatItem,
 } from "../../components/types/types";
 import { useAuth } from "../../contexts/AuthContext";
-
-// Define WorkMode type for job work modes
-// type WorkMode = "Onsite" | "Remote" | "Hybrid";
 
 // ErrorBoundary component definition (keep exactly as is)
 class ErrorBoundary extends React.Component<
@@ -89,8 +89,55 @@ const JobSeekerDashboard = () => {
   const [jobError, setJobError] = useState<string | null>(null);
   const [applicationsError, setApplicationsError] = useState<string | null>(null);
   const [savedJobsCount, setSavedJobsCount] = useState(0);
+  
+  // PWD Verification states
+  const [showPWDVerification, setShowPWDVerification] = useState(false);
+  const [showPWDVerifiedBadge, setShowPWDVerifiedBadge] = useState(false);
+  const [pwdVerificationDismissed, setPWDVerificationDismissed] = useState(false);
+  const [seekerData, setSeekerData] = useState<any>(null);
+  const [profileCompletionPercentage, setProfileCompletionPercentage] = useState(0);
+  const [showEditJobSeekerModal, setShowEditJobSeekerModal] = useState(false);
 
-  console.log('JobSeekerDashboard user:', user);
+  // Calculate profile completion percentage
+  const calculateProfileCompletion = (userData: UserData | null, seekerData: any) => {
+    if (!userData) return 0;
+
+    const fields = [
+      // User table fields
+      userData.first_name,
+      userData.last_name,
+      userData.email,
+      userData.phone_number,
+      userData.photo,
+      // Job seeker fields (excluding pwd_number and resume fields)
+      seekerData?.disability,
+      seekerData?.education,
+      seekerData?.experience_years,
+      seekerData?.current_job_title,
+      seekerData?.desired_job_title,
+      seekerData?.location_preference,
+      // Check if they have at least one skill
+      seekerData?.skills && seekerData.skills.length > 0 ? 'has_skills' : null,
+    ];
+
+    const filledFields = fields.filter(field => 
+      field !== null && 
+      field !== undefined && 
+      field !== ''
+    ).length;
+
+    const percentage = Math.round((filledFields / fields.length) * 100);
+    return percentage;
+  };
+
+  // Update profile completion when user or seeker data changes
+  useEffect(() => {
+    if (currentUser || seekerData) {
+      const completion = calculateProfileCompletion(currentUser, seekerData);
+      setProfileCompletionPercentage(completion);
+      console.log('Profile completion:', completion + '%');
+    }
+  }, [currentUser, seekerData]);
 
   if (loading) return <div>Loading...</div>;
 
@@ -110,21 +157,102 @@ const JobSeekerDashboard = () => {
       fetchUserData();
       fetchApplications();
       fetchSavedJobs();
+      
+      // Fetch seeker data for PWD verification check
+      if (user.user_type === "pwd") {
+        fetchSeekerData();
+      }
     }
   }, [user]);
+
+  // Check if PWD verification is needed - FIXED VERSION
+  useEffect(() => {
+    if (user?.user_type === "pwd" && seekerData && !pwdVerificationDismissed) {
+      // Check both users table and job_seekers table
+      const hasPwdNumber = user.pwd_id_number && user.pwd_id_number.trim() !== '';
+      const hasDisability = seekerData.disability && seekerData.disability.trim() !== '';
+      
+      const needsVerification = !hasPwdNumber || !hasDisability;
+      const isFullyVerified = hasPwdNumber && hasDisability && profileCompletionPercentage === 100;
+      
+      console.log('PWD Verification Check:', {
+        userType: user.user_type,
+        pwdNumber: user.pwd_id_number,
+        disability: seekerData.disability,
+        completion: profileCompletionPercentage,
+        needsVerification,
+        isFullyVerified,
+        dismissed: pwdVerificationDismissed
+      });
+      
+      // Show verified badge if 100% complete and has PWD verification
+      if (isFullyVerified) {
+        setShowPWDVerifiedBadge(true);
+        setShowPWDVerification(false);
+        
+        // Auto-hide verified badge after 3 seconds
+        const timer = setTimeout(() => {
+          setShowPWDVerifiedBadge(false);
+        }, 3000);
+        
+        return () => clearTimeout(timer);
+      } else if (needsVerification) {
+        // Show verification banner only if PWD fields are missing
+        setShowPWDVerification(true);
+        setShowPWDVerifiedBadge(false);
+      } else {
+        // Profile not 100% but PWD fields filled - don't show either
+        setShowPWDVerification(false);
+        setShowPWDVerifiedBadge(false);
+      }
+    }
+  }, [user, seekerData, pwdVerificationDismissed, profileCompletionPercentage]);
 
   // Fetch job listings after applications are loaded
   useEffect(() => {
     if (user && (user.user_type === "pwd" || user.user_type === "indigenous" || user.user_type === "general")) {
       fetchJobListings();
     }
-  }, [applications]); // Re-fetch jobs when applications change
+  }, [applications]);
 
   // Hide header after 3 seconds
   useEffect(() => {
     const timer = setTimeout(() => setShowHeader(false), 3000);
     return () => clearTimeout(timer);
   }, []);
+
+  // Fetch seeker data for PWD verification
+  const fetchSeekerData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("Authentication required");
+      
+      const storedUser = localStorage.getItem("user");
+      const userId = storedUser ? JSON.parse(storedUser).id : null;
+      
+      // Use your existing endpoint: /api/jobseeker/:userId
+      const response = await fetch(`/api/jobseeker/${userId}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        // If seeker record doesn't exist, assume empty data (will trigger verification)
+        console.log("Seeker data not found, assuming incomplete profile");
+        setSeekerData({ pwd_number: null, disability: null });
+        return;
+      }
+      
+      const data = await response.json();
+      console.log("Fetched seeker data:", data.jobSeeker);
+      setSeekerData(data.jobSeeker); // Note: your API returns 'jobSeeker' not 'data'
+    } catch (error) {
+      console.error("Seeker data fetch error:", error);
+      // Set empty data to trigger verification banner
+      setSeekerData({ pwd_number: null, disability: null });
+    }
+  };
 
   // Fetch saved jobs from backend
   const fetchSavedJobs = async () => {
@@ -187,11 +315,9 @@ const JobSeekerDashboard = () => {
     }
   };
 
-  // Mock data for stats (keep exactly as is)
-    const stats: StatItem[] = [
+  // Mock data for stats
+  const stats: StatItem[] = [
     { name: "Applications Sent", value: applications.length, change: "", trend: "up" },
-    // { name: "Interview Rate", value: "25%", change: "", trend: "up" },
-    // { name: "Profile Views", value: 24, change: "", trend: "up" },
     { name: "Saved Jobs", value: savedJobsCount, change: "", trend: "up" },
   ];
 
@@ -223,7 +349,6 @@ const JobSeekerDashboard = () => {
       setIsLoadingUser(false);
     }
   };
-  console.log('ApplicantDashboard mounted');
 
   // Enhanced job fetch with loading states and error handling
   const fetchJobListings = async () => {
@@ -250,7 +375,7 @@ const JobSeekerDashboard = () => {
         id: job.id,
         title: job.job_title,
         company: job.company?.name || "Unknown Company",
-        logo_path: job.company?.logo || "/default-logo.png", // Added default logo
+        logo_path: job.company?.logo || "/default-logo.png",
         location: job.job_location || "Remote",
         job_description: job.job_description || "No description available.",
         job_requirements: job.job_requirements || "No requirements specified.",
@@ -267,7 +392,6 @@ const JobSeekerDashboard = () => {
           importance_level: skill.importance_level
         })) || [],
         status: userApplications.includes(job.id) ? "applied" : "new",
-        
         work_mode: ["Onsite", "Remote", "Hybrid"].includes(job.work_mode)
           ? job.work_mode
           : "Onsite",
@@ -287,7 +411,7 @@ const JobSeekerDashboard = () => {
     }
   };
 
-  // Helper function to format the posted date (keep exactly as is)
+  // Helper function to format the posted date
   const formatPostedDate = (dateString: string) => {
     const postedDate = new Date(dateString);
     const now = new Date();
@@ -302,12 +426,6 @@ const JobSeekerDashboard = () => {
     return `${Math.floor(diffInDays / 30)} months ago`;
   };
 
-  // Helper function to calculate match percentage (keep exactly as is)
-  // const calculateMatchPercentage = (skills: any[]) => {
-  //   // In a real app, you'd compare with user's skills
-  //   return Math.floor(Math.random() * 30) + 70; // Random between 70-100%
-  // };
-
   // Function to handle job status updates
   const handleJobStatusUpdate = (jobId: string, newStatus: "new" | "applied" | "saved") => {
     setJobListings(prevJobs => 
@@ -315,6 +433,27 @@ const JobSeekerDashboard = () => {
         job.id === jobId ? { ...job, status: newStatus } : job
       )
     );
+  };
+
+  // Handle PWD verification click
+  const handleVerifyClick = () => {
+    setShowEditJobSeekerModal(true);
+    setShowPWDVerification(false);
+  };
+
+  // Handle PWD verification dismiss
+  const handleDismissVerification = () => {
+    setPWDVerificationDismissed(true);
+    setShowPWDVerification(false);
+  };
+
+  // Handle modal close and refresh seeker data
+  const handleEditJobSeekerModalClose = () => {
+    setShowEditJobSeekerModal(false);
+    // Refresh seeker data after modal closes
+    if (user?.user_type === "pwd") {
+      fetchSeekerData();
+    }
   };
 
   return (
@@ -336,17 +475,40 @@ const JobSeekerDashboard = () => {
       }
     >
       <div className="min-h-screen relative overflow-hidden flex flex-col">
+        {/* Floating PWD Verification Banner - Shows when profile incomplete */}
+        <PWDVerificationBanner
+          isVisible={showPWDVerification}
+          onVerifyClick={handleVerifyClick}
+          onDismiss={handleDismissVerification}
+          completionPercentage={profileCompletionPercentage}
+        />
+
+        {/* PWD Verified Badge - Shows when profile is 100% complete */}
+        <PWDVerifiedBadge
+          isVisible={showPWDVerifiedBadge}
+          completionPercentage={profileCompletionPercentage}
+        />
+
+        {/* Edit Job Seeker Modal */}
+        {showEditJobSeekerModal && (
+          <EditJobSeekerAccountModal
+            isOpen={showEditJobSeekerModal}
+            onClose={handleEditJobSeekerModalClose}
+            userId={user?.id || 0}
+          />
+        )}
+
         {/* Rich background gradient and floating shapes */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-200" />
-          {/* Floating blurred circles */}
           <div className="absolute top-10 left-10 w-72 h-72 bg-blue-300 opacity-30 rounded-full filter blur-3xl animate-pulse" />
           <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-200 opacity-30 rounded-full filter blur-3xl animate-pulse" />
           <div className="absolute top-1/2 left-1/2 w-80 h-80 bg-indigo-200 opacity-20 rounded-full filter blur-2xl animate-pulse" style={{ transform: 'translate(-50%, -50%)' }} />
         </div>
-        {/* Main dashboard content (z-10) */}
+        
+        {/* Main dashboard content */}
         <div className="relative z-10">
-          {/* Header (keep exactly as is) */}
+          {/* Header */}
           {showHeader && (
             <DynamicHeader
               title="DevCareer Dashboard"
@@ -360,9 +522,9 @@ const JobSeekerDashboard = () => {
             />
           )}
 
-          {/* Main Content (keep exactly as is) */}
+          {/* Main Content */}
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Tabs (keep exactly as is) */}
+            {/* Tabs */}
             <div className="border-b border-gray-200">
               <nav className="-mb-px flex space-x-8">
                 <TabButton
@@ -398,7 +560,7 @@ const JobSeekerDashboard = () => {
               </nav>
             </div>
 
-            {/* Tab Content (keep exactly as is) */}
+            {/* Tab Content */}
             <div className="py-6">
               {activeTab === "dashboard" && (
                 <ErrorBoundary>
@@ -502,7 +664,7 @@ const JobSeekerDashboard = () => {
   );
 };
 
-// TabButton component (keep exactly as is)
+// TabButton component
 const TabButton: React.FC<{
   active: boolean;
   onClick: () => void;

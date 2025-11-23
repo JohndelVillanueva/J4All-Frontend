@@ -97,8 +97,8 @@ const ProfileTab: React.FC = () => {
               <div>
                 <h4 className="text-md font-medium text-gray-900 mb-2">Resume & Skills</h4>
                 <ul className="space-y-2 text-gray-700">
-                  <li><strong>Resume Text:</strong> {jobSeekerData.resume_text ? <span className="block max-h-32 overflow-y-auto bg-gray-50 p-2 rounded mt-1">{jobSeekerData.resume_text}</span> : "-"}</li>
-                  <li><strong>Resume File:</strong> {jobSeekerData.resume_file_path ? <a href={`${API_BASE_URL}${jobSeekerData.resume_file_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View Resume</a> : "-"}</li>
+                  {/* <li><strong>Resume Text:</strong> {jobSeekerData.resume_text ? <span className="block max-h-32 overflow-y-auto bg-gray-50 p-2 rounded mt-1">{jobSeekerData.resume_text}</span> : "-"}</li>
+                  <li><strong>Resume File:</strong> {jobSeekerData.resume_file_path ? <a href={`${API_BASE_URL}${jobSeekerData.resume_file_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View Resume</a> : "-"}</li> */}
                   <li><strong>Skills:</strong> {Array.isArray(jobSeekerData.skills) && jobSeekerData.skills.length > 0 ? (
                     <div className="flex flex-wrap gap-2 mt-1">
                       {jobSeekerData.skills.map((skill: any) => (
