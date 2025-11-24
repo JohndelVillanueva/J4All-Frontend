@@ -166,7 +166,7 @@ const JobSeekerDashboard = () => {
   }, [user]);
 
   // Check if PWD verification is needed - FIXED VERSION
-  useEffect(() => {
+ useEffect(() => {
     if (user?.user_type === "pwd" && seekerData && !pwdVerificationDismissed) {
       // Check both users table and job_seekers table
       const hasPwdNumber = user.pwd_id_number && user.pwd_id_number.trim() !== '';
@@ -185,26 +185,23 @@ const JobSeekerDashboard = () => {
         dismissed: pwdVerificationDismissed
       });
       
-      // Show verified badge if 100% complete and has PWD verification
+      // ✅ UPDATED: Don't show badge when fully verified (user already knows they're verified)
       if (isFullyVerified) {
-        setShowPWDVerifiedBadge(true);
+        setShowPWDVerifiedBadge(false);
         setShowPWDVerification(false);
-        
-        // Auto-hide verified badge after 3 seconds
-        const timer = setTimeout(() => {
-          setShowPWDVerifiedBadge(false);
-        }, 3000);
-        
-        return () => clearTimeout(timer);
-      } else if (needsVerification) {
-        // Show verification banner only if PWD fields are missing
+      } else if (needsVerification && profileCompletionPercentage < 100) {
+        // Show verification banner ONLY if PWD fields missing AND profile not 100%
         setShowPWDVerification(true);
         setShowPWDVerifiedBadge(false);
       } else {
-        // Profile not 100% but PWD fields filled - don't show either
+        // Profile 100% OR PWD fields filled - don't show either
         setShowPWDVerification(false);
         setShowPWDVerifiedBadge(false);
       }
+    } else {
+      // User is not PWD or data not loaded - hide both
+      setShowPWDVerification(false);
+      setShowPWDVerifiedBadge(false);
     }
   }, [user, seekerData, pwdVerificationDismissed, profileCompletionPercentage]);
 
