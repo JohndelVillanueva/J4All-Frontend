@@ -5,7 +5,7 @@ import { FaTimes, FaMapMarkerAlt, FaBriefcase, FaUserFriends, FaComments } from 
 import { JobListing } from "../types/types";
 import ApplyModal from "./ApplyModal";
 import MessageModal from "./MessageModal";
-import UserAvatar from '../UserAvatar';
+// import UserAvatar from '../UserAvatar';
 import { useToast } from "../../components/ToastContainer";
 import { handleJobApplicationError } from "../../src/utils/errorHandler";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -45,7 +45,7 @@ const JobDetailsPanel: React.FC<JobDetailsPanelProps> = ({
   // HR contact info (for contact person display, not the main avatar)
   const hrFirstName = (job as any).hrFirstName || '';
   const hrLastName = (job as any).hrLastName || '';
-  const hrPhoto = (job as any).hrPhoto || null;
+  // const hrPhoto = (job as any).hrPhoto || null;
 
   // Check saved status on mount
 useEffect(() => {
