@@ -24,15 +24,25 @@ function useUserAvatarInfo(userId?: number) {
 
   useEffect(() => {
     if (!userId) return;
+    
     const fetchInfo = async () => {
       try {
         const token = localStorage.getItem('token');
-        const headers: Record<string, string> = {};
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
+        if (!token) {
+          return;
         }
 
+        const headers: Record<string, string> = {
+          'Authorization': `Bearer ${token}`
+        };
+
         const userRes = await fetch(`/api/users/${userId}`, { headers });
+        
+        // Silently handle 403 - user doesn't have permission
+        if (userRes.status === 403) {
+          return;
+        }
+        
         if (userRes.ok) {
           const userData = await userRes.json();
           setFirstName(userData?.data?.first_name || '');
@@ -43,13 +53,13 @@ function useUserAvatarInfo(userId?: number) {
         if (photoRes.ok) {
           const photoData = await photoRes.json();
           setPhotoUrl(photoData?.data?.photo_url || null);
-        } else {
-          setPhotoUrl(null);
         }
       } catch (e) {
+        // Silently fail - component will use fallback
         setPhotoUrl(null);
       }
     };
+    
     fetchInfo();
   }, [userId]);
 
@@ -74,33 +84,40 @@ const JobListItem: React.FC<JobListItemProps> = ({
   const [isApplied, setIsApplied] = useState(job.status === "applied");
 
   // Check saved status from backend
-  useEffect(() => {
-    const checkSavedStatus = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
+useEffect(() => {
+  const checkSavedStatus = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
 
-        const response = await fetch(`/api/check-saved-job/${job.id}`, {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
-        });
+      const response = await fetch(`/api/check-saved-job/${job.id}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
 
-        if (response.ok) {
-          const data = await response.json();
-          setIsBookmarkFilled(data.data.isSaved);
-          
-          if (onJobStatusUpdate && data.data.isSaved && job.status !== "saved") {
-            onJobStatusUpdate(job.id, "saved");
-          }
-        }
-      } catch (error) {
-        console.error("Error checking saved status:", error);
+      // Silently handle 404 - endpoint not implemented yet
+      if (response.status === 404) {
+        setIsBookmarkFilled(job.status === "saved");
+        return;
       }
-    };
 
-    checkSavedStatus();
-  }, [job.id, job.status, onJobStatusUpdate]);
+      if (response.ok) {
+        const data = await response.json();
+        setIsBookmarkFilled(data.data.isSaved);
+        
+        if (onJobStatusUpdate && data.data.isSaved && job.status !== "saved") {
+          onJobStatusUpdate(job.id, "saved");
+        }
+      }
+    } catch (error) {
+      // Silently fallback to prop value
+      setIsBookmarkFilled(job.status === "saved");
+    }
+  };
+
+  checkSavedStatus();
+}, [job.id, job.status, onJobStatusUpdate]);
 
   // Check if user has already applied to this job
   useEffect(() => {

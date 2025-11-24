@@ -430,10 +430,21 @@ const EmployerProfileModal: React.FC<{
   employer: any;
   onClose: () => void;
 }> = ({ employer, onClose }) => {
-  // Fetch HR/contact person info if available
-  const { photoUrl, firstName, lastName } = useEmployerAvatarInfo(employer.user_id);
+  // Try to get HR info from employer object first
+  const hrFirstName = employer.contact_first_name || employer.first_name || '';
+  const hrLastName = employer.contact_last_name || employer.last_name || '';
+  const hrPhoto = employer.contact_photo || employer.photo || null;
+  
+  // Only fetch if we don't have the data
+  const shouldFetchFromAPI = !hrFirstName && !hrLastName && employer.user_id;
+  const { photoUrl: fetchedPhotoUrl, firstName: fetchedFirstName, lastName: fetchedLastName } = 
+    useEmployerAvatarInfo(shouldFetchFromAPI ? employer.user_id : undefined);
+  
+  const photoUrl = hrPhoto || fetchedPhotoUrl;
+  const firstName = hrFirstName || fetchedFirstName;
+  const lastName = hrLastName || fetchedLastName;
 
-  // Safe access to logo path - try multiple possible property names
+  // Safe access to logo path
   const companyLogo = employer.logo_path || employer.logo || employer.company_logo;
 
   return (
@@ -546,7 +557,7 @@ const EmployerProfileModal: React.FC<{
                 />
                 <div>
                   <p className="font-medium text-gray-900">
-                    {firstName} {lastName}
+                    {firstName || lastName ? `${firstName} ${lastName}`.trim() : 'Contact Person'}
                   </p>
                   <p className="text-sm text-gray-500">HR / Recruiter</p>
                 </div>
@@ -597,7 +608,6 @@ const EmployerProfileModal: React.FC<{
                     <FaLinkedin className="w-6 h-6" />
                   </a>
                 )}
-                {/* Add other social icons as needed */}
               </div>
             </div>
           )}
@@ -888,8 +898,20 @@ const ApplicationListItem: React.FC<{
   application: Application;
   job: JobListing;
 }> = ({ application, job }) => {
-  // Fetch employer avatar info
-  const { photoUrl, firstName, lastName } = useEmployerAvatarInfo(job.employer_user_id);
+  // Try to get HR info from job object first
+  const hrFirstName = (job as any).hrFirstName || '';
+  const hrLastName = (job as any).hrLastName || '';
+  const hrPhoto = (job as any).hrPhoto || null;
+  
+  // Only fetch from API if we don't have HR info in the job object
+  const shouldFetchFromAPI = !hrFirstName && !hrLastName && job.employer_user_id;
+  const { photoUrl: fetchedPhotoUrl, firstName: fetchedFirstName, lastName: fetchedLastName } = 
+    useEmployerAvatarInfo(shouldFetchFromAPI ? job.employer_user_id : undefined);
+  
+  // Use job data if available, otherwise use fetched data
+  const photoUrl = hrPhoto || fetchedPhotoUrl;
+  const firstName = hrFirstName || fetchedFirstName;
+  const lastName = hrLastName || fetchedLastName;
 
   return (
     <li>

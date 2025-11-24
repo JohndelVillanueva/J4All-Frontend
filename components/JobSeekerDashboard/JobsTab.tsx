@@ -33,7 +33,6 @@ const JobsTab: React.FC<JobsTabProps> = ({
 
       setIsCheckingSavedStatus(true);
       try {
-        // Fetch all saved jobs
         const response = await fetch("/api/saved-jobs", {
           headers: {
             "Authorization": `Bearer ${token}`,
@@ -43,11 +42,9 @@ const JobsTab: React.FC<JobsTabProps> = ({
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.data) {
-            // Create a Set of saved job IDs for quick lookup
             const savedIds = new Set<string>(data.data.map((job: any) => String(job.id)));
-setSavedJobIds(savedIds);
+            setSavedJobIds(savedIds);
             
-            // Update parent component with saved statuses
             if (onJobStatusUpdate) {
               data.data.forEach((savedJob: any) => {
                 onJobStatusUpdate(String(savedJob.id), "saved");
@@ -63,7 +60,7 @@ setSavedJobIds(savedIds);
     };
 
     checkSavedStatus();
-  }, [jobListings.length]); // Re-run when job listings length changes
+  }, [jobListings.length]);
 
   const handleApplySuccess = () => {
     if (refreshJobs) {
@@ -73,10 +70,7 @@ setSavedJobIds(savedIds);
 
   const handleViewDetails = async (job: JobListing) => {
     setIsLoadingJob(true);
-    
-    // Simulate loading delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    await new Promise(resolve => setTimeout(resolve, 500));
     setSelectedJob(job);
     setIsLoadingJob(false);
   };
@@ -86,7 +80,6 @@ setSavedJobIds(savedIds);
   };
 
   const handleJobStatusUpdate = (jobId: string, newStatus: "new" | "applied" | "saved") => {
-    // Update local saved job IDs
     if (newStatus === "saved") {
       setSavedJobIds(prev => new Set(prev).add(jobId));
     } else if (newStatus === "new") {
@@ -97,13 +90,11 @@ setSavedJobIds(savedIds);
       });
     }
     
-    // Pass to parent
     if (onJobStatusUpdate) {
       onJobStatusUpdate(jobId, newStatus);
     }
   };
 
-  // Merge saved status into job listings
   const jobListingsWithStatus = jobListings.map(job => ({
     ...job,
     status: savedJobIds.has(String(job.id)) ? "saved" as const : job.status
@@ -131,9 +122,9 @@ setSavedJobIds(savedIds);
   }) || [];
 
   return (
-    <div>
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 200px)' }}>
       {/* Fixed Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 flex-shrink-0">
         <h2 className="text-xl font-semibold text-gray-900">Find Your Next Opportunity</h2>
         <div className="flex space-x-3">
           <div className="relative">
@@ -166,20 +157,20 @@ setSavedJobIds(savedIds);
         </div>
       </div>
 
-      {/* Loading indicator for saved status check */}
+      {/* Loading indicator */}
       {isCheckingSavedStatus && (
-        <div className="mb-4 text-sm text-gray-500 text-center">
+        <div className="mb-4 text-sm text-gray-500 text-center flex-shrink-0">
           Checking saved jobs...
         </div>
       )}
 
-      {/* Split View Container */}
-      <div className="flex gap-6">
-        {/* Jobs List Section */}
-        <div className={`transition-all duration-300 ${selectedJob || isLoadingJob ? 'w-2/5' : 'w-full'}`}>
-          <div className="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200">
+      {/* Split View Container - Full height with proper overflow */}
+      <div className="flex gap-6 flex-1 min-h-0 overflow-hidden">
+        {/* Jobs List Section - Independently Scrollable */}
+        <div className={`transition-all duration-300 ${selectedJob || isLoadingJob ? 'w-2/5' : 'w-full'} flex flex-col min-h-0`}>
+          <div className="bg-white shadow sm:rounded-lg border border-gray-200 flex flex-col h-full overflow-hidden">
             {filteredJobs.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="text-center py-12 flex-1 flex flex-col items-center justify-center">
                 <div className="text-gray-400 text-6xl mb-4">💼</div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs found</h3>
                 <p className="text-gray-500">
@@ -189,27 +180,29 @@ setSavedJobIds(savedIds);
                 </p>
               </div>
             ) : (
-              <ul className="divide-y divide-gray-200">
-                {filteredJobs.map((job) => (
-                  <JobListItem 
-                    key={job.id} 
-                    job={job} 
-                    onApplySuccess={handleApplySuccess}
-                    onJobStatusUpdate={handleJobStatusUpdate}
-                    onViewDetails={handleViewDetails}
-                    isSelected={selectedJob?.id === job.id}
-                  />
-                ))}
-              </ul>
+              <div className="overflow-y-auto flex-1">
+                <ul className="divide-y divide-gray-200">
+                  {filteredJobs.map((job) => (
+                    <JobListItem 
+                      key={job.id} 
+                      job={job} 
+                      onApplySuccess={handleApplySuccess}
+                      onJobStatusUpdate={handleJobStatusUpdate}
+                      onViewDetails={handleViewDetails}
+                      isSelected={selectedJob?.id === job.id}
+                    />
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Job Details Panel or Loading State */}
+        {/* Job Details Panel - Independently Scrollable */}
         {(selectedJob || isLoadingJob) && (
-          <div className="w-3/5">
+          <div className="w-3/5 flex flex-col min-h-0">
             {isLoadingJob ? (
-              <div className="rounded-lg flex flex-col border border-gray-200 h-[calc(100vh-3rem)]">
+              <div className="rounded-lg flex flex-col border border-gray-200 h-full bg-white">
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
                     <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mb-4"></div>
