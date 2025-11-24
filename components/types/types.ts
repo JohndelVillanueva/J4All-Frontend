@@ -63,6 +63,7 @@ export type JobListing = {
   id: string;
   jobType?: string;
   title: string;
+  description: string;
   company: string | Company;
   logo_path?: string | null;
   employer?: EmployerInfo;

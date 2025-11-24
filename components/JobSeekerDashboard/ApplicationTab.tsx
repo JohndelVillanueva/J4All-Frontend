@@ -207,52 +207,54 @@ const ApplicationsTab: React.FC<ApplicationsTabProps> = ({ applications, jobList
     setSelectedJob(job);
   };
 
-  const defaultJobListing: JobListing = {
-    id: "0",
-    title: "Position no longer available",
-    company: "Unknown Company",
-    logo_path: null,
-    location: "",
-    salary: "",
-    type: "",
-    posted: "",
-    skills: [],
-    status: "new",
-    match: 0,
-    work_mode: "Remote",
-    job_description: "",
-    job_requirements: "",
-    employer_id: 0,
-    employer_user_id: 0,
-    hrName: "",
-    hrPhoto: null,
-  };
+const defaultJobListing: JobListing = {
+  id: "0",
+  title: "Position no longer available",
+  company: "Unknown Company",
+  logo_path: null,
+  location: "",
+  salary: "",
+  type: "",
+  posted: "",
+  skills: [],
+  status: "new",
+  match: 0,
+  work_mode: "Remote",
+  job_description: "",
+  job_requirements: "",
+  employer_id: 0,
+  employer_user_id: 0,
+  hrName: "",
+  hrPhoto: null,
+  description: "", // Add this missing property
+};
 
   // Helper function to convert any job-like object to a proper JobListing
-  const toJobListing = (job: any): JobListing => {
-    if (!job) return defaultJobListing;
-    
-    return {
-      id: String(job.id || defaultJobListing.id),
-      title: job.title || defaultJobListing.title,
-      company: job.company || defaultJobListing.company,
-      logo_path: job.logo_path || job.logo || defaultJobListing.logo_path,
-      location: job.location || defaultJobListing.location,
-      salary: job.salary || defaultJobListing.salary,
-      type: job.type || defaultJobListing.type,
-      posted: job.posted || defaultJobListing.posted,
-      skills: job.skills || defaultJobListing.skills,
-      status: job.status || defaultJobListing.status,
-      match: job.match || defaultJobListing.match,
-      work_mode: job.work_mode || job.workMode || defaultJobListing.work_mode,
-      job_description: job.job_description || defaultJobListing.job_description,
-      job_requirements: job.job_requirements || defaultJobListing.job_requirements,
-      employer_id: job.employer_id || defaultJobListing.employer_id,
-      employer_user_id: job.employer_user_id || defaultJobListing.employer_user_id,
-      hrName: job.hrName || defaultJobListing.hrName,
-      hrPhoto: job.hrPhoto || defaultJobListing.hrPhoto,
-    };
+const toJobListing = (job: any): JobListing => {
+  if (!job) return defaultJobListing;
+  
+  return {
+    id: String(job.id || defaultJobListing.id),
+    title: job.title || defaultJobListing.title,
+    company: job.company || defaultJobListing.company,
+    logo_path: job.logo_path || job.logo || defaultJobListing.logo_path,
+    location: job.location || defaultJobListing.location,
+    salary: job.salary || defaultJobListing.salary,
+    type: job.type || defaultJobListing.type,
+    posted: job.posted || defaultJobListing.posted,
+    skills: job.skills || defaultJobListing.skills,
+    status: job.status || defaultJobListing.status,
+    match: job.match || defaultJobListing.match,
+    work_mode: job.work_mode || job.workMode || defaultJobListing.work_mode,
+    job_description: job.job_description || defaultJobListing.job_description,
+    job_requirements: job.job_requirements || defaultJobListing.job_requirements,
+    employer_id: job.employer_id || defaultJobListing.employer_id,
+    employer_user_id: job.employer_user_id || defaultJobListing.employer_user_id,
+    hrName: job.hrName || defaultJobListing.hrName,
+    hrPhoto: job.hrPhoto || defaultJobListing.hrPhoto,
+    description: job.description || defaultJobListing.description, // Add this missing property
   };
+};
 
   return (
     <div>

@@ -881,6 +881,7 @@ const createDefaultJob = (jobId: number): JobListing => ({
   job_description: "No description available.",
   job_requirements: "No requirements available.",
   employer_id: 0,
+  description: "No description available.", // Add this missing property
 });
 
 const ApplicationListItem: React.FC<{
