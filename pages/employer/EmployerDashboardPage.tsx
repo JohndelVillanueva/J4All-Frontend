@@ -1038,6 +1038,7 @@ const EmployerDashboardPage = () => {
         <EditEmployerAccountModal
           isOpen={editEmployerAccountOpen}
           onClose={() => setEditEmployerAccountOpen(false)}
+          userId={currentUser?.id || ''}
         />
       </div>
     </div>

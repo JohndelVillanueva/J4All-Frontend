@@ -851,10 +851,18 @@ const Header: React.FC<HeaderProps> = ({ onEmployerEditAccount }) => {
         }}
       />
       {user && ["pwd", "indigenous", "general"].includes(user.user_type) && (
-        <EditJobSeekerAccountModal isOpen={editAccountOpen} onClose={() => setEditAccountOpen(false)} />
+        <EditJobSeekerAccountModal 
+  isOpen={editAccountOpen} 
+  onClose={() => setEditAccountOpen(false)} 
+  userId={user?.id || ''} 
+/>
       )}
       {user && user.user_type === "employer" && (
-        <EditEmployerAccountModal isOpen={editEmployerAccountOpen} onClose={() => setEditEmployerAccountOpen(false)} />
+        <EditEmployerAccountModal 
+  isOpen={editEmployerAccountOpen} 
+  onClose={() => setEditEmployerAccountOpen(false)} 
+  userId={user?.id || ''} 
+/>
       )}
       {/* Profile Modal */}
       {profileModalOpen && user && ["pwd", "indigenous", "general"].includes(user.user_type) && (

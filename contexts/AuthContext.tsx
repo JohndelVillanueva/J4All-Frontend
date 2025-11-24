@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 type User = {
+  pwd_id_number?: string;
   id: string;
   username: string;
   email: string;

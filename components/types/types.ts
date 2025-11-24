@@ -31,8 +31,9 @@ export interface User {
   username: string;
   email: string;
   user_type: string;
-  first_name?: string; // optional
-  last_name?: string;  // optional
+  first_name?: string;
+  last_name?: string;
+  pwd_id_number?: string;
 }
 
 export type UserData = {
@@ -42,12 +43,14 @@ export type UserData = {
   email: string;
   photo?: string | null;
   user_type?: string;
+  phone_number?: string;
+  pwd_id_number?: string;
 };
 
 export type EmployerInfo = {
   id: string;
-   logo_path?: string;
-    name: string;
+  logo_path?: string;
+  name: string;
   logo?: string | null;
   description?: string;
 }
@@ -77,7 +80,7 @@ export type JobListing = {
     category?: string;
     is_required: boolean;
     importance_level: number;
-  }[]; // Updated to match Prisma structure
+  }[];
   status: "new" | "applied" | "saved";
   match: number;
   work_mode: WorkMode;
@@ -127,7 +130,7 @@ export type Applicant = {
   name: string;
   email: string;
   phone: string;
-  photo?: string | null; // Add photo field
+  photo?: string | null;
   position: string;
   status: string;
   experience: string;
@@ -140,7 +143,7 @@ export type Applicant = {
   desiredSalary?: number;
   locationPreference?: string;
   resumeText?: string;
-  user_id: number; // Job seeker's user ID for messaging
+  user_id: number;
   job?: {
     id: number;
     title: string;
@@ -162,20 +165,13 @@ export type StatItem = {
 
 export interface ApplicantHeaderProps {
   title?: string;
-  user?: { firstName: string; lastName: string;  };
+  user?: { firstName: string; lastName: string; };
   showSearch?: boolean;
   onSearchChange?: (term: string) => void;
   className?: string;
 }
-// export interface EmployerHeaderProps {
-//   title?: string;
-//   user?: { firstName: string; lastName: string };
-//   showSearch?: boolean;
-//   onSearchChange?: (term: string) => void;
-//   className?: string;
-// }
 
-export interface  FormData {
+export interface FormData {
   email: string;
   username: string;
   password: string;
@@ -192,6 +188,18 @@ export interface  FormData {
   address: string;
   agreeToTerms: boolean;
   userType: "EMPLOYER";
-  logo_path?: FileList ; // optional for employer registration
-};
+  logo_path?: FileList;
+}
 
+// ← ADD THESE NEW INTERFACES:
+export interface EditJobSeekerAccountModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  userId: number | string;
+}
+
+export interface EditEmployerAccountModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  userId: number | string;
+}

@@ -33,6 +33,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <EditEmployerAccountModal
         isOpen={editEmployerAccountOpen}
         onClose={() => setEditEmployerAccountOpen(false)}
+        userId={user?.id || ''}
       />
     </div>
   );

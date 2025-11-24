@@ -9,6 +9,7 @@ import clsx from 'clsx';
 interface EditEmployerAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
+  userId: number | string;  // ✅ ADD THIS LINE
 }
 
 const EditEmployerAccountModal: React.FC<EditEmployerAccountModalProps> = ({ isOpen, onClose }) => {
